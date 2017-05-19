@@ -1,0 +1,5 @@
+*.DS_STORE
+.idea/
+__pycache__/
+*.csv
+example.py
