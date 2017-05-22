@@ -2,7 +2,7 @@
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
 
-[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/vc1492a/LoOP)
+[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/vc1492a/PyLoOP)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
