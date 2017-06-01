@@ -3,7 +3,10 @@ import numpy as np
 import sys
 import warnings
 
-__version__ = '0.1.0'
+
+__author__ = 'Valentino Constantinou'
+__version__ = '0.1.2'
+__license__ = 'Apache 2.0'
 
 
 class LocalOutlierProbability(object):

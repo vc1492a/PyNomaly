@@ -1,8 +1,9 @@
-# PyLoOP (LoOP: Local Outlier Probabilities)
+# PyNomaly (LoOP: Local Outlier Probabilities)
+PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
 
-[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/vc1492a/PyLoOP)
+[![Release](https://img.shields.io/badge/release-v0.1.2-blue.svg)](https://github.com/vc1492a/PyNomaly)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -36,21 +37,26 @@ to calculate the Local Outlier Probability of each sample.
 
 ## Quick Start
 
-First include loop.py in the same directory as the Python file you're working with. Then:
+First install the package from the Python Package Index:
 
 ```python
-from loop import LocalOutlierProbability
-scores = LocalOutlierProbability(data).fit()
+pip install PyNomaly # or pip3 install ... if you're using both Python 3 and 2.
+```
+Then you can do something like this: 
+
+```python
+from PyNomaly import loop
+scores = loop.LocalOutlierProbability(data).fit()
 print(scores)
 ```
 where *data* is a NxM (N rows, M columns) set of data as either a Pandas DataFrame or Numpy array. 
 
-LoOP sets the *extent* parameter (in range [0,1]) *n_neighbors* (must be greater than 0) parameters with the default
+LocalOutlierProbability sets the *extent* (in range [0,1]) and *n_neighbors* (must be greater than 0) parameters with the default
 values of 0.997 and 10, respectively. You're free to set these parameters on your own as below:
 
 ```python
-from loop import LocalOutlierProbability
-scores = LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
+from PyNomaly import loop
+scores = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
 print(scores)
 ```
 The *extent* parameter controls the sensitivity of the scoring in practice, with values 
@@ -63,10 +69,10 @@ of varying density occur within the same set of data. When using *cluster_labels
 sample is calculated with respect to its cluster assignment.
 
 ```python
-from loop import LocalOutlierProbability
+from PyNomaly import loop
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-scores = LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
+scores = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
 print(scores)
 ```
 
@@ -87,7 +93,7 @@ example beyond the standard prerequisites listed above:
 First, let's import the packages and libraries we will need for this example.
 
 ```python
-from loop import LocalOutlierProbability
+from PyNomaly import loop
 import pandas as pd
 from pydataset import data
 import numpy as np
@@ -109,8 +115,8 @@ values for both *extent* (0.997) and *n_neighbors* (10).
 
 ```python
 db = DBSCAN(eps=0.9, min_samples=10).fit(iris)
-scores_noclust = LocalOutlierProbability(iris).fit()
-scores_clust = LocalOutlierProbability(iris, cluster_labels=db.labels_).fit()
+scores_noclust = loop.LocalOutlierProbability(iris).fit()
+scores_clust = loop.LocalOutlierProbability(iris, cluster_labels=db.labels_).fit()
 ```
 
 Organize the data into two separate Pandas DataFrames.
@@ -165,16 +171,16 @@ plt.close()
 Your results should look like the following:
 
 **LoOP Scores without Clustering**
-![LoOP Scores without Clustering](https://github.com/vc1492a/PyLoOP/blob/master/images/scores.png)
+![LoOP Scores without Clustering](https://github.com/vc1492a/PyNomaly/blob/master/images/scores.png)
 
 **LoOP Scores with Clustering**
-![LoOP Scores with Clustering](https://github.com/vc1492a/PyLoOP/blob/master/images/scores_clust.png)
+![LoOP Scores with Clustering](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_clust.png)
 
 **DBSCAN Cluster Assignments**
-![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyLoOP/blob/master/images/cluster_assignments.png)
+![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/cluster_assignments.png)
 
 
-Note the differences between using LoOP with and without clustering. In the example without clustering, samples are 
+Note the differences between using LocalOutlierProbability with and without clustering. In the example without clustering, samples are 
 scored according to the distribution of the entire data set. In the example with clustering, each sample is scored 
 according to the distribution of each cluster. Which approach is suitable depends on the use case. 
 
@@ -185,7 +191,7 @@ according to the distribution of each cluster. Which approach is suitable depend
 If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request. 
 Some next steps:
 - Organizational improvements to the code base.
-- Publish PyLoOP on the Python Package Index. 
+- Clean up import statement for package (import LocalOutlierProbability instead of loop). 
 - Characterizing the computational complexity and making improvements to overall speed.
 - Outlining some known disadvantages in the readme.
 - Outlining some useful applications in the readme. 
@@ -200,9 +206,8 @@ versioning guidelines when submitting a pull request.
 This project is licensed under the Apache 2.0 license.
 
 ## References
-1. Aggarwal C., Hinneburg A., Keim D. On the Surprising Behavior of Distance Metrics in High Dimensional Space. ICDT Conference (2001). [PDF](https://bib.dbvis.de/uploadedFiles/155.pdf).
-2. Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD International Conference on Management of Data (2000). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf).
-3. Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on Information and knowledge management, CIKM (2009). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
+1. Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD International Conference on Management of Data (2000). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf).
+2. Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on Information and knowledge management, CIKM (2009). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
 
 ## Acknowledgements
 - The authors of LoOP (Local Outlier Probabilities)
