@@ -21,8 +21,16 @@ Problem. Impractical in practice. Our passes sometimes include 40k points, which
 for training and loop is fairly computationally expensive. Using a sliding window of continuous computation results in
 the same concerns.
 
+NOTES 2: The other concern I have with LoOP in its current form is that euclidean distance is not necessarily the
+best method of calculating similarity across time series data. There are a variety of options here, like using
+another metric measure such as Mahalanobis Distance or using something along the like of Dynamic Time Warping (DTW).
+Utilizing the Euclidean distance assumes that clusters have identity covariances i.e. all dimensions are statistically
+independent and the variance of along each of the dimensions (columns) is equal to one. The Mahalanobis distance is an
+euclidian distance that considers the covariance of the data by down-weighting the axis with higher variance.
 
 
+
+REF: http://kldavenport.com/mahalanobis-distance-and-outliers/
 
 """
 
@@ -47,11 +55,12 @@ class LocalOutlierProbability(object):
     .. [2] Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on
     """
 
-    def __init__(self, data, extent=0.997, n_neighbors=10, cluster_labels=None):
+    def __init__(self, data, extent=0.997, n_neighbors=10, cluster_labels=None, test=None):
         self.data = data
         self.extent = extent
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
+        self.test = test
         self.local_outlier_probabilities = None
 
     @staticmethod
@@ -76,11 +85,19 @@ class LocalOutlierProbability(object):
         erf_vec = np.vectorize(erf)
         return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.0))))
 
-    def _n_observations(self):
-        return len(self.data)
-
     def _store(self):
-        return np.empty([self._n_observations(), 3])
+        if self.test is not None:
+            self.train_labels = [0] * len(self.data)
+            self.test_labels = [1] * len(self.test)
+            self.train_test_labels = np.array(self.train_labels + self.test_labels)
+            import pandas as pd
+            self.data = pd.DataFrame(pd.concat([self.data, self.test]))
+            return np.empty([len(self.data), 3])
+
+            # print(self.data)
+            # print(self._n_observations())
+
+        return np.empty([len(self.data), 3])
 
     def _cluster_labels(self):
         if self.cluster_labels is None:
@@ -97,8 +114,16 @@ class LocalOutlierProbability(object):
                 points_vector = self.data.take(indices, axis=0)
                 points_vector = points_vector.reshape(points_vector.shape[1:])
             d = (points_vector[:, np.newaxis] - points_vector)
+
+            # d = np.tril(d, -1)
+
+            # print(d)
+
             for vec in range(d.shape[1]):
                 neighborhood_distances = np.sort(np.mean(np.sqrt(d[:, vec] ** 2), axis=1))[1:self.n_neighbors + 1]
+
+                # print(neighborhood_distances)
+
                 neighborhood_dist = np.mean(neighborhood_distances)
                 closest_neighbor_distance = neighborhood_distances[1:2]
                 data_store[indices[0][vec]] = np.array([cluster_id, neighborhood_dist, closest_neighbor_distance])
@@ -192,6 +217,26 @@ class LocalOutlierProbability(object):
         store = self._norm_prob_local_outlier_factors(store)
         store = self._local_outlier_probabilities(store)
 
-        self.local_outlier_probabilities = store[:, 10]
+        if self.test is not None:
+            test_indices = np.where(self.train_test_labels != 0)
+            print(test_indices)
+            print(self.data.shape)
+            self.local_outlier_probabilities = np.take(store[:, 10], test_indices)
+
+        else:
+            self.local_outlier_probabilities = store[:, 10]
+
+
+
+        # test_indices = np.where(np.array(self.test_labels) == 1.0)
+        # print(test_indices)
+        # print(np.take(store[:, 10], test_indices))
+        #
+        # self.local_outlier_probabilities = np.take(store[:, 10], test_indices)
+
+        # self.local_outlier_probabilities = np.take(np.where(np.array(self.test_labels) == 1.0), store[:, 10])
+
+
+        # self.local_outlier_probabilities = store[:, 10]
 
         return self.local_outlier_probabilities
