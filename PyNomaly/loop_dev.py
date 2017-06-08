@@ -115,14 +115,14 @@ class LocalOutlierProbability(object):
                 points_vector = points_vector.reshape(points_vector.shape[1:])
             d = (points_vector[:, np.newaxis] - points_vector)
 
-            # d = np.tril(d, -1)
+            d = np.tril(d, -1)
 
             # print(d)
 
             for vec in range(d.shape[1]):
                 neighborhood_distances = np.sort(np.mean(np.sqrt(d[:, vec] ** 2), axis=1))[1:self.n_neighbors + 1]
 
-                # print(neighborhood_distances)
+                print(neighborhood_distances)
 
                 neighborhood_dist = np.mean(neighborhood_distances)
                 closest_neighbor_distance = neighborhood_distances[1:2]
@@ -207,36 +207,32 @@ class LocalOutlierProbability(object):
             warnings.warn('Input data contains missing values. Some scores may not be returned.', UserWarning)
 
         store = self._store()
-        store = self._distances(store)
-        store = self._ssd(store)
-        store = self._standard_distances(store)
-        store = self._prob_set_distances(store)
-        store = self._prob_set_distances_ev(store)
-        store = self._prob_local_outlier_factors(store)
-        store = self._prob_local_outlier_factors_ev(store)
-        store = self._norm_prob_local_outlier_factors(store)
-        store = self._local_outlier_probabilities(store)
+        store = self._distances(store) # neighborhood distance for each obs. given k neighbors
+        store = self._ssd(store) # a single value for each cluster, the sum of squared distances
+        store = self._standard_distances(store) # value unique to each point
+        store = self._prob_set_distances(store) # value unique to each point
+        store = self._prob_set_distances_ev(store) # single value for each cluster
+        store = self._prob_local_outlier_factors(store) # value unique to each point
+        store = self._prob_local_outlier_factors_ev(store) # single value for each cluster
+        store = self._norm_prob_local_outlier_factors(store) # value unique to each point
+        store = self._local_outlier_probabilities(store) # value unique to each point
+
+        # what if... when specifying testing data...
+        # a separate distance matrix is calculated for the testing data
+        # along with th ssd, standard distances, prob set distances...
+        # but then the prob_set_distance_ev from training is used
+        # along with the prob_local_outlier_factor_ev... it's also used from training
+        # this makes intuitive sense, right?
+
+        # if that is indeed the case, then
+        # we only need to store the expected value values for later use in the testing result
 
         if self.test is not None:
             test_indices = np.where(self.train_test_labels != 0)
             print(test_indices)
             print(self.data.shape)
             self.local_outlier_probabilities = np.take(store[:, 10], test_indices)
-
         else:
             self.local_outlier_probabilities = store[:, 10]
-
-
-
-        # test_indices = np.where(np.array(self.test_labels) == 1.0)
-        # print(test_indices)
-        # print(np.take(store[:, 10], test_indices))
-        #
-        # self.local_outlier_probabilities = np.take(store[:, 10], test_indices)
-
-        # self.local_outlier_probabilities = np.take(np.where(np.array(self.test_labels) == 1.0), store[:, 10])
-
-
-        # self.local_outlier_probabilities = store[:, 10]
 
         return self.local_outlier_probabilities
