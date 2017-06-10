@@ -3,7 +3,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
 
-[![Release](https://img.shields.io/badge/release-v0.1.2-blue.svg)](https://github.com/vc1492a/PyNomaly)
+[![Release](https://img.shields.io/badge/pypi-v0.1.3-blue.svg)](https://github.com/vc1492a/PyNomaly)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -39,7 +39,7 @@ to calculate the Local Outlier Probability of each sample.
 
 First install the package from the Python Package Index:
 
-```python
+```shell
 pip install PyNomaly # or pip3 install ... if you're using both Python 3 and 2.
 ```
 Then you can do something like this: 
@@ -110,7 +110,7 @@ iris = pd.DataFrame(data('iris'))
 iris = pd.DataFrame(iris.drop('Species', 1))
 ```
 
-Next, let's cluster the data using DBSCAN and generate two sets of scores. On both cases, we wil use the default 
+Next, let's cluster the data using DBSCAN and generate two sets of scores. On both cases, we will use the default 
 values for both *extent* (0.997) and *n_neighbors* (10).
 
 ```python

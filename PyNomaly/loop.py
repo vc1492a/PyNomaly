@@ -5,7 +5,7 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __license__ = 'Apache 2.0'
 
 
@@ -23,11 +23,9 @@ class LocalOutlierProbability(object):
 
     References
     ----------
-    .. [1] Aggarwal C., Hinneburg A., Keim D. On the Surprising Behavior of Distance Metrics in High Dimensional Space.
-           ICDT Conference (2001).
-    .. [2] Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD
+    .. [1] Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD
            International Conference on Management of Data (2000).
-    .. [3] Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on
+    .. [2] Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on
     """
 
     def __init__(self, data, extent=0.997, n_neighbors=10, cluster_labels=None):
@@ -79,7 +77,7 @@ class LocalOutlierProbability(object):
             elif self.data.__class__.__name__ == 'ndarray':
                 points_vector = self.data.take(indices, axis=0)
                 points_vector = points_vector.reshape(points_vector.shape[1:])
-            d = (points_vector[:, np.newaxis] - points_vector)
+            d = np.tril((points_vector[:, np.newaxis] - points_vector), -1)
             for vec in range(d.shape[1]):
                 neighborhood_distances = np.sort(np.mean(np.sqrt(d[:, vec] ** 2), axis=1))[1:self.n_neighbors + 1]
                 neighborhood_dist = np.mean(neighborhood_distances)
