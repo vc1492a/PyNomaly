@@ -5,7 +5,7 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 __license__ = 'Apache 2.0'
 
 
@@ -37,7 +37,8 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _standard_distance(mean_distance, sum_squared_distance):
-        st_dist = np.sqrt(sum_squared_distance / np.fabs(mean_distance))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            st_dist = np.sqrt(np.divide(sum_squared_distance, np.fabs(mean_distance)))
         return st_dist
 
     @staticmethod
@@ -83,7 +84,9 @@ class LocalOutlierProbability(object):
                 neighborhood_dist = np.mean(neighborhood_distances)
                 closest_neighbor_distance = neighborhood_distances[1:2]
                 data_store[indices[0][vec]] = np.array([cluster_id, neighborhood_dist, closest_neighbor_distance])
-
+            if not data_store[:, 1].any():
+                warnings.warn('Neighborhood distances all zero. Try using a larger value for n_neighbors.', RuntimeWarning)
+                sys.exit()
         return data_store
 
     def _ssd(self, data_store):
@@ -93,10 +96,12 @@ class LocalOutlierProbability(object):
             indices = np.where(data_store[:, 0] == cluster_id)
             cluster_distances = np.take(data_store[:, 1], indices)
             cluster_distances_nonan = cluster_distances[np.logical_not(np.isnan(cluster_distances))]
-            ssd = np.sum(cluster_distances_nonan ** 2.0)
+            ssd = np.sum(np.power(cluster_distances_nonan, 2))
+            if ssd == 0.0:
+                warnings.warn('Sum of square distances equals zero.', RuntimeWarning)
+                sys.exit()
             ssd_dict[cluster_id] = ssd
         data_store = np.hstack((data_store, np.array([[ssd_dict[x] for x in data_store[:, 0].tolist()]]).T))
-
         return data_store
 
     def _standard_distances(self, data_store):
@@ -116,7 +121,6 @@ class LocalOutlierProbability(object):
             prob_set_distance_ev_dict[cluster_id] = np.mean(prob_set_distances_nonan)
         data_store = np.hstack(
             (data_store, np.array([[prob_set_distance_ev_dict[x] for x in data_store[:, 0].tolist()]]).T))
-
         return data_store
 
     def _prob_local_outlier_factors(self, data_store):
@@ -131,11 +135,10 @@ class LocalOutlierProbability(object):
             prob_local_outlier_factors = np.take(data_store[:, 7], indices)
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
-            prob_local_outlier_factor_ev_dict[cluster_id] = np.sum(prob_local_outlier_factors_nonan ** 2.0) / float(
-                prob_local_outlier_factors_nonan.size)
+            prob_local_outlier_factor_ev_dict[cluster_id] = np.sum(np.power(prob_local_outlier_factors_nonan, 2)) / \
+                                                            float(prob_local_outlier_factors_nonan.size)
         data_store = np.hstack(
             (data_store, np.array([[prob_local_outlier_factor_ev_dict[x] for x in data_store[:, 0].tolist()]]).T))
-
         return data_store
 
     def _norm_prob_local_outlier_factors(self, data_store):
@@ -148,7 +151,7 @@ class LocalOutlierProbability(object):
 
     def fit(self):
 
-        if not self.n_neighbors > 0.:
+        if not self.n_neighbors > 0:
             warnings.warn('n_neighbors must be greater than 0. Execution halted.', UserWarning)
             sys.exit()
         if not 0. < self.extent < 1.:

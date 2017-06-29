@@ -1,0 +1,27 @@
+You have an M x N x t matrix, where M is columns (vars), N is rows (observations), and t is time. 
+
+First try using some sort of time-series appropriate distance measure in the matrix calculation. 
+	- can we use Mahalanobis distance or some other metric distance measure that's more suitable for time series? 
+	- What if we mapped several time series using Dynamic Time Warping (DTW) with a threshold, and then apply euclidean distance or some other metric distance measure? 
+		- DTW in lit is to "align" points from two time series due to a one to many relationship. Can we apply the same approach to single dimension data? 
+
+Then try dimensionality reduction. 
+
+
+What if, on a news feed, you start with certain information that dictates the feed content. But as the user provides information (likes, comments, etc.), the the remainder of the news feed that is dynamically loaded to the user is adjusted accordingly (recompute the model with each user action). This results in a lot of possible actions, resulting in a root like structure with each user action. 
+
+B4
+[[ 0.          0.36506043  0.94104227  0.          0.          0.71911148
+   0.          0.          0.          0.81608592  0.82599308  0.99744155
+   0.          0.1174516   0.86910002  0.88360177  0.31360042  0.        
+   0.          0.02730024  0.          0.25996032  0.          0.08772377
+   0.1174516   0.          0.08772377  0.          0.67380168  0.        ]]
+   
+With triangular matrix (most values lowered)
+[[ 0.          0.35666298  0.91465491  0.          0.02954256  0.68262148
+   0.          0.          0.          0.77853618  0.78866355  0.99354327
+   0.02954256  0.13667647  0.8337379   0.84935201  0.31073392  0.02954256
+   0.          0.05674292  0.          0.26302304  0.          0.11033396
+   0.13667647  0.02954256  0.11033396  0.          0.63928553  0.        ]]
+ 
+https://stackoverflow.com/questions/27686240/calculate-mahalanobis-distance-using-numpy-only

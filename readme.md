@@ -3,7 +3,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
 
-[![Release](https://img.shields.io/badge/pypi-v0.1.3-blue.svg)](https://github.com/vc1492a/PyNomaly)
+[![PyPi](https://img.shields.io/badge/pypi-v0.1.4-brightgreen.svg)](https://pypi.python.org/pypi/PyNomaly/0.1.4)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -34,6 +34,8 @@ to calculate the Local Outlier Probability of each sample.
 - Python 3.5.2 or greater
 - Numpy 1.12.0 or greater
 - Pandas 0.19.2 or greater (**optional**)
+
+Note that PyNomaly remains untested in older Python versions. 
 
 ## Quick Start
 
@@ -188,15 +190,8 @@ according to the distribution of each cluster. Which approach is suitable depend
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
 
 ## Contributing
-If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request. 
-Some next steps:
-- Organizational improvements to the code base.
-- Clean up import statement for package (import LocalOutlierProbability instead of loop). 
-- Characterizing the computational complexity and making improvements to overall speed.
-- Outlining some known disadvantages in the readme.
-- Outlining some useful applications in the readme. 
-- Introducing modifications that allow LoOP to be applied more effectively to noisy data without losing the ability 
-to effectively identify outliers or anomalies in the data. 
+If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.
+Feel free to open an issue if you notice any erroneous behavior.
 
 ## Versioning
 [Semantic versioning](http://semver.org/) is used for this project. If contributing, please conform to semantic
