@@ -5,14 +5,14 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.1.4'
-__license__ = 'Apache 2.0'
+__version__ = '0.1.5'
+__license__ = 'Apache License, Version 2.0'
 
 
 class LocalOutlierProbability(object):
     """
     :param data: a Pandas DataFrame or Numpy array of float data
-    :param extent: a parameter value between 0 and 1 that controls the statistical extent (optional, default 0.997)
+    :param extent: a parameter value in the range (0, 1] that controls the statistical extent (optional, default 0.997)
     :param n_neighbors: the total number of neighbors to consider w.r.t. each sample (optional, default 10)
     :param cluster_labels: a numpy array of cluster assignments w.r.t. each sample (optional, default None)
     :return:
@@ -28,12 +28,57 @@ class LocalOutlierProbability(object):
     .. [2] Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on
     """
 
+    def accepts(*types):
+        def decorator(f):
+            assert len(types) == f.__code__.co_argcount
+
+            def new_f(*args, **kwds):
+                for (a, t) in zip(args, types):
+                    if type(a).__name__ == 'DataFrame':
+                        a = np.array(a)
+                    if isinstance(a, t) is False:
+                        warnings.warn("Argument %r is not of type %s" % (a, t), UserWarning)
+                        sys.exit()
+                opt_types = {
+                    'extent': {
+                        'type': types[2]
+                    },
+                    'n_neighbors': {
+                        'type': types[3]
+                    },
+                    'cluster_labels': {
+                        'type': types[4]
+                    }
+                }
+                for x in kwds:
+                    opt_types[x]['value'] = kwds[x]
+                for k in opt_types:
+                    try:
+                        if isinstance(opt_types[k]['value'], opt_types[k]['type']) is False:
+                            warnings.warn("Argument %r is not of type %s" % (k, opt_types[k]['type']), UserWarning)
+                            sys.exit()
+                    except KeyError:
+                        pass
+                return f(*args, **kwds)
+            new_f.__name__ = f.__name__
+            return new_f
+        return decorator
+
+    @accepts(object, np.ndarray, float, int, (list, np.ndarray))
     def __init__(self, data, extent=0.997, n_neighbors=10, cluster_labels=None):
         self.data = data
         self.extent = extent
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
         self.local_outlier_probabilities = None
+        if not self.n_neighbors > 0:
+            warnings.warn('n_neighbors must be greater than 0. Execution halted.', UserWarning)
+            sys.exit()
+        if not 0. < self.extent <= 1.:
+            warnings.warn('Statistical extent must be in (0,1]. Execution halted.', UserWarning)
+            sys.exit()
+        if np.any(np.isnan(self.data)):
+            warnings.warn('Input data contains missing values. Some scores may not be returned.', UserWarning)
 
     @staticmethod
     def _standard_distance(mean_distance, sum_squared_distance):
@@ -85,7 +130,7 @@ class LocalOutlierProbability(object):
                 closest_neighbor_distance = neighborhood_distances[1:2]
                 data_store[indices[0][vec]] = np.array([cluster_id, neighborhood_dist, closest_neighbor_distance])
             if not data_store[:, 1].any():
-                warnings.warn('Neighborhood distances all zero. Try using a larger value for n_neighbors.', RuntimeWarning)
+                warnings.warn('Neighborhood distances all zero. Use a larger value for n_neighbors.', RuntimeWarning)
                 sys.exit()
         return data_store
 
@@ -98,7 +143,7 @@ class LocalOutlierProbability(object):
             cluster_distances_nonan = cluster_distances[np.logical_not(np.isnan(cluster_distances))]
             ssd = np.sum(np.power(cluster_distances_nonan, 2))
             if ssd == 0.0:
-                warnings.warn('Sum of square distances equals zero.', RuntimeWarning)
+                warnings.warn('Sum of square distances equals zero. Execution halted.', RuntimeWarning)
                 sys.exit()
             ssd_dict[cluster_id] = ssd
         data_store = np.hstack((data_store, np.array([[ssd_dict[x] for x in data_store[:, 0].tolist()]]).T))
@@ -136,7 +181,7 @@ class LocalOutlierProbability(object):
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
             prob_local_outlier_factor_ev_dict[cluster_id] = np.sum(np.power(prob_local_outlier_factors_nonan, 2)) / \
-                                                            float(prob_local_outlier_factors_nonan.size)
+                float(prob_local_outlier_factors_nonan.size)
         data_store = np.hstack(
             (data_store, np.array([[prob_local_outlier_factor_ev_dict[x] for x in data_store[:, 0].tolist()]]).T))
         return data_store
@@ -150,21 +195,6 @@ class LocalOutlierProbability(object):
              np.array([np.apply_along_axis(self._local_outlier_probability, 0, data_store[:, 7], data_store[:, 9])]).T))
 
     def fit(self):
-
-        if not self.n_neighbors > 0:
-            warnings.warn('n_neighbors must be greater than 0. Execution halted.', UserWarning)
-            sys.exit()
-        if not 0. < self.extent < 1.:
-            warnings.warn('Statistical extent must be in [0,1]. Execution halted.', UserWarning)
-            sys.exit()
-        if self.data.__class__.__name__ == 'DataFrame' or self.data.__class__.__name__ == 'ndarray':
-            pass
-        else:
-            warnings.warn('Not a Pandas DataFrame or Numpy array. Execution halted.', UserWarning)
-            sys.exit()
-        if np.any(np.isnan(self.data)):
-            warnings.warn('Input data contains missing values. Some scores may not be returned.', UserWarning)
-
         store = self._store()
         store = self._distances(store)
         store = self._ssd(store)
