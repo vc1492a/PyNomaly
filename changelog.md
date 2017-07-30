@@ -4,7 +4,7 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.5]() - 2017-07-30
+## [0.1.5](https://github.com/vc1492a/PyNomaly/commit/d203c402dd657e8240365d538c723f831237326e) - 2017-07-30
 ### Fixed
 - [Issue #4](https://github.com/vc1492a/PyNomaly/issues/4) - Separated parameter type checks 
 from checks for invalid parameter values.
