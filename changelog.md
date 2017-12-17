@@ -4,6 +4,10 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.0]()
+### Added
+- Added
+
 ## [0.1.6](https://github.com/vc1492a/PyNomaly/commit/2526879b1f941c887eeb24a267b5ea010e20d5d7) - 2017-12-17
 ### Fixed
 - Updated the distance calculation such that the euclidean distance calculation has been separated from 

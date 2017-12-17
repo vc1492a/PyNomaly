@@ -49,7 +49,8 @@ Then you can do something like this:
 
 ```python
 from PyNomaly import loop
-scores = loop.LocalOutlierProbability(data).fit()
+m = loop.LocalOutlierProbability(data).fit()
+scores = m.local_outlier_probabilities
 print(scores)
 ```
 where *data* is a NxM (N rows, M columns) set of data as either a Pandas DataFrame or Numpy array. 
@@ -59,7 +60,8 @@ values of 0.997 and 10, respectively. You're free to set these parameters on you
 
 ```python
 from PyNomaly import loop
-scores = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
+m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
+scores = m.local_outlier_probabilities
 print(scores)
 ```
 The *extent* parameter controls the sensitivity of the scoring in practice, with values 
@@ -75,7 +77,8 @@ sample is calculated with respect to its cluster assignment.
 from PyNomaly import loop
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-scores = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
+m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
+scores = m.local_outlier_probabilities
 print(scores)
 ```
 
@@ -192,6 +195,62 @@ according to the distribution of each cluster. Which approach is suitable depend
 
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
 
+## Streaming Data
+
+New in 0.2.0, PyNomaly now contains an implementation of Hamlet et. al.'s modifications
+to the original LoOP approach [4](http://www.tandfonline.com/doi/abs/10.1080/23742917.2016.1226651?journalCode=tsec20),
+which is ideal for applications involving streaming data where rapid calculations may be necessary. 
+First, the standard LoOP algorithm is used on "training" data, with certain attributes of the fitted data 
+stored. Then, as new points are considered, these fitted attributes are called when calculating the score 
+of the incoming streaming data. This approach is prone to error compared to the standard approach, but 
+it may be effective in streaming applications.  
+
+### Example
+
+While the iris dataset is not streaming data, here's an example where we use the first 120 observations 
+as training data and use the remaining 30 observations as a stream, scoring each observation 
+individually. 
+
+Split the data.
+```python
+iris_train = iris.head(120)
+iris_test = iris.tail(30)
+```
+
+Fit to each set.
+```python
+m = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
+m.fit()
+iris_train_scores = m.local_outlier_probabilities
+```
+
+```python
+iris_test_scores = []
+for index, row in iris_test.iterrows():
+    array = np.array([row['Sepal.Length'], row['Sepal.Width'], row['Petal.Length'], row['Petal.Width']])
+    iris_test_scores.append(m.stream(array))
+iris_test_scores = np.array(iris_test_scores)
+```
+
+Concatenate the scores and assess. 
+
+```python
+iris['stream_scores'] = np.hstack((iris_train_scores, iris_test_scores))
+# iris['scores'] from earlier example
+mse = ((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None)
+print(mse)
+```
+
+The mean squared error (MSE) between the two approaches is approximately 0.03949. The plot below 
+shows the scores from the stream approach.  
+
+**LoOP Scores using Stream Approach for n=30**
+![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
+
+### Notes
+When calculating the LoOP score of incoming data, the original fitted scores are not updated. 
+In some applications, it may be beneficial to refit the data periodically.
+
 ## Contributing
 If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.
 Feel free to open an issue if you notice any erroneous behavior.
@@ -207,6 +266,7 @@ This project is licensed under the Apache 2.0 license.
 1. Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD International Conference on Management of Data (2000). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf).
 2. Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on Information and knowledge management, CIKM (2009). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
 3. Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised Anomaly Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016).
+4. Hamlet C., Straub J., Russell M., Kerlin S. An incremental and approximate local outlier probability algorithm for intrusion detection and its evaluation. Journal of Cyber Security Technology (2016). [DOI](http://www.tandfonline.com/doi/abs/10.1080/23742917.2016.1226651?journalCode=tsec20)
 
 ## Acknowledgements
 - The authors of LoOP (Local Outlier Probabilities)

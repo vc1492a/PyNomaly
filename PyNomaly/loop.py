@@ -6,7 +6,7 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.1.6'
+__version__ = '0.2.0'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -30,6 +30,8 @@ class LocalOutlierProbability(object):
            Information and knowledge management, CIKM (2009).
     .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised Anomaly
            Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016).
+    .. [4] Hamlet C., Straub J., Russell M., Kerlin S. An incremental and approximate local outlier probability 
+           algorithm for intrusion detection and its evaluation. Journal of Cyber Security Technology (2016). 
     """
 
     def accepts(*types):
@@ -228,3 +230,31 @@ class LocalOutlierProbability(object):
         self.local_outlier_probabilities = store[:, 10]
 
         return self
+
+    def stream(self, x):
+        if len(set(self._cluster_labels())) > 1:
+            warnings.warn('Stream approach does not support clustered data. Please refit without cluster labels.', UserWarning)
+            sys.exit()
+        if self.local_outlier_probabilities is None:
+            warnings.warn("Must fit on historical data by calling fit() prior to calling stream(x).", UserWarning)
+            sys.exit()
+        if x.__class__.__name__ == 'DataFrame':
+            point_vector = x.values
+        elif x.__class__.__name__ == 'ndarray':
+            point_vector = x
+        else:
+            sys.exit()
+        distances = np.full([1, self.n_neighbors], 9e10, dtype=float)
+        for p in range(0, self.points_vector.shape[0]):
+            d = self._euclidean(self.points_vector[p, :], point_vector)
+            idx_max = np.argmax(distances[0])
+            if d < distances[0][idx_max]:
+                distances[0][idx_max] = d
+        ssd = np.sum(np.power(distances, 2))
+        std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
+        prob_dist = self._prob_distance(self.extent, std_dist)
+        plof = self._prob_outlier_factor(prob_dist, self.prob_distances_ev)
+        loop = self._local_outlier_probability(plof, self.norm_prob_local_outlier_factor)
+
+        return loop
+
