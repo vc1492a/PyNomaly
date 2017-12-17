@@ -245,7 +245,7 @@ The mean squared error (MSE) between the two approaches is approximately 0.03949
 shows the scores from the stream approach.  
 
 **LoOP Scores using Stream Approach for n=30**
-![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
+![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/0.2.0/images/scores_stream.png)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated. 
