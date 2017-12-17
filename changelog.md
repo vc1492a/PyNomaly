@@ -4,6 +4,17 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.6]() - 2017-12-17
+### Fixed
+- Updated the distance calculation such that the euclidean distance calculation has been separated from 
+the main distance calculation function.
+- Fixed an error in the calculation of the standard distance. 
+
+### Changed
+- .fit() now returns a fitted object instead of local_outlier_probabilities. Local outlier probabilities can 
+be now be retrieved by calling .local_outlier_probabilities. See the readme for an example. 
+- Some private functions have been renamed. 
+
 ## [0.1.5](https://github.com/vc1492a/PyNomaly/commit/d203c402dd657e8240365d538c723f831237326e) - 2017-07-30
 ### Fixed
 - [Issue #4](https://github.com/vc1492a/PyNomaly/issues/4) - Separated parameter type checks 

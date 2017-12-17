@@ -1,3 +1,4 @@
+import itertools
 from math import erf
 import numpy as np
 import sys
@@ -5,7 +6,7 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -25,7 +26,10 @@ class LocalOutlierProbability(object):
     ----------
     .. [1] Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD
            International Conference on Management of Data (2000).
-    .. [2] Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on
+    .. [2] Kriegel H.-P., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on 
+           Information and knowledge management, CIKM (2009).
+    .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised Anomaly
+           Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016).
     """
 
     def accepts(*types):
@@ -70,6 +74,10 @@ class LocalOutlierProbability(object):
         self.extent = extent
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
+        self.points_vector = None
+        self.prob_distances = None
+        self.prob_distances_ev = None
+        self.norm_prob_local_outlier_factor = None
         self.local_outlier_probabilities = None
         if not self.n_neighbors > 0:
             warnings.warn('n_neighbors must be greater than 0. Execution halted.', UserWarning)
@@ -81,33 +89,34 @@ class LocalOutlierProbability(object):
             warnings.warn('Input data contains missing values. Some scores may not be returned.', UserWarning)
 
     @staticmethod
-    def _standard_distance(mean_distance, sum_squared_distance):
+    def _standard_distance(cardinality, sum_squared_distance):
         with np.errstate(divide='ignore', invalid='ignore'):
-            st_dist = np.sqrt(np.divide(sum_squared_distance, np.fabs(mean_distance)))
+            st_dist = np.array([np.sqrt(i) for i in np.divide(sum_squared_distance, cardinality)])
         return st_dist
 
     @staticmethod
-    def _prob_set_distance(extent, standard_distance):
-        return 1.0 / (extent * standard_distance)
+    def _prob_distance(extent, standard_distance):
+        return extent * standard_distance
 
     @staticmethod
-    def _prob_outlier_factor(probabilistic_set_distance, ev_prob_dist):
-        return (probabilistic_set_distance / ev_prob_dist) - 1
+    def _prob_outlier_factor(probabilistic_distance, ev_prob_dist):
+        return (probabilistic_distance / ev_prob_dist) - 1.
 
     @staticmethod
     def _norm_prob_outlier_factor(extent, ev_probabilistic_outlier_factor):
+        ev_probabilistic_outlier_factor = [i for i in ev_probabilistic_outlier_factor]
         return extent * np.sqrt(ev_probabilistic_outlier_factor)
 
     @staticmethod
     def _local_outlier_probability(plof_val, nplof_val):
         erf_vec = np.vectorize(erf)
-        return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.0))))
+        return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.))))
 
     def _n_observations(self):
         return len(self.data)
 
     def _store(self):
-        return np.empty([self._n_observations(), 3])
+        return np.empty([self._n_observations(), 3], dtype=object)
 
     def _cluster_labels(self):
         if self.cluster_labels is None:
@@ -115,53 +124,61 @@ class LocalOutlierProbability(object):
         else:
             return self.cluster_labels
 
+    @staticmethod
+    def _euclidean(vector1, vector2):
+        distance = np.sqrt(np.sum((vector1 - vector2) ** 2))
+        return distance
+
     def _distances(self, data_store):
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
             if self.data.__class__.__name__ == 'DataFrame':
-                points_vector = self.data.iloc[indices].values
+                self.points_vector = self.data.iloc[indices].values
             elif self.data.__class__.__name__ == 'ndarray':
-                points_vector = self.data.take(indices, axis=0)
-                points_vector = points_vector.reshape(points_vector.shape[1:])
-            d = np.tril((points_vector[:, np.newaxis] - points_vector), -1)
-            for vec in range(d.shape[1]):
-                neighborhood_distances = np.sort(np.mean(np.sqrt(d[:, vec] ** 2), axis=1))[1:self.n_neighbors + 1]
-                neighborhood_dist = np.mean(neighborhood_distances)
-                closest_neighbor_distance = neighborhood_distances[1:2]
-                data_store[indices[0][vec]] = np.array([cluster_id, neighborhood_dist, closest_neighbor_distance])
-            if not data_store[:, 1].any():
-                warnings.warn('Neighborhood distances all zero. Use a larger value for n_neighbors.', RuntimeWarning)
+                self.points_vector = self.data.take(indices, axis=0)
+                self.points_vector = self.points_vector.reshape(self.points_vector.shape[1:])
+            else:
                 sys.exit()
+            distances = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
+            pairs = itertools.permutations(np.ndindex(self.points_vector.shape[0]), 2)
+            for p in pairs:
+                d = self._euclidean(self.points_vector[p[0]], self.points_vector[p[1]])
+                idx_max = np.argmax(distances[p[0]])
+                if d < distances[p[0]][idx_max]:
+                    distances[p[0]][idx_max] = d
+            for vec in range(distances.shape[0]):
+                idx_min = np.argmin(distances[vec])
+                data_store[vec][0] = cluster_id
+                data_store[vec][1] = distances[vec]
+                data_store[vec][2] = distances[vec][idx_min]
         return data_store
 
     def _ssd(self, data_store):
         self.cluster_labels_u = np.unique(data_store[:, 0])
-        ssd_dict = {}
+        ssd_array = np.empty([self._n_observations(), 1])
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
-            cluster_distances = np.take(data_store[:, 1], indices)
-            cluster_distances_nonan = cluster_distances[np.logical_not(np.isnan(cluster_distances))]
-            ssd = np.sum(np.power(cluster_distances_nonan, 2))
-            if ssd == 0.0:
-                warnings.warn('Sum of square distances equals zero. Execution halted.', RuntimeWarning)
-                sys.exit()
-            ssd_dict[cluster_id] = ssd
-        data_store = np.hstack((data_store, np.array([[ssd_dict[x] for x in data_store[:, 0].tolist()]]).T))
+            cluster_distances = np.take(data_store[:, 1], indices).tolist()
+            ssd = np.sum(np.power(cluster_distances[0], 2), axis=1)
+            for i, j in zip(indices[0], ssd):
+                ssd_array[i] = j
+        data_store = np.hstack((data_store, ssd_array))
         return data_store
 
     def _standard_distances(self, data_store):
+        cardinality = np.array([self.n_neighbors] * self._n_observations())
         return np.hstack(
             (data_store,
-             np.array([np.apply_along_axis(self._standard_distance, 0, data_store[:, 1], data_store[:, 3])]).T))
+             np.array([np.apply_along_axis(self._standard_distance, 0, cardinality, data_store[:, 3])]).T))
 
-    def _prob_set_distances(self, data_store):
-        return np.hstack((data_store, np.array([self._prob_set_distance(self.extent, data_store[:, 4])]).T))
+    def _prob_distances(self, data_store):
+        return np.hstack((data_store, np.array([self._prob_distance(self.extent, data_store[:, 4])]).T))
 
-    def _prob_set_distances_ev(self, data_store):
+    def _prob_distances_ev(self, data_store):
         prob_set_distance_ev_dict = {}
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
-            prob_set_distances = np.take(data_store[:, 5], indices)
+            prob_set_distances = np.take(data_store[:, 5], indices).astype(float)
             prob_set_distances_nonan = prob_set_distances[np.logical_not(np.isnan(prob_set_distances))]
             prob_set_distance_ev_dict[cluster_id] = np.mean(prob_set_distances_nonan)
         data_store = np.hstack(
@@ -177,7 +194,7 @@ class LocalOutlierProbability(object):
         prob_local_outlier_factor_ev_dict = {}
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
-            prob_local_outlier_factors = np.take(data_store[:, 7], indices)
+            prob_local_outlier_factors = np.take(data_store[:, 7], indices).astype(float)
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
             prob_local_outlier_factor_ev_dict[cluster_id] = np.sum(np.power(prob_local_outlier_factors_nonan, 2)) / \
@@ -199,13 +216,15 @@ class LocalOutlierProbability(object):
         store = self._distances(store)
         store = self._ssd(store)
         store = self._standard_distances(store)
-        store = self._prob_set_distances(store)
-        store = self._prob_set_distances_ev(store)
+        store = self._prob_distances(store)
+        self.prob_distances = store[:, 5]
+        store = self._prob_distances_ev(store)
+        self.prob_distances_ev = np.max(store[:, 6])
         store = self._prob_local_outlier_factors(store)
         store = self._prob_local_outlier_factors_ev(store)
         store = self._norm_prob_local_outlier_factors(store)
+        self.norm_prob_local_outlier_factor = np.max(store[:, 9])
         store = self._local_outlier_probabilities(store)
-
         self.local_outlier_probabilities = store[:, 10]
 
-        return self.local_outlier_probabilities
+        return self

@@ -5,3 +5,5 @@ __pycache__/
 example.py
 nasaValve
 rel_research
+PyNomaly/loop_dev.py
+/PyNomaly.egg-info/

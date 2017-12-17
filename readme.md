@@ -4,7 +4,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
 
-[![PyPi](https://img.shields.io/badge/pypi-v0.1.5-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.1.5)
+[![PyPi](https://img.shields.io/badge/pypi-v0.1.6-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.1.6)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -118,8 +118,10 @@ values for both *extent* (0.997) and *n_neighbors* (10).
 
 ```python
 db = DBSCAN(eps=0.9, min_samples=10).fit(iris)
-scores_noclust = loop.LocalOutlierProbability(iris).fit()
-scores_clust = loop.LocalOutlierProbability(iris, cluster_labels=db.labels_).fit()
+m = loop.LocalOutlierProbability(iris).fit()
+scores_noclust = m.local_outlier_probabilities
+m_clust = loop.LocalOutlierProbability(iris, cluster_labels=db.labels_).fit()
+scores_clust = m_clust.local_outlier_probabilities
 ```
 
 Organize the data into two separate Pandas DataFrames.
@@ -204,6 +206,7 @@ This project is licensed under the Apache 2.0 license.
 ## References
 1. Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD International Conference on Management of Data (2000). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf).
 2. Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on Information and knowledge management, CIKM (2009). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
+3. Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised Anomaly Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016).
 
 ## Acknowledgements
 - The authors of LoOP (Local Outlier Probabilities)
