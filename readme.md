@@ -49,7 +49,8 @@ Then you can do something like this:
 
 ```python
 from PyNomaly import loop
-scores = loop.LocalOutlierProbability(data).fit()
+m = loop.LocalOutlierProbability(data).fit()
+scores = m.local_outlier_probabilities
 print(scores)
 ```
 where *data* is a NxM (N rows, M columns) set of data as either a Pandas DataFrame or Numpy array. 
@@ -59,7 +60,8 @@ values of 0.997 and 10, respectively. You're free to set these parameters on you
 
 ```python
 from PyNomaly import loop
-scores = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
+m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
+scores = m.local_outlier_probabilities
 print(scores)
 ```
 The *extent* parameter controls the sensitivity of the scoring in practice, with values 
@@ -75,7 +77,8 @@ sample is calculated with respect to its cluster assignment.
 from PyNomaly import loop
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-scores = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
+m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
+scores = m.local_outlier_probabilities
 print(scores)
 ```
 
@@ -129,7 +132,7 @@ Organize the data into two separate Pandas DataFrames.
 ```python
 iris_clust = pd.DataFrame(iris.copy())
 iris_clust['scores'] = scores_clust
-iris_clust['labels'] = labels
+iris_clust['labels'] = db.labels_
 iris['scores'] = scores_noclust
 ```
 
