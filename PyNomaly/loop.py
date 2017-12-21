@@ -132,27 +132,28 @@ class LocalOutlierProbability(object):
         return distance
 
     def _distances(self, data_store):
+        distances = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
+        if self.data.__class__.__name__ == 'DataFrame':
+            self.points_vector = self.data.values
+        elif self.data.__class__.__name__ == 'ndarray':
+            self.points_vector = self.data.reshape(self.data.shape[1:])
+        else:
+            sys.exit()
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
-            if self.data.__class__.__name__ == 'DataFrame':
-                self.points_vector = self.data.iloc[indices].values
-            elif self.data.__class__.__name__ == 'ndarray':
-                self.points_vector = self.data.take(indices, axis=0)
-                self.points_vector = self.points_vector.reshape(self.points_vector.shape[1:])
-            else:
-                sys.exit()
-            distances = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
-            pairs = itertools.permutations(np.ndindex(self.points_vector.shape[0]), 2)
+            clust_points_vector = self.points_vector.take(indices, axis=0)[0]
+            pairs = itertools.permutations(np.ndindex(clust_points_vector.shape[0]), 2)
             for p in pairs:
-                d = self._euclidean(self.points_vector[p[0]], self.points_vector[p[1]])
-                idx_max = np.argmax(distances[p[0]])
-                if d < distances[p[0]][idx_max]:
-                    distances[p[0]][idx_max] = d
-            for vec in range(distances.shape[0]):
-                idx_min = np.argmin(distances[vec])
-                data_store[vec][0] = cluster_id
-                data_store[vec][1] = distances[vec]
-                data_store[vec][2] = distances[vec][idx_min]
+                d = self._euclidean(clust_points_vector[p[0]], clust_points_vector[p[1]])
+                idx = indices[0][p[0]]
+                idx_max = np.argmax(distances[idx])
+                if d < distances[idx][idx_max]:
+                    distances[idx][idx_max] = d
+        for vec, cluster_id in zip(range(distances.shape[0]), self._cluster_labels()):
+            idx_min = np.argmin(distances[vec])
+            data_store[vec][0] = cluster_id
+            data_store[vec][1] = distances[vec]
+            data_store[vec][2] = distances[vec][idx_min]
         return data_store
 
     def _ssd(self, data_store):

@@ -131,9 +131,9 @@ Organize the data into two separate Pandas DataFrames.
 
 ```python
 iris_clust = pd.DataFrame(iris.copy())
-iris_clust['scores'] = scores_clust
-iris_clust['labels'] = labels
 iris['scores'] = scores_noclust
+iris_clust['scores'] = scores_clust
+iris_clust['labels'] = db.labels_
 ```
 
 And finally, let's visualize the scores provided by LoOP in both cases (with and without clustering).
@@ -198,7 +198,7 @@ according to the distribution of each cluster. Which approach is suitable depend
 ## Streaming Data
 
 New in 0.2.0, PyNomaly now contains an implementation of Hamlet et. al.'s modifications
-to the original LoOP approach [4](http://www.tandfonline.com/doi/abs/10.1080/23742917.2016.1226651?journalCode=tsec20),
+to the original LoOP approach [[4](http://www.tandfonline.com/doi/abs/10.1080/23742917.2016.1226651?journalCode=tsec20)],
 which is ideal for applications involving streaming data where rapid calculations may be necessary. 
 First, the standard LoOP algorithm is used on "training" data, with certain attributes of the fitted data 
 stored. Then, as new points are considered, these fitted attributes are called when calculating the score 
@@ -213,8 +213,8 @@ individually.
 
 Split the data.
 ```python
-iris_train = iris.head(120)
-iris_test = iris.tail(30)
+iris_train = iris.iloc[:, 0:4].head(120)
+iris_test = iris.iloc[:, 0:4].tail(30)
 ```
 
 Fit to each set.
@@ -237,11 +237,11 @@ Concatenate the scores and assess.
 ```python
 iris['stream_scores'] = np.hstack((iris_train_scores, iris_test_scores))
 # iris['scores'] from earlier example
-mse = ((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None)
-print(mse)
+rmse = np.sqrt(((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None))
+print(rmse)
 ```
 
-The mean squared error (MSE) between the two approaches is approximately 0.03949. The plot below 
+The root mean squared error (RMSE) between the two approaches is approximately 0.1987. The plot below 
 shows the scores from the stream approach.  
 
 **LoOP Scores using Stream Approach for n=30**
