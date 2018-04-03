@@ -4,7 +4,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
 
-[![PyPi](https://img.shields.io/badge/pypi-v0.1.6-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.1.6)
+[![PyPi](https://img.shields.io/badge/pypi-0.2.0-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -213,6 +213,7 @@ individually.
 
 Split the data.
 ```python
+iris = iris.sample(frac=1) # shuffle data
 iris_train = iris.iloc[:, 0:4].head(120)
 iris_test = iris.iloc[:, 0:4].tail(30)
 ```
@@ -241,15 +242,15 @@ rmse = np.sqrt(((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None))
 print(rmse)
 ```
 
-The root mean squared error (RMSE) between the two approaches is approximately 0.1987. The plot below 
-shows the scores from the stream approach.  
+The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary slightly). 
+The plot below shows the scores from the stream approach.  
 
 **LoOP Scores using Stream Approach for n=30**
 ![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/0.2.0/images/scores_stream.png)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated. 
-In some applications, it may be beneficial to refit the data periodically.
+In some applications, it may be beneficial to refit the data periodically. 
 
 ## Contributing
 If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.
