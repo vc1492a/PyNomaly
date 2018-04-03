@@ -4,6 +4,11 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.8](#)
+### Fixed
+- Fixed an issue which allowed the number of neighbors considered to exceed the number of observations. Added a check
+to ensure this is no longer possible.
+
 ## [0.1.7](https://github.com/vc1492a/PyNomaly/commit/8df501ab5c5605873c2812f6d8fe8730e2586975)
 ### Fixed
 - Fixed an issue inadvertently introduced in 0.1.6 that caused distance calculations to be incorrect, 

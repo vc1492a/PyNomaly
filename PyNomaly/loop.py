@@ -6,7 +6,7 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -81,6 +81,9 @@ class LocalOutlierProbability(object):
         self.local_outlier_probabilities = None
         if not self.n_neighbors > 0:
             warnings.warn('n_neighbors must be greater than 0. Execution halted.', UserWarning)
+            sys.exit()
+        if self.n_neighbors >= self._n_observations():
+            warnings.warn('n_neighbors must be less than the number of observations.', UserWarning)
             sys.exit()
         if not 0. < self.extent <= 1.:
             warnings.warn('Statistical extent must be in (0,1]. Execution halted.', UserWarning)
