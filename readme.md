@@ -131,7 +131,6 @@ Organize the data into two separate Pandas DataFrames.
 
 ```python
 iris_clust = pd.DataFrame(iris.copy())
-iris['scores'] = scores_noclust
 iris_clust['scores'] = scores_clust
 iris_clust['labels'] = db.labels_
 ```

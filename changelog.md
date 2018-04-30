@@ -12,6 +12,11 @@ data applications or in the case where computational expense is a concern.
 Data is first fit to a "training set", with any additional observations
 considered for outlierness against this initial set.
 
+## [0.1.8](https://github.com/vc1492a/PyNomaly/commit/da203acdb50a013667ba5e57dd2facc7a7e4b8a5)
+### Fixed
+- Fixed an issue which allowed the number of neighbors considered to exceed the number of observations. Added a check
+to ensure this is no longer possible.
+
 ## [0.1.7](https://github.com/vc1492a/PyNomaly/commit/8df501ab5c5605873c2812f6d8fe8730e2586975)
 ### Fixed
 - Fixed an issue inadvertently introduced in 0.1.6 that caused distance calculations to be incorrect, 
