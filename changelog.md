@@ -4,7 +4,7 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.0]()
+## [0.2.0](https://github.com/vc1492a/PyNomaly/commit/9e1996f08da3d151461adbb2b86c5d9447aaafa4)
 ### Added
 - Added new functionality to PyNomaly by integrating a modified LoOP
 approach introduced by Hamlet et al. which can be used for streaming
