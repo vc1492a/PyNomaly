@@ -243,8 +243,8 @@ print(rmse)
 The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary slightly). 
 The plot below shows the scores from the stream approach.  
 
-**LoOP Scores using Stream Approach for n=30**
-![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
+**LoOP Scores using Stream Approach for n=30 (static image in /images)**
+![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.gif)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated. 
