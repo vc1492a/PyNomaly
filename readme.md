@@ -36,7 +36,7 @@ to calculate the Local Outlier Probability of each sample.
 - Numpy 1.12.0 or greater
 - Pandas 0.19.2 or greater (**optional**)
 
-Note that PyNomaly remains untested in older Python versions. 
+Note that PyNomaly remains untested in older Python versions.
 
 ## Quick Start
 
@@ -192,24 +192,23 @@ Note the differences between using LocalOutlierProbability with and without clus
 scored according to the distribution of the entire data set. In the example with clustering, each sample is scored 
 according to the distribution of each cluster. Which approach is suitable depends on the use case. 
 
-
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
 
 ## Streaming Data
 
 New in 0.2.0, PyNomaly now contains an implementation of Hamlet et. al.'s modifications
 to the original LoOP approach [[4](http://www.tandfonline.com/doi/abs/10.1080/23742917.2016.1226651?journalCode=tsec20)],
-which is ideal for applications involving streaming data where rapid calculations may be necessary. 
-First, the standard LoOP algorithm is used on "training" data, with certain attributes of the fitted data 
-stored. Then, as new points are considered, these fitted attributes are called when calculating the score 
-of the incoming streaming data. This approach is prone to error compared to the standard approach, but 
-it may be effective in streaming applications.  
+which may be used for applications involving streaming data or where rapid calculations may be necessary.
+First, the standard LoOP algorithm is used on "training" data, with certain attributes of the fitted data
+stored from the original LoOP approach. Then, as new points are considered, these fitted attributes are
+called when calculating the score of the incoming streaming data. This approach is prone to error compared
+to the standard approach, but it may be effective in streaming applications.
 
 ### Example
 
-While the iris dataset is not streaming data, here's an example where we use the first 120 observations 
-as training data and use the remaining 30 observations as a stream, scoring each observation 
-individually. 
+While the iris dataset is not streaming data, we'll use it in this example by taking the first 120 observations
+as training data and take the remaining 30 observations as a stream, scoring each observation
+individually.
 
 Split the data.
 ```python
@@ -246,7 +245,7 @@ The root mean squared error (RMSE) between the two approaches is approximately 0
 The plot below shows the scores from the stream approach.  
 
 **LoOP Scores using Stream Approach for n=30**
-![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/0.2.0/images/scores_stream.png)
+![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated. 
