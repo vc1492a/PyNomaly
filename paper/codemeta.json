@@ -1,0 +1,23 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [
+    {
+      "@id": "http://orcid.org/0000-0002-5279-4143",
+      "@type": "Person",
+      "email": "vconstan@jpl.nasa.gov",
+      "name": "Valentino Constantinou",
+      "affiliation": "NASA Jet Propulsion Laboratory"
+    }
+  ],
+  "identifier": "",
+  "codeRepository": "https://www.github.com/vc1492a/PyNomaly",
+  "datePublished": "2018-05-07",
+  "dateModified": "2018-05-07",
+  "dateCreated": "2018-05-07",
+  "description": "Anomaly detection using Local Outlier Probabilities (LoOP).",
+  "keywords": "machine learning, unsupervised learning, outlier detection, anomaly detection, nearest neighbors, statistics, probability",
+  "license": "Apache 2.0",
+  "title": "PyNomaly",
+  "version": "v0.2.0"
+}
