@@ -1,8 +1,8 @@
 # PyNomaly
 
 PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
-LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier 
-scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
+LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier
+scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
 [![PyPi](https://img.shields.io/badge/pypi-0.2.0-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -11,25 +11,25 @@ The outlier score of each sample is called the Local Outlier Probability.
 It measures the local deviation of density of a given sample with
 respect to its neighbors as Local Outlier Factor (LOF), but provides normalized
 outlier scores in the range [0,1]. These outlier scores are directly interpretable
-as a probability of an object being an outlier. Since Local Outlier Probabilities provides scores in the 
+as a probability of an object being an outlier. Since Local Outlier Probabilities provides scores in the
 range [0,1], practitioners are free to interpret the results according to the application.
 
 Like LOF, it is local in that the anomaly score depends on how isolated the sample is
 with respect to the surrounding neighborhood. Locality is given by k-nearest neighbors,
-whose distance is used to estimate the local density. By comparing the local density of a sample to the 
+whose distance is used to estimate the local density. By comparing the local density of a sample to the
 local densities of its neighbors, one can identify samples that lie in regions of lower
-density compared to their neighbors and thus identify samples that may be outliers according to their Local 
+density compared to their neighbors and thus identify samples that may be outliers according to their Local
 Outlier Probability.
 
-The authors' 2009 paper detailing LoOP's theory, formulation, and application is provided by 
-Ludwig-Maximilians University Munich - Institute for Informatics; 
+The authors' 2009 paper detailing LoOP's theory, formulation, and application is provided by
+Ludwig-Maximilians University Munich - Institute for Informatics;
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
 
 ## Implementation
 
-This Python 3 implementation uses Numpy and the formulas outlined in 
+This Python 3 implementation uses Numpy and the formulas outlined in
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf)
-to calculate the Local Outlier Probability of each sample. 
+to calculate the Local Outlier Probability of each sample.
 
 ## Prerequisites
 - Python 3.5.2 or greater
@@ -45,7 +45,7 @@ First install the package from the Python Package Index:
 ```shell
 pip install PyNomaly # or pip3 install ... if you're using both Python 3 and 2.
 ```
-Then you can do something like this: 
+Then you can do something like this:
 
 ```python
 from PyNomaly import loop
@@ -53,7 +53,7 @@ m = loop.LocalOutlierProbability(data).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 ```
-where *data* is a NxM (N rows, M columns) set of data as either a Pandas DataFrame or Numpy array. 
+where *data* is a NxM (N rows, M columns) set of data as either a Pandas DataFrame or Numpy array.
 
 LocalOutlierProbability sets the *extent* (in range (0,1]) and *n_neighbors* (must be greater than 0) parameters with the default
 values of 0.997 and 10, respectively. You're free to set these parameters on your own as below:
@@ -64,13 +64,13 @@ m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 ```
-The *extent* parameter controls the sensitivity of the scoring in practice, with values 
-closer to 0 as having higher sensitivity. The *n_neighbors* parameter defines the number of neighbors to consider 
-about each sample (neighborhood size) when determining its Local Outlier Probability with respect to the density 
-of the sample's defined neighborhood. 
+The *extent* parameter controls the sensitivity of the scoring in practice, with values
+closer to 0 as having higher sensitivity. The *n_neighbors* parameter defines the number of neighbors to consider
+about each sample (neighborhood size) when determining its Local Outlier Probability with respect to the density
+of the sample's defined neighborhood.
 
-This implementation of LoOP also includes an optional *cluster_labels* parameter. This is useful in cases where regions 
-of varying density occur within the same set of data. When using *cluster_labels*, the Local Outlier Probability of a 
+This implementation of LoOP also includes an optional *cluster_labels* parameter. This is useful in cases where regions
+of varying density occur within the same set of data. When using *cluster_labels*, the Local Outlier Probability of a
 sample is calculated with respect to its cluster assignment.
 
 ```python
@@ -82,19 +82,19 @@ scores = m.local_outlier_probabilities
 print(scores)
 ```
 
-**NOTE**: Unless your data is all the same scale, it may be a good idea to normalize your data with z-scores or another 
-normalization scheme prior to using LoOP, especially when working with multiple dimensions of varying scale. 
-Users must also appropriately handle missing values prior to using LoOP, as LoOP does not support Pandas 
-DataFrames or Numpy arrays with missing values. While LoOP will execute with missing values, any observations with 
-missing values will be returned with empty outlier scores (nan) in the final result. 
+**NOTE**: Unless your data is all the same scale, it may be a good idea to normalize your data with z-scores or another
+normalization scheme prior to using LoOP, especially when working with multiple dimensions of varying scale.
+Users must also appropriately handle missing values prior to using LoOP, as LoOP does not support Pandas
+DataFrames or Numpy arrays with missing values. While LoOP will execute with missing values, any observations with
+missing values will be returned with empty outlier scores (nan) in the final result.
 
 ## Iris Data Example
 
-We'll be using the well-known Iris dataset to show LoOP's capabilities. There's a few things you'll need for this 
+We'll be using the well-known Iris dataset to show LoOP's capabilities. There's a few things you'll need for this
 example beyond the standard prerequisites listed above:
 - matplotlib 2.0.0 or greater
-- PyDataset 0.2.0 or greater 
-- scikit-learn 0.18.1 or greater 
+- PyDataset 0.2.0 or greater
+- scikit-learn 0.18.1 or greater
 
 First, let's import the packages and libraries we will need for this example.
 
@@ -108,7 +108,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 ```
 
-Now let's create two sets of Iris data for scoring; one with clustering and the other without. 
+Now let's create two sets of Iris data for scoring; one with clustering and the other without.
 
 ```python
 # import the data and remove any non-numeric columns
@@ -116,7 +116,7 @@ iris = pd.DataFrame(data('iris'))
 iris = pd.DataFrame(iris.drop('Species', 1))
 ```
 
-Next, let's cluster the data using DBSCAN and generate two sets of scores. On both cases, we will use the default 
+Next, let's cluster the data using DBSCAN and generate two sets of scores. On both cases, we will use the default
 values for both *extent* (0.997) and *n_neighbors* (10).
 
 ```python
@@ -140,7 +140,7 @@ And finally, let's visualize the scores provided by LoOP in both cases (with and
 ```python
 fig = plt.figure(figsize=(7, 7))
 ax = fig.add_subplot(111, projection='3d')
-ax.scatter(iris['Sepal.Width'], iris['Petal.Width'], iris['Sepal.Length'], 
+ax.scatter(iris['Sepal.Width'], iris['Petal.Width'], iris['Sepal.Length'],
 c=iris['scores'], cmap='seismic', s=50)
 ax.set_xlabel('Sepal.Width')
 ax.set_ylabel('Petal.Width')
@@ -152,7 +152,7 @@ plt.close()
 
 fig = plt.figure(figsize=(7, 7))
 ax = fig.add_subplot(111, projection='3d')
-ax.scatter(iris_clust['Sepal.Width'], iris_clust['Petal.Width'], iris_clust['Sepal.Length'], 
+ax.scatter(iris_clust['Sepal.Width'], iris_clust['Petal.Width'], iris_clust['Sepal.Length'],
 c=iris_clust['scores'], cmap='seismic', s=50)
 ax.set_xlabel('Sepal.Width')
 ax.set_ylabel('Petal.Width')
@@ -164,7 +164,7 @@ plt.close()
 
 fig = plt.figure(figsize=(7, 7))
 ax = fig.add_subplot(111, projection='3d')
-ax.scatter(iris_clust['Sepal.Width'], iris_clust['Petal.Width'], iris_clust['Sepal.Length'], 
+ax.scatter(iris_clust['Sepal.Width'], iris_clust['Petal.Width'], iris_clust['Sepal.Length'],
 c=iris_clust['labels'], cmap='Set1', s=50)
 ax.set_xlabel('Sepal.Width')
 ax.set_ylabel('Petal.Width')
@@ -187,9 +187,9 @@ Your results should look like the following:
 ![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/cluster_assignments.png)
 
 
-Note the differences between using LocalOutlierProbability with and without clustering. In the example without clustering, samples are 
-scored according to the distribution of the entire data set. In the example with clustering, each sample is scored 
-according to the distribution of each cluster. Which approach is suitable depends on the use case. 
+Note the differences between using LocalOutlierProbability with and without clustering. In the example without clustering, samples are
+scored according to the distribution of the entire data set. In the example with clustering, each sample is scored
+according to the distribution of each cluster. Which approach is suitable depends on the use case.
 
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
 
@@ -231,7 +231,7 @@ for index, row in iris_test.iterrows():
 iris_test_scores = np.array(iris_test_scores)
 ```
 
-Concatenate the scores and assess. 
+Concatenate the scores and assess.
 
 ```python
 iris['stream_scores'] = np.hstack((iris_train_scores, iris_test_scores))
@@ -240,15 +240,15 @@ rmse = np.sqrt(((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None))
 print(rmse)
 ```
 
-The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary slightly). 
-The plot below shows the scores from the stream approach.  
+The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary slightly).
+The plot below shows the scores from the stream approach.
 
 **LoOP Scores using Stream Approach for n=30 (static image in /images)**
 ![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.gif)
 
 ### Notes
-When calculating the LoOP score of incoming data, the original fitted scores are not updated. 
-In some applications, it may be beneficial to refit the data periodically. 
+When calculating the LoOP score of incoming data, the original fitted scores are not updated.
+In some applications, it may be beneficial to refit the data periodically.
 
 ## Contributing
 If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.
@@ -276,4 +276,3 @@ This project is licensed under the Apache 2.0 license.
 - [NASA Jet Propulsion Laboratory](https://jpl.nasa.gov/)
     - [Kyle Hundman](https://github.com/khundman)
     - Ian Colwell
-    
