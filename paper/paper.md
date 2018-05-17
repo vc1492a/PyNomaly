@@ -26,8 +26,7 @@ Probabilities) [@Kriegel]. LoOP is a local density based outlier detection
 method by Kriegel, Kröger, Schubert, and Zimek which provides
 outlier scores in the range of [0,1] that are directly
 interpretable as the probability of a sample being an outlier.
-``PyNomaly`` also implements a modified approach to LoOP introduced
-by Hamlet et. al., which may be used for applications involving
+``PyNomaly`` also implements a modified approach to LoOP [@Hamlet], which may be used for applications involving
 streaming data or where rapid calculations may be necessary.
 
 The outlier score of each sample is called the Local Outlier
@@ -54,9 +53,7 @@ their Local Outlier Probability.
 This is useful in cases where regions of varying density
 occur within the same set of data. When using _cluster_labels_,
 the Local Outlier Probability of a sample is calculated with
-respect to its cluster assignment. In addition, PyNomaly also
-includes a modification of LoOP introduced by Hamlet et. al. [@Hamlet]
-that could be used in applications of streaming data.
+respect to its cluster assignment.
 
 ## Research
 
