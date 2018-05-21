@@ -70,7 +70,7 @@ class LocalOutlierProbability(object):
             return new_f
         return decorator
 
-    @accepts(object, np.ndarray, float, int, (list, np.ndarray))
+    @accepts(object, np.ndarray, (float, np.floating), (int, np.integer), (list, np.ndarray))
     def __init__(self, data, extent=0.997, n_neighbors=10, cluster_labels=None):
         self.data = data
         self.extent = extent
@@ -105,7 +105,10 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _prob_outlier_factor(probabilistic_distance, ev_prob_dist):
-        return (probabilistic_distance / ev_prob_dist) - 1.
+        if np.all(probabilistic_distance == ev_prob_dist):
+            return np.zeros(probabilistic_distance.shape)
+        else:
+            return (probabilistic_distance / ev_prob_dist) - 1.
 
     @staticmethod
     def _norm_prob_outlier_factor(extent, ev_probabilistic_outlier_factor):
@@ -115,7 +118,10 @@ class LocalOutlierProbability(object):
     @staticmethod
     def _local_outlier_probability(plof_val, nplof_val):
         erf_vec = np.vectorize(erf)
-        return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.))))
+        if np.all(plof_val == nplof_val):
+            return np.zeros(plof_val.shape)
+        else:
+            return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.))))
 
     def _n_observations(self):
         return len(self.data)
@@ -131,8 +137,8 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _euclidean(vector1, vector2):
-        distance = np.sqrt(np.sum((vector1 - vector2) ** 2))
-        return distance
+        diff = vector1 - vector2
+        return np.dot(diff, diff)**0.5
 
     def _distances(self, data_store):
         distances = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
@@ -261,4 +267,3 @@ class LocalOutlierProbability(object):
         loop = self._local_outlier_probability(plof, self.norm_prob_local_outlier_factor)
 
         return loop
-
