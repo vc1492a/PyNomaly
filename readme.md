@@ -4,7 +4,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
-[![PyPi](https://img.shields.io/badge/pypi-0.2.0-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.0)
+[![PyPi](https://img.shields.io/badge/pypi-0.2.1-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.1)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -53,7 +53,7 @@ m = loop.LocalOutlierProbability(data).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 ```
-where *data* is a NxM (N rows, M columns) set of data as either a Pandas DataFrame or Numpy array.
+where *data* is a NxM (N rows, M columns; 2-dimensional) set of data as either a Pandas DataFrame or Numpy array.
 
 LocalOutlierProbability sets the *extent* (in range (0,1]) and *n_neighbors* (must be greater than 0) parameters with the default
 values of 0.997 and 10, respectively. You're free to set these parameters on your own as below:
@@ -192,6 +192,33 @@ scored according to the distribution of the entire data set. In the example with
 according to the distribution of each cluster. Which approach is suitable depends on the use case.
 
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
+
+## Numpy Example
+
+When using numpy, make sure to use 2-dimensional arrays in tabular format:
+
+```python
+data = np.array([
+    [43.3, 30.2, 90.2],
+    [62.9, 58.3, 49.3],
+    [55.2, 56.2, 134.2],
+    [48.6, 80.3, 50.3],
+    [67.1, 60.0, 55.9],
+    [421.5, 90.3, 50.0]
+])
+
+scores = loop.LocalOutlierProbability(new_array, n_neighbors=3).fit().local_outlier_probabilities
+print(scores)
+
+```
+
+Similarly:
+
+```python
+data = np.random.rand(100, 5)
+scores = loop.LocalOutlierProbability(data).fit().local_outlier_probabilities
+print(scores)
+```
 
 ## Streaming Data
 

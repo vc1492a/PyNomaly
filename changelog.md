@@ -4,6 +4,12 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.1]
+### Fixed
+- [Issue #10](https://github.com/vc1492a/PyNomaly/issues/10) - Fixed error on line
+142 which was causing the class to fail. More explicit examples
+were also included in the readme for using numpy arrays.
+
 ## [0.2.0](https://github.com/vc1492a/PyNomaly/commit/9e1996f08da3d151461adbb2b86c5d9447aaafa4)
 ### Added
 - Added new functionality to PyNomaly by integrating a modified LoOP

@@ -139,7 +139,7 @@ class LocalOutlierProbability(object):
         if self.data.__class__.__name__ == 'DataFrame':
             self.points_vector = self.data.values
         elif self.data.__class__.__name__ == 'ndarray':
-            self.points_vector = self.data.reshape(self.data.shape[1:])
+            self.points_vector = self.data
         else:
             sys.exit()
         for cluster_id in set(self._cluster_labels()):
