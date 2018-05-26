@@ -6,7 +6,7 @@ import warnings
 
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __license__ = 'Apache License, Version 2.0'
 
 

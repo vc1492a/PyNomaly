@@ -4,11 +4,15 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.1]
+## [0.2.1](https://github.com/vc1492a/PyNomaly/commit/bb62253b94b4a3683cf64455905092a6a29a2088)
 ### Fixed
 - [Issue #10](https://github.com/vc1492a/PyNomaly/issues/10) - Fixed error on line
 142 which was causing the class to fail. More explicit examples
 were also included in the readme for using numpy arrays.
+
+### Added
+- An improvement to the Euclidean distance calculation by [MichaelSchreier](https://github.com/MichaelSchreier)
+which brings a over a 50% reduction in computation time.
 
 ## [0.2.0](https://github.com/vc1492a/PyNomaly/commit/9e1996f08da3d151461adbb2b86c5d9447aaafa4)
 ### Added
