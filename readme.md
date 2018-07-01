@@ -133,6 +133,7 @@ Organize the data into two separate Pandas DataFrames.
 iris_clust = pd.DataFrame(iris.copy())
 iris_clust['scores'] = scores_clust
 iris_clust['labels'] = db.labels_
+iris['scores'] = scores_noclust
 ```
 
 And finally, let's visualize the scores provided by LoOP in both cases (with and without clustering).
@@ -141,7 +142,7 @@ And finally, let's visualize the scores provided by LoOP in both cases (with and
 fig = plt.figure(figsize=(7, 7))
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(iris['Sepal.Width'], iris['Petal.Width'], iris['Sepal.Length'],
-c=iris_clust['scores'], cmap='seismic', s=50)
+c=iris['scores'], cmap='seismic', s=50)
 ax.set_xlabel('Sepal.Width')
 ax.set_ylabel('Petal.Width')
 ax.set_zlabel('Sepal.Length')
