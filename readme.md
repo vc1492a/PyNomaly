@@ -290,6 +290,14 @@ versioning guidelines when submitting a pull request.
 ## License
 This project is licensed under the Apache 2.0 license.
 
+## Research
+PyNomaly has been used in the following research:
+
+- Y. Zhao and M.K. Hryniewicki, "XGBOD: Improving Supervised Outlier Detection with Unsupervised Representation Learning," International Joint Conference on Neural Networks (IJCNN), IEEE, 2018. Accepted, to appear.
+
+If your research is missing from this list, please submit a pull request with an addition to the readme.
+
+
 ## References
 1. Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying Density-based Local Outliers. ACM SIGMOD International Conference on Management of Data (2000). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf).
 2. Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier Probabilities. 18th ACM conference on Information and knowledge management, CIKM (2009). [PDF](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
