@@ -295,6 +295,7 @@ PyNomaly has been used in the following research:
 
 - Y. Zhao and M.K. Hryniewicki, "XGBOD: Improving Supervised Outlier Detection with Unsupervised Representation Learning," International Joint Conference on Neural Networks (IJCNN), IEEE, 2018. Accepted, to appear.
 
+Please reference PyNomaly if used in research.
 If your research is missing from this list, please submit a pull request with an addition to the readme.
 
 
