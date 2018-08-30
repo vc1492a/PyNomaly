@@ -5,7 +5,7 @@ import sys
 import warnings
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -52,6 +52,17 @@ class LocalOutlierProbability(object):
                     return points_vector
                 points_vector = np.array([obj])
                 return points_vector
+
+        @staticmethod
+        def cluster_size(obj):
+            c_labels = obj._cluster_labels()
+            for cluster_id in set(c_labels):
+                c_size = np.where(c_labels == cluster_id)[0].shape[0]
+                if c_size <= obj.n_neighbors:
+                    warnings.warn(
+                        'Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).',
+                        UserWarning)
+                    return False
 
         @staticmethod
         def n_neighbors(obj, set_neighbors=False):
@@ -136,7 +147,7 @@ class LocalOutlierProbability(object):
                         if isinstance(opt_types[k]['value'],
                                       opt_types[k]['type']) is False:
                             warnings.warn("Argument %r is not of type %s" % (
-                            k, opt_types[k]['type']), UserWarning)
+                                k, opt_types[k]['type']), UserWarning)
                     except KeyError:
                         pass
                 return f(*args, **kwds)
@@ -161,6 +172,7 @@ class LocalOutlierProbability(object):
 
         self.Validate.data(self.data)
         self.Validate.n_neighbors(self)
+        self.Validate.cluster_size(self)
         self.Validate.extent(self)
         self.Validate.missing_values(self)
 
@@ -311,6 +323,7 @@ class LocalOutlierProbability(object):
 
         self.Validate.data(self.data)
         self.Validate.n_neighbors(self, set_neighbors=True)
+        self.Validate.cluster_size(self)
         self.Validate.missing_values(self)
 
         store = self._store()

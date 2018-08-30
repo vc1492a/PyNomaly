@@ -6,6 +6,7 @@ from PyNomaly import loop
 import numpy as np
 from numpy.testing import assert_array_equal
 
+import pandas as pd
 import pytest
 
 from sklearn.metrics import roc_auc_score
@@ -236,3 +237,30 @@ def test_missing_values():
     clf = loop.LocalOutlierProbability(X, n_neighbors=3)
 
     assert_warns(UserWarning, clf.fit)
+
+
+def test_small_cluster_size():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X = np.r_[X, X_outliers]
+    # Generate cluster labels
+    a = [0] * 120
+    b = [1] * 18
+    cluster_labels = a + b
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).",
+            UserWarning)
+
+    loop.LocalOutlierProbability(X, n_neighbors=50, cluster_labels=cluster_labels)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one)."
