@@ -32,12 +32,11 @@ plt.show()
 '''
 The above plot shows that the results from this implementation generally 
 match in ranking vs the results shown in the original paper, but the 
-probabilities are off by some margin, and significantly in some cases. 
-Some examination points to the calculation of the expected values during the 
+probabilities are off by some margin in some cases. 
+Examination points to the calculation of the expected values during the 
 estimation process: where we calculate expected values using global means, 
 the paper mentions calculating the expected value over the neighborhood 
-about a particular observation. Further examination is needed to iron out 
-the exact cause.
+about a particular observation. 
 '''
 
 
