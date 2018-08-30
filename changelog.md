@@ -5,10 +5,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [0.2.2](https://github.com/vc1492a/PyNomaly/commit/e02c03599fed5dcc0db3dc6de70433e39f466656)
-### Fixed
-- [Issue #14](https://github.com/vc1492a/PyNomaly/issues/14) - Fixed an issue
-that was causing a ZeroDivisionError when the specified neighborhood size
-is larger than the total number of observations in the smallest cluster.
 
 ### Changed
 - This implementation to align more closely with the specification of the

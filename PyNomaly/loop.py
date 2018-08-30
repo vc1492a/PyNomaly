@@ -66,14 +66,6 @@ class LocalOutlierProbability(object):
                     'n_neighbors must be less than the number of observations. Fit with ' + str(
                         obj.n_neighbors) + ' instead.', UserWarning)
                 return True
-            for cluster_id in obj._cluster_labels():
-                c_labels = obj._cluster_labels()
-                if c_labels[np.where(np.array(c_labels) == cluster_id)].shape[
-                    0] <= obj.n_neighbors:
-                    warnings.warn(
-                        'Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).',
-                        UserWarning)
-                return False
 
         @staticmethod
         def extent(obj):
