@@ -31,7 +31,7 @@ plt.show()
 
 '''
 The above plot shows that the results from this implementation generally 
-match in ranking vs the results shown in the original paper, but the 
+match in ranking vs the results shown in the original paper: the 
 probabilities are off by some margin in some cases. 
 Examination points to the calculation of the expected values during the 
 estimation process: where we calculate expected values using global means, 
