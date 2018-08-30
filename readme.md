@@ -4,7 +4,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
-[![PyPi](https://img.shields.io/badge/pypi-0.2.1-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.1)
+[![PyPi](https://img.shields.io/badge/pypi-0.2.2-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.2)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![JOSS status](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
 
@@ -56,19 +56,15 @@ print(scores)
 ```
 where *data* is a NxM (N rows, M columns; 2-dimensional) set of data as either a Pandas DataFrame or Numpy array.
 
-LocalOutlierProbability sets the *extent* (in range (0,1]) and *n_neighbors* (must be greater than 0) parameters with the default
-values of 0.997 and 10, respectively. You're free to set these parameters on your own as below:
+LocalOutlierProbability sets the *extent* (in integer in value of 1, 2, or 3) and *n_neighbors* (must be greater than 0) parameters with the default
+values of 3 and 10, respectively. You're free to set these parameters on your own as below:
 
 ```python
 from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20).fit()
+m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 ```
-The *extent* parameter controls the sensitivity of the scoring in practice, with values
-closer to 0 as having higher sensitivity. The *n_neighbors* parameter defines the number of neighbors to consider
-about each sample (neighborhood size) when determining its Local Outlier Probability with respect to the density
-of the sample's defined neighborhood.
 
 This implementation of LoOP also includes an optional *cluster_labels* parameter. This is useful in cases where regions
 of varying density occur within the same set of data. When using *cluster_labels*, the Local Outlier Probability of a
@@ -78,7 +74,7 @@ sample is calculated with respect to its cluster assignment.
 from PyNomaly import loop
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-m = loop.LocalOutlierProbability(data, extent=0.95, n_neighbors=20, cluster_labels=db.labels_).fit()
+m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, cluster_labels=list(db.labels_)).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -88,6 +84,26 @@ normalization scheme prior to using LoOP, especially when working with multiple 
 Users must also appropriately handle missing values prior to using LoOP, as LoOP does not support Pandas
 DataFrames or Numpy arrays with missing values. While LoOP will execute with missing values, any observations with
 missing values will be returned with empty outlier scores (nan) in the final result.
+
+### Choosing Parameters
+
+The *extent* parameter controls the sensitivity of the scoring in practice. The parameter corresponds to
+the statistical notion of an outlier defined as an object deviating more than a given lambda (*extent*)
+times the standard deviation from the mean. A value of 2 implies outliers deviating more than 2 standard deviations
+from the mean, and corresponds to 95.0% in the empirical "three-sigma" rule. The appropriate parameter should be selected
+according to the level of sensitivity needed for the input data and application. The question to ask is whether it is
+more reasonable to assume outliers in your data are 1, 2, or 3 standard deviations from the mean, and select the value
+likely most appropriate to your data and application.
+
+The *n_neighbors* parameter defines the number of neighbors to consider about
+each sample (neighborhood size) when determining its Local Outlier Probability with respect to the density
+of the sample's defined neighborhood. The idea number of neighbors to consider is dependent on the
+input data. However, the notion of an outlier implies it would be considered as such regardless of the number
+of neighbors considered. One potential approach is to use a number of different neighborhood sizes and average
+the results for reach observation. Those observations which rank highly with varying neighborhood sizes are
+more than likely outliers. This is one potential approach of selecting the neighborhood size. Another is to
+select a value proportional to the number of observations, such an odd-valued integer close to the square root
+of the number of observations in your data (*sqrt(n_observations*).
 
 ## Iris Data Example
 
@@ -124,7 +140,7 @@ values for both *extent* (0.997) and *n_neighbors* (10).
 db = DBSCAN(eps=0.9, min_samples=10).fit(iris)
 m = loop.LocalOutlierProbability(iris).fit()
 scores_noclust = m.local_outlier_probabilities
-m_clust = loop.LocalOutlierProbability(iris, cluster_labels=db.labels_).fit()
+m_clust = loop.LocalOutlierProbability(iris, cluster_labels=list(db.labels_)).fit()
 scores_clust = m_clust.local_outlier_probabilities
 ```
 
@@ -209,7 +225,7 @@ data = np.array([
     [421.5, 90.3, 50.0]
 ])
 
-scores = loop.LocalOutlierProbability(new_array, n_neighbors=3).fit().local_outlier_probabilities
+scores = loop.LocalOutlierProbability(data, n_neighbors=3).fit().local_outlier_probabilities
 print(scores)
 
 ```
@@ -247,16 +263,20 @@ iris_test = iris.iloc[:, 0:4].tail(30)
 
 Fit to each set.
 ```python
-m = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
-m.fit()
-iris_train_scores = m.local_outlier_probabilities
+m = loop.LocalOutlierProbability(iris).fit()
+scores_noclust = m.local_outlier_probabilities
+iris['scores'] = scores_noclust
+
+m_train = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
+m_train.fit()
+iris_train_scores = m_train.local_outlier_probabilities
 ```
 
 ```python
 iris_test_scores = []
 for index, row in iris_test.iterrows():
     array = np.array([row['Sepal.Length'], row['Sepal.Width'], row['Petal.Length'], row['Petal.Width']])
-    iris_test_scores.append(m.stream(array))
+    iris_test_scores.append(m_train.stream(array))
 iris_test_scores = np.array(iris_test_scores)
 ```
 
@@ -269,8 +289,22 @@ rmse = np.sqrt(((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None))
 print(rmse)
 ```
 
-The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary slightly).
+The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary depending on the data and specification).
 The plot below shows the scores from the stream approach.
+
+```python
+fig = plt.figure(figsize=(7, 7))
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(iris['Sepal.Width'], iris['Petal.Width'], iris['Sepal.Length'],
+c=iris['stream_scores'], cmap='seismic', s=50)
+ax.set_xlabel('Sepal.Width')
+ax.set_ylabel('Petal.Width')
+ax.set_zlabel('Sepal.Length')
+plt.show()
+plt.clf()
+plt.cla()
+plt.close()
+```
 
 **LoOP Scores using Stream Approach for n=30 (static image in /images)**
 ![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.gif)
@@ -296,7 +330,8 @@ PyNomaly has been used in the following research:
 - Y. Zhao and M.K. Hryniewicki, "XGBOD: Improving Supervised Outlier Detection with Unsupervised Representation Learning," International Joint Conference on Neural Networks (IJCNN), IEEE, 2018. Accepted, to appear.
 
 Please reference PyNomaly if used in research.
-If your research is missing from this list, please submit a pull request with an addition to the readme.
+If your research is missing from this list and should be listed,
+ please submit a pull request with an addition to the readme.
 
 
 ## References
