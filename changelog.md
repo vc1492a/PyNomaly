@@ -4,7 +4,7 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.3]()
+## [0.2.3](https://github.com/vc1492a/PyNomaly/commit/75803b3ee801191574f4a91ed06b604a4e1b7142)
 ### Fixed
 - [Issue #14](https://github.com/vc1492a/PyNomaly/issues/14) - Fixed an issue
 that was causing a ZeroDivisionError when the specified neighborhood size

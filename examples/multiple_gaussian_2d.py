@@ -10,7 +10,7 @@ df = pd.read_csv('../data/multiple-gaussian-2d-data-only.csv')
 print(df)
 
 # fit LoOP according to the original settings outlined in the paper #
-m = loop.LocalOutlierProbability(df[['x', 'y']], n_neighbors=20, extent=3, cluster_labels=df['c'].tolist()).fit()
+m = loop.LocalOutlierProbability(df[['x', 'y']], n_neighbors=20, extent=3).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 
