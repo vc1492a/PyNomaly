@@ -15,6 +15,6 @@ install:
   - pip install scipy
 # command to run tests
 script:
-  - python -m pytest --cov=PyNomaly/loop.py
+  - coverage run PyNomaly/loop.py test
 after_success:
   - coveralls
