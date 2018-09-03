@@ -10,10 +10,10 @@ install:
   - pip install pandas
   - pip install scikit-learn
   - pip install coveralls
-  - pip install pytest
+  - pip install pytest pytest-cov
   - pip install scipy
 # command to run tests
 script:
-  - pytest --cov=PyNomaly/
+  - pytest
 after_success:
   - coveralls
