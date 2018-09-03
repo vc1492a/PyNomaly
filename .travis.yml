@@ -7,13 +7,14 @@ python:
 install:
   - pip install -r requirements.txt
   - python setup.py -q install
-  - pip install pandas
-  - pip install scikit-learn
+  - pip install coverage
   - pip install coveralls
+  - pip install pandas
   - pip install pytest pytest-cov
+  - pip install scikit-learn
   - pip install scipy
 # command to run tests
 script:
-  - pytest
+  - pytest --cov=PyNomaly/loop.py
 after_success:
   - coveralls

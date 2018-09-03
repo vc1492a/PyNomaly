@@ -7,6 +7,7 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 [![PyPi](https://img.shields.io/badge/pypi-0.2.3-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.3)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![JOSS status](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
+[![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 
 The outlier score of each sample is called the Local Outlier Probability.
 It measures the local deviation of density of a given sample with
@@ -32,9 +33,9 @@ This Python 3 implementation uses Numpy and the formulas outlined in
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf)
 to calculate the Local Outlier Probability of each sample.
 
-## Prerequisites
-- Python 3.5.2 or greater
-- Numpy 1.12.0 or greater
+## Dependencies
+- Python 3.4 - 3.6
+- Numpy >= 1.12.0
 - Pandas 0.19.2 or greater (**optional**)
 
 Note that PyNomaly remains untested in older Python versions.
