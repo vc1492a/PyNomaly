@@ -8,3 +8,4 @@ PyNomaly/loop_dev.py
 /PyNomaly.egg-info/
 .pytest_cache
 build
+htmlcov/
