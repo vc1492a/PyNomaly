@@ -9,3 +9,5 @@ PyNomaly/loop_dev.py
 .pytest_cache
 build
 htmlcov/
+*.egg
+*.pyc

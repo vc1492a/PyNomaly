@@ -7,7 +7,6 @@ python:
 install:
   - pip install -r requirements.txt
   - python setup.py -q install
-  - pip install coverage
   - pip install coveralls
   - pip install pandas
   - pip install pytest pytest-cov
@@ -15,6 +14,6 @@ install:
   - pip install scipy
 # command to run tests
 script:
-  - pytest --cov-report term-missing --cov=PyNomaly/loop.py
+  - python -m pytest --cov=PyNomaly
 after_success:
   - coveralls
