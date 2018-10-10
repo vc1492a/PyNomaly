@@ -12,5 +12,5 @@ setup(
     keywords=['outlier', 'anomaly', 'detection', 'machine', 'learning', 'probability'],
     classifiers=[],
     license='Apache License, Version 2.0',
-    setup_requires=['numpy']
+    install_requires=['numpy']
 )
