@@ -233,7 +233,14 @@ print(scores)
 
 ```
 
-Similarly:
+The shape of the input array shape corresponds to the rows (observations) and columns (features) in the data:
+
+```python
+print(data.shape)
+# (6,3), which matches number of observations and features in the above example
+```
+
+Similar to the above:
 
 ```python
 data = np.random.rand(100, 5)
