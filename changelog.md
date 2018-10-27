@@ -4,6 +4,14 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.4]()
+### Fixed
+- [Issue #17](https://github.com/vc1492a/PyNomaly/issues/17) - Fixed
+a bug that allowed for a column of empty values in the primary data store.
+- Integrated [pull request #18](https://github.com/vc1492a/PyNomaly/pull/18) -
+Fixed a bug that was not causing dependencies such as numpy to skip
+installation when installing PyNomaly via pip.
+
 ## [0.2.3](https://github.com/vc1492a/PyNomaly/commit/75803b3ee801191574f4a91ed06b604a4e1b7142)
 ### Fixed
 - [Issue #14](https://github.com/vc1492a/PyNomaly/issues/14) - Fixed an issue
