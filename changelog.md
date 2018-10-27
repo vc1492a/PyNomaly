@@ -4,7 +4,7 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.4]()
+## [0.2.4](https://github.com/vc1492a/PyNomaly/commit/184e221438da6718ba85bb679027708ab9d3f4fd)
 ### Fixed
 - [Issue #17](https://github.com/vc1492a/PyNomaly/issues/17) - Fixed
 a bug that allowed for a column of empty values in the primary data store.

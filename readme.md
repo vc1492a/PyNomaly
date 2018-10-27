@@ -4,7 +4,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
-[![PyPi](https://img.shields.io/badge/pypi-0.2.3-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.3)
+[![PyPi](https://img.shields.io/badge/pypi-0.2.4-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.4)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![JOSS status](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
