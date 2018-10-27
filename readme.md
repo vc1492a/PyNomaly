@@ -9,7 +9,6 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
 [![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
-[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.1472519.svg)](https://doi.org/10.5281/zenodo.1472519)
 
 The outlier score of each sample is called the Local Outlier Probability.
 It measures the local deviation of density of a given sample with
