@@ -6,9 +6,10 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 
 [![PyPi](https://img.shields.io/badge/pypi-0.2.4-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.4)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![JOSS status](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
+[![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
+[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.1472519.svg)](https://doi.org/10.5281/zenodo.1472519)
 
 The outlier score of each sample is called the Local Outlier Probability.
 It measures the local deviation of density of a given sample with
@@ -339,9 +340,26 @@ PyNomaly has been used in the following research:
 
 - Y. Zhao and M.K. Hryniewicki, "XGBOD: Improving Supervised Outlier Detection with Unsupervised Representation Learning," International Joint Conference on Neural Networks (IJCNN), IEEE, 2018.
 
-Please reference PyNomaly if used in research.
 If your research is missing from this list and should be listed,
- please submit a pull request with an addition to the readme.
+please submit a pull request with an addition to the readme. 
+
+If citing PyNomaly, use the following: 
+
+```
+@article{Constantinou2018,
+  doi = {10.21105/joss.00845},
+  url = {https://doi.org/10.21105/joss.00845},
+  year  = {2018},
+  month = {oct},
+  publisher = {The Open Journal},
+  volume = {3},
+  number = {30},
+  pages = {845},
+  author = {Valentino Constantinou},
+  title = {{PyNomaly}: Anomaly detection using Local Outlier Probabilities ({LoOP}).},
+  journal = {Journal of Open Source Software}
+}
+```
 
 
 ## References
