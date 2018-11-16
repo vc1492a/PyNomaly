@@ -197,7 +197,7 @@ class LocalOutlierProbability(object):
     def _norm_prob_outlier_factor(extent, ev_probabilistic_outlier_factor):
         ev_probabilistic_outlier_factor = [i for i in
                                            ev_probabilistic_outlier_factor]
-        return extent * np.sqrt(np.power(ev_probabilistic_outlier_factor, 2))
+        return extent * np.sqrt(ev_probabilistic_outlier_factor)
 
     @staticmethod
     def _local_outlier_probability(plof_val, nplof_val):
@@ -211,7 +211,7 @@ class LocalOutlierProbability(object):
         return len(self.data)
 
     def _store(self):
-        return np.empty([self._n_observations(), 2], dtype=object)
+        return np.empty([self._n_observations(), 3], dtype=object)
 
     def _cluster_labels(self):
         if self.cluster_labels is None:
@@ -227,6 +227,8 @@ class LocalOutlierProbability(object):
     def _distances(self, data_store):
         distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
                             dtype=float)
+        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
+                            dtype=float)
         self.points_vector = self.Validate.data(self.data)
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
@@ -240,10 +242,12 @@ class LocalOutlierProbability(object):
                 idx_max = np.argmax(distances[idx])
                 if d < distances[idx][idx_max]:
                     distances[idx][idx_max] = d
+                    indexes[idx][idx_max] = p[1][0]
         for vec, cluster_id in zip(range(distances.shape[0]),
                                    self._cluster_labels()):
             data_store[vec][0] = cluster_id
             data_store[vec][1] = distances[vec]
+            data_store[vec][2] = indexes[vec]
         return data_store
 
     def _ssd(self, data_store):
@@ -263,39 +267,37 @@ class LocalOutlierProbability(object):
         return np.hstack(
             (data_store,
              np.array([np.apply_along_axis(self._standard_distance, 0,
-                                           cardinality, data_store[:, 2])]).T))
+                                           cardinality, data_store[:, 3])]).T))
 
     def _prob_distances(self, data_store):
         return np.hstack((data_store, np.array(
-            [self._prob_distance(self.extent, data_store[:, 3])]).T))
+            [self._prob_distance(self.extent, data_store[:, 4])]).T))
 
     def _prob_distances_ev(self, data_store):
-        prob_set_distance_ev_dict = {}
+        prob_set_distance_ev = np.empty([self._n_observations(), 1])
         for cluster_id in self.cluster_labels_u:
-            indices = np.where(data_store[:, 0] == cluster_id)
-            prob_set_distances = np.take(data_store[:, 4], indices).astype(
-                float)
-            prob_set_distances_nonan = prob_set_distances[
-                np.logical_not(np.isnan(prob_set_distances))]
-            prob_set_distance_ev_dict[cluster_id] = np.mean(
-                prob_set_distances_nonan)
-        data_store = np.hstack(
-            (data_store, np.array([[prob_set_distance_ev_dict[x] for x in
-                                    data_store[:, 0].tolist()]]).T))
+            indices = np.where(data_store[:, 0] == cluster_id)[0]
+            for index in indices:
+                nbrhood = data_store[index][2].astype(int)
+                nbrhood_prob_distances = np.take(data_store[:, 5], nbrhood).astype(float)
+                nbrhood_prob_distances_nonan = nbrhood_prob_distances[
+                    np.logical_not(np.isnan(nbrhood_prob_distances))]
+                prob_set_distance_ev[index] = np.mean(nbrhood_prob_distances_nonan)
+        data_store = np.hstack((data_store, prob_set_distance_ev))
         return data_store
 
     def _prob_local_outlier_factors(self, data_store):
         return np.hstack(
             (data_store,
              np.array([np.apply_along_axis(self._prob_outlier_factor, 0,
-                                           data_store[:, 4],
-                                           data_store[:, 5])]).T))
+                                           data_store[:, 5],
+                                           data_store[:, 6])]).T))
 
     def _prob_local_outlier_factors_ev(self, data_store):
         prob_local_outlier_factor_ev_dict = {}
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
-            prob_local_outlier_factors = np.take(data_store[:, 6],
+            prob_local_outlier_factors = np.take(data_store[:, 7],
                                                  indices).astype(float)
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
@@ -310,14 +312,14 @@ class LocalOutlierProbability(object):
 
     def _norm_prob_local_outlier_factors(self, data_store):
         return np.hstack((data_store, np.array([self._norm_prob_outlier_factor(
-            self.extent, data_store[:, 7])]).T))
+            self.extent, data_store[:, 8])]).T))
 
     def _local_outlier_probabilities(self, data_store):
         return np.hstack(
             (data_store,
              np.array([np.apply_along_axis(self._local_outlier_probability, 0,
-                                           data_store[:, 6],
-                                           data_store[:, 8])]).T))
+                                           data_store[:, 7],
+                                           data_store[:, 9])]).T))
 
     def fit(self):
 
@@ -331,15 +333,14 @@ class LocalOutlierProbability(object):
         store = self._ssd(store)
         store = self._standard_distances(store)
         store = self._prob_distances(store)
-        self.prob_distances = store[:, 4]
+        self.prob_distances = store[:, 5]
         store = self._prob_distances_ev(store)
-        self.prob_distances_ev = np.max(store[:, 5])
         store = self._prob_local_outlier_factors(store)
         store = self._prob_local_outlier_factors_ev(store)
         store = self._norm_prob_local_outlier_factors(store)
-        self.norm_prob_local_outlier_factor = np.max(store[:, 8])
+        self.norm_prob_local_outlier_factor = np.max(store[:, 9])
         store = self._local_outlier_probabilities(store)
-        self.local_outlier_probabilities = store[:, 9]
+        self.local_outlier_probabilities = store[:, 10]
 
         return self
 
