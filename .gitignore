@@ -2,8 +2,12 @@
 .idea/
 __pycache__/
 *.csv
-example.py
 nasaValve
 rel_research
 PyNomaly/loop_dev.py
 /PyNomaly.egg-info/
+.pytest_cache
+build
+htmlcov/
+*.egg
+*.pyc

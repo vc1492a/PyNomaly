@@ -4,11 +4,45 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.1]
+## [0.2.4](https://github.com/vc1492a/PyNomaly/commit/184e221438da6718ba85bb679027708ab9d3f4fd)
+### Fixed
+- [Issue #17](https://github.com/vc1492a/PyNomaly/issues/17) - Fixed
+a bug that allowed for a column of empty values in the primary data store.
+- Integrated [pull request #18](https://github.com/vc1492a/PyNomaly/pull/18) -
+Fixed a bug that was not causing dependencies such as numpy to skip
+installation when installing PyNomaly via pip.
+
+## [0.2.3](https://github.com/vc1492a/PyNomaly/commit/75803b3ee801191574f4a91ed06b604a4e1b7142)
+### Fixed
+- [Issue #14](https://github.com/vc1492a/PyNomaly/issues/14) - Fixed an issue
+that was causing a ZeroDivisionError when the specified neighborhood size
+is larger than the total number of observations in the smallest cluster.
+
+## [0.2.2](https://github.com/vc1492a/PyNomaly/commit/e02c03599fed5dcc0db3dc6de70433e39f466656)
+
+### Changed
+- This implementation to align more closely with the specification of the
+approach in the original paper. The extent parameter now takes an integer
+value of 1, 2, or 3 that corresponds to the lambda parameter specified
+in the paper. See the [readme](https://github.com/vc1492a/PyNomaly/blob/master/readme.md) for more details.
+- Refactored the code base and created the Validate class, which includes
+checks for data type, correct specification, and other dependencies.
+
+### Added
+- Automated tests to ensure the desired functionality is being met can now be
+found in the `PyNomaly/tests` directory.
+- Code for the examples in the readme can now be found in the `examples` directory.
+- Additional information for parameter selection in the [readme](https://github.com/vc1492a/PyNomaly/blob/master/readme.md).
+
+## [0.2.1](https://github.com/vc1492a/PyNomaly/commit/bb62253b94b4a3683cf64455905092a6a29a2088)
 ### Fixed
 - [Issue #10](https://github.com/vc1492a/PyNomaly/issues/10) - Fixed error on line
 142 which was causing the class to fail. More explicit examples
 were also included in the readme for using numpy arrays.
+
+### Added
+- An improvement to the Euclidean distance calculation by [MichaelSchreier](https://github.com/MichaelSchreier)
+which brings a over a 50% reduction in computation time.
 
 ## [0.2.0](https://github.com/vc1492a/PyNomaly/commit/9e1996f08da3d151461adbb2b86c5d9447aaafa4)
 ### Added

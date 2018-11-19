@@ -1,0 +1,19 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+# command to install dependencies
+install:
+  - pip install -r requirements.txt
+  - python setup.py -q install
+  - pip install coveralls
+  - pip install pandas
+  - pip install pytest pytest-cov
+  - pip install scikit-learn
+  - pip install scipy
+# command to run tests
+script:
+  - python -m pytest --cov=PyNomaly
+after_success:
+  - coveralls
