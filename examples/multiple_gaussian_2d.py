@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PyNomaly import loop
 import pandas as pd
-from sklearn import preprocessing
-
 
 # import the multiple gaussian data #
 df = pd.read_csv('../data/multiple-gaussian-2d-data-only.csv')

@@ -4,7 +4,7 @@ PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
-[![PyPi](https://img.shields.io/badge/pypi-0.2.4-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.4)
+[![PyPi](https://img.shields.io/badge/pypi-0.2.5-green.svg)](https://pypi.python.org/pypi/PyNomaly/0.2.5)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
@@ -85,8 +85,7 @@ print(scores)
 **NOTE**: Unless your data is all the same scale, it may be a good idea to normalize your data with z-scores or another
 normalization scheme prior to using LoOP, especially when working with multiple dimensions of varying scale.
 Users must also appropriately handle missing values prior to using LoOP, as LoOP does not support Pandas
-DataFrames or Numpy arrays with missing values. While LoOP will execute with missing values, any observations with
-missing values will be returned with empty outlier scores (nan) in the final result.
+DataFrames or Numpy arrays with missing values.
 
 ### Choosing Parameters
 
@@ -250,13 +249,15 @@ print(scores)
 
 ## Streaming Data
 
-New in 0.2.0, PyNomaly now contains an implementation of Hamlet et. al.'s modifications
+PyNomaly also contains an implementation of Hamlet et. al.'s modifications
 to the original LoOP approach [[4](http://www.tandfonline.com/doi/abs/10.1080/23742917.2016.1226651?journalCode=tsec20)],
 which may be used for applications involving streaming data or where rapid calculations may be necessary.
 First, the standard LoOP algorithm is used on "training" data, with certain attributes of the fitted data
 stored from the original LoOP approach. Then, as new points are considered, these fitted attributes are
-called when calculating the score of the incoming streaming data. This approach is prone to error compared
-to the standard approach, but it may be effective in streaming applications.
+called when calculating the score of the incoming streaming data due to the use of averages from the initial
+fit, such as the use of a global value for the expected value of the probabilistic distance. Despite the potential
+for increased error when compared to the standard approach, but it may be effective in streaming applications where
+refitting the standard approach over all points could be computationally expensive.
 
 ### Example
 
@@ -299,7 +300,7 @@ rmse = np.sqrt(((iris['scores'] - iris['stream_scores']) ** 2).mean(axis=None))
 print(rmse)
 ```
 
-The root mean squared error (RMSE) between the two approaches is approximately 0.0934 (your scores will vary depending on the data and specification).
+The root mean squared error (RMSE) between the two approaches is approximately 0.199 (your scores will vary depending on the data and specification).
 The plot below shows the scores from the stream approach.
 
 ```python
@@ -316,8 +317,8 @@ plt.cla()
 plt.close()
 ```
 
-**LoOP Scores using Stream Approach for n=30 (static image in /images)**
-![LoOP Scores using Stream Approach for n=30](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.gif)
+**LoOP Scores using Stream Approach with n=10**
+![LoOP Scores using Stream Approach with n=10](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated.
@@ -375,4 +376,4 @@ If citing PyNomaly, use the following:
     - Arthur Zimek
 - [NASA Jet Propulsion Laboratory](https://jpl.nasa.gov/)
     - [Kyle Hundman](https://github.com/khundman)
-    - Ian Colwell
+    - [Ian Colwell](https://github.com/iancolwell)

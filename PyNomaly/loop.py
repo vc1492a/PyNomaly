@@ -5,7 +5,7 @@ import sys
 import warnings
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -92,7 +92,7 @@ class LocalOutlierProbability(object):
         def missing_values(obj):
             if np.any(np.isnan(obj.data)):
                 warnings.warn(
-                    'Input data contains missing values. Some scores may not be returned.',
+                    'Method does not support missing values in input data. ',
                     UserWarning)
                 return False
             else:
@@ -228,7 +228,7 @@ class LocalOutlierProbability(object):
         distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
                             dtype=float)
         indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
-                            dtype=float)
+                          dtype=float)
         self.points_vector = self.Validate.data(self.data)
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
@@ -279,10 +279,13 @@ class LocalOutlierProbability(object):
             indices = np.where(data_store[:, 0] == cluster_id)[0]
             for index in indices:
                 nbrhood = data_store[index][2].astype(int)
-                nbrhood_prob_distances = np.take(data_store[:, 5], nbrhood).astype(float)
+                nbrhood_prob_distances = np.take(data_store[:, 5],
+                                                 nbrhood).astype(float)
                 nbrhood_prob_distances_nonan = nbrhood_prob_distances[
                     np.logical_not(np.isnan(nbrhood_prob_distances))]
-                prob_set_distance_ev[index] = np.mean(nbrhood_prob_distances_nonan)
+                prob_set_distance_ev[index] = np.mean(
+                    nbrhood_prob_distances_nonan)
+        self.prob_distances_ev = prob_set_distance_ev
         data_store = np.hstack((data_store, prob_set_distance_ev))
         return data_store
 
@@ -326,7 +329,8 @@ class LocalOutlierProbability(object):
         self.Validate.data(self.data)
         self.Validate.n_neighbors(self, set_neighbors=True)
         self.Validate.cluster_size(self)
-        self.Validate.missing_values(self)
+        if self.Validate.missing_values(self) is False:
+            sys.exit()
 
         store = self._store()
         store = self._distances(store)
@@ -363,8 +367,9 @@ class LocalOutlierProbability(object):
         ssd = np.sum(np.power(distances, 2))
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
         prob_dist = self._prob_distance(self.extent, std_dist)
-        plof = self._prob_outlier_factor(prob_dist, self.prob_distances_ev)
-        loop = self._local_outlier_probability(plof,
-                                               self.norm_prob_local_outlier_factor)
+        plof = self._prob_outlier_factor(prob_dist,
+                                         np.mean(self.prob_distances_ev))
+        loop = self._local_outlier_probability(
+            plof, self.norm_prob_local_outlier_factor)
 
         return loop

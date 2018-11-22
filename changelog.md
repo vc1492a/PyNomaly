@@ -4,6 +4,20 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.5]()
+### Fixed
+- [Issue #20](https://github.com/vc1492a/PyNomaly/issues/20) - Fixed
+a bug that inadvertently used global means of the probabilistic distance
+as the expected value of the probabilistic distance, as opposed to the
+expected value of the probabilistic distance within a neighborhood of
+a point.
+- Integrated [pull request #21](https://github.com/vc1492a/PyNomaly/pull/18) -
+This pull request addressed the issue noted above.
+### Changed
+- Changed the default behavior to strictly not supporting the
+use of missing values in the input data, as opposed to the soft enforcement
+(a simple user warning) used in the previous behavior.
+
 ## [0.2.4](https://github.com/vc1492a/PyNomaly/commit/184e221438da6718ba85bb679027708ab9d3f4fd)
 ### Fixed
 - [Issue #17](https://github.com/vc1492a/PyNomaly/issues/17) - Fixed

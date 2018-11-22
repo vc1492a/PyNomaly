@@ -58,7 +58,7 @@ def test_loop_performance():
         np.repeat(1, X.shape[0]), np.repeat(-1, X_outliers.shape[0])]
 
     # fit the model
-    clf = loop.LocalOutlierProbability(X_test)
+    clf = loop.LocalOutlierProbability(X_test, n_neighbors=X_test.shape[0] - 1)
 
     # predict scores (the lower, the more normal)
     score = clf.fit().local_outlier_probabilities
@@ -98,38 +98,6 @@ def test_lambda_values():
     assert_greater(score_mean2, score_mean3)
 
 
-def test_stream_performance():
-    # Generate train/test data
-    rng = check_random_state(2)
-    X = 0.3 * rng.randn(120, 2)
-
-    # Generate some abnormal novel observations
-    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
-    X = np.r_[X, X_outliers]
-
-    X_train = X[0:100]
-    X_test = X[100:140]
-
-    # Fit the models in standard and stream form
-    m = loop.LocalOutlierProbability(X).fit()
-    scores_noclust = m.local_outlier_probabilities
-
-    m_train = loop.LocalOutlierProbability(X_train)
-    m_train.fit()
-    X_train_scores = m_train.local_outlier_probabilities
-
-    X_test_scores = []
-    for idx in range(X_test.shape[0]):
-        X_test_scores.append(m_train.stream(X_test[idx]))
-    X_test_scores = np.array(X_test_scores)
-
-    stream_scores = np.hstack((X_train_scores, X_test_scores))
-
-    # calculate the rmse and ensure score is below threshold
-    rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
-    assert_greater(0.35, rmse)
-
-
 def test_parameters():
     # Generate train/test data
     rng = check_random_state(2)
@@ -147,10 +115,10 @@ def test_parameters():
                 clf._cluster_labels() is not None)
     assert_true(hasattr(clf, 'prob_distances') and
                 clf.prob_distances is not None)
-    assert_true(hasattr(clf, 'norm_prob_local_outlier_factor') and
-                clf.norm_prob_local_outlier_factor is not None)
     assert_true(hasattr(clf, 'prob_distances_ev') and
                 clf.prob_distances_ev is not None)
+    assert_true(hasattr(clf, 'norm_prob_local_outlier_factor') and
+                clf.norm_prob_local_outlier_factor is not None)
     assert_true(hasattr(clf, 'local_outlier_probabilities') and
                 clf.local_outlier_probabilities is not None)
 
@@ -169,6 +137,49 @@ def test_extent():
     X = np.array([[1, 1], [1, 0]])
     clf = loop.LocalOutlierProbability(X, n_neighbors=2, extent=4)
     assert_warns(UserWarning, clf.fit)
+
+
+def test_data_format():
+    X = [1.3, 1.1, 0.9, 1.4, 1.5, 3.2]
+    clf = loop.LocalOutlierProbability(X, n_neighbors=3)
+    assert_warns(UserWarning, clf.fit)
+
+
+def test_missing_values():
+    X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
+    clf = loop.LocalOutlierProbability(X, n_neighbors=3)
+
+    with pytest.raises(SystemExit) as record:
+        clf.fit()
+
+    assert record.type == SystemExit
+
+
+def test_small_cluster_size():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X = np.r_[X, X_outliers]
+    # Generate cluster labels
+    a = [0] * 120
+    b = [1] * 18
+    cluster_labels = a + b
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).",
+            UserWarning)
+
+    loop.LocalOutlierProbability(X, n_neighbors=50, cluster_labels=cluster_labels)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one)."
 
 
 def test_stream_fit():
@@ -225,21 +236,7 @@ def test_stream_cluster():
                0] == "Stream approach does not support clustered data. Automatically refit using single cluster of points."
 
 
-def test_data_format():
-    X = [1.3, 1.1, 0.9, 1.4, 1.5, 3.2]
-    clf = loop.LocalOutlierProbability(X, n_neighbors=3)
-
-    assert_warns(UserWarning, clf.fit)
-
-
-def test_missing_values():
-    X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
-    clf = loop.LocalOutlierProbability(X, n_neighbors=3)
-
-    assert_warns(UserWarning, clf.fit)
-
-
-def test_small_cluster_size():
+def test_stream_performance():
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
@@ -247,20 +244,25 @@ def test_small_cluster_size():
     # Generate some abnormal novel observations
     X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
     X = np.r_[X, X_outliers]
-    # Generate cluster labels
-    a = [0] * 120
-    b = [1] * 18
-    cluster_labels = a + b
 
-    with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).",
-            UserWarning)
+    X_train = X[0:100]
+    X_test = X[100:140]
 
-    loop.LocalOutlierProbability(X, n_neighbors=50, cluster_labels=cluster_labels)
+    # Fit the models in standard and stream form
+    m = loop.LocalOutlierProbability(X).fit()
+    scores_noclust = m.local_outlier_probabilities
 
-    # check that only one warning was raised
-    assert len(record) == 1
-    # check that the message matches
-    assert record[0].message.args[
-               0] == "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one)."
+    m_train = loop.LocalOutlierProbability(X_train)
+    m_train.fit()
+    X_train_scores = m_train.local_outlier_probabilities
+
+    X_test_scores = []
+    for idx in range(X_test.shape[0]):
+        X_test_scores.append(m_train.stream(X_test[idx]))
+    X_test_scores = np.array(X_test_scores)
+
+    stream_scores = np.hstack((X_train_scores, X_test_scores))
+
+    # calculate the rmse and ensure score is below threshold
+    rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
+    assert_greater(0.35, rmse)

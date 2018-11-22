@@ -9,7 +9,6 @@ from mpl_toolkits.mplot3d import Axes3D
 iris = pd.DataFrame(data('iris'))
 iris = pd.DataFrame(iris.drop('Species', 1))
 
-iris = iris.sample(frac=1) # shuffle data
 iris_train = iris.iloc[:, 0:4].head(120)
 iris_test = iris.iloc[:, 0:4].tail(30)
 
