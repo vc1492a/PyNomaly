@@ -6,7 +6,6 @@ from PyNomaly import loop
 import numpy as np
 from numpy.testing import assert_array_equal
 
-import pandas as pd
 import pytest
 
 from sklearn.metrics import roc_auc_score
@@ -15,9 +14,11 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_warns
 
 from sklearn.datasets import load_iris
+from sklearn.neighbors import NearestNeighbors
 
 import warnings
 
@@ -67,6 +68,194 @@ def test_loop_performance():
 
     # check that roc_auc is good
     assert_greater(roc_auc_score(X_pred, X_labels), .985)
+
+
+def test_input_nodata():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X_test = np.r_[X, X_outliers]
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "Data or a distance matrix must be provided.",
+            UserWarning)
+
+    # attempt to fit loop without data or a distance matrix
+    loop.LocalOutlierProbability(n_neighbors=X_test.shape[0] - 1)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "Data or a distance matrix must be provided."
+
+
+def test_input_distonly():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh.fit(X)
+    d, idx = neigh.kneighbors(X, return_distance=True)
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "A neighbor index matrix must be provided when using "
+            "a distance matrix.",
+            UserWarning)
+
+    # attempt to fit loop with only a distance matrix and no neighbor matrix
+    loop.LocalOutlierProbability(distance_matrix=d)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "A neighbor index matrix must be provided when using " \
+                     "a distance matrix."
+
+
+def test_input_neighboronly():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh.fit(X)
+    d, idx = neigh.kneighbors(X, return_distance=True)
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "A neighbor index matrix must be provided when using "
+            "a distance matrix.",
+            UserWarning)
+
+    # attempt to fit loop with only a distance matrix and no neighbor matrix
+    loop.LocalOutlierProbability(neighbor_matrix=idx)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "A neighbor index matrix must be provided when using " \
+                     "a distance matrix."
+
+
+def test_input_too_many():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh.fit(X)
+    d, idx = neigh.kneighbors(X, return_distance=True)
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "Only one of the following may be provided: data or a "
+            "distance matrix (not both).",
+            UserWarning)
+
+    # attempt to fit loop with only a distance matrix and no neighbor matrix
+    loop.LocalOutlierProbability(X, distance_matrix=d, neighbor_matrix=idx)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "Only one of the following may be provided: data or a " \
+                     "distance matrix (not both)."
+
+
+def test_input_shape_mismatch():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh.fit(X)
+    d, idx = neigh.kneighbors(X, return_distance=True)
+
+    # generate distance and neighbor indices of a different shape
+    neigh_2 = NearestNeighbors(n_neighbors=5, metric='euclidean')
+    neigh_2.fit(X)
+    d_2, idx_2 = neigh.kneighbors(X, return_distance=True)
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "The shape of the distance and neighbor "
+            "index matrices must match.",
+            UserWarning)
+
+    # attempt to fit loop with only a distance matrix and no neighbor matrix
+    loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx_2)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "The shape of the distance and neighbor " \
+                     "index matrices must match."
+
+
+def test_input_neighbor_mismatch():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=5, metric='euclidean')
+    neigh.fit(X)
+    d, idx = neigh.kneighbors(X, return_distance=True)
+
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "The shape of the distance or "
+            "neighbor index matrix does not "
+            "match the number of neighbors "
+            "specified.",
+            UserWarning)
+
+    # attempt to fit loop with only a distance matrix and no neighbor matrix
+    loop.LocalOutlierProbability(distance_matrix=d)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "The shape of the distance or " \
+                     "neighbor index matrix does not " \
+                     "match the number of neighbors " \
+                     "specified."
+
+
+def test_loop_dist_matrix():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh.fit(X)
+    d, idx = neigh.kneighbors(X, return_distance=True)
+
+    # fit loop using data and distance matrix
+    clf1 = loop.LocalOutlierProbability(X)
+    clf2 = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx)
+    scores1 = clf1.fit().local_outlier_probabilities
+    scores2 = clf2.fit().local_outlier_probabilities
+
+    # compare the agreement between the results
+    assert_almost_equal(scores1, scores2, decimal=1)
 
 
 def test_lambda_values():
@@ -201,10 +390,59 @@ def test_stream_fit():
     X_test = X[139]
     clf = loop.LocalOutlierProbability(X_train)
 
-    with pytest.raises(SystemExit) as record:
-        clf.stream(X_test)
+    with pytest.warns(UserWarning) as record:
+        warnings.warn(
+            "Must fit on historical data by calling fit() prior to "
+            "calling stream(x).",
+            UserWarning)
 
-    assert record.type == SystemExit
+    clf.stream(X_test)
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "Must fit on historical data by calling fit() prior to " \
+                     "calling stream(x)."
+
+
+def test_stream_distance():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X = np.r_[X, X_outliers]
+
+    X_train = X[0:100]
+    X_test = X[100:140]
+
+    # generate distance and neighbor indices
+    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh.fit(X_train)
+    d, idx = neigh.kneighbors(X_train, return_distance=True)
+
+    # Fit the models in standard and distance matrix form
+    m = loop.LocalOutlierProbability(X_train).fit()
+    m_dist = loop.LocalOutlierProbability(distance_matrix=d,
+                                          neighbor_matrix=idx).fit()
+
+    # Collect the scores
+    X_test_scores = []
+    for i in range(X_test.shape[0]):
+        X_test_scores.append(m.stream(X_test[i]))
+    X_test_scores = np.array(X_test_scores)
+
+    X_test_dist_scores = []
+    for i in range(X_test.shape[0]):
+        dd, ii = neigh.kneighbors(np.array([X_test[i]]), return_distance=True)
+        X_test_dist_scores.append(m_dist.stream(np.mean(dd)))
+    X_test_dist_scores = np.array(X_test_dist_scores)
+
+    # calculate the rmse and ensure score is below threshold
+    rmse = np.sqrt(((X_test_scores - X_test_dist_scores) ** 2).mean(axis=None))
+    assert_greater(0.05, rmse)
 
 
 def test_stream_cluster():
@@ -273,12 +511,3 @@ def test_stream_performance():
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
     assert_greater(0.35, rmse)
-
-
-# test for warning if distance and neighbor matrix aren't both provided
-# test to ensure only one (data or distance) is provided
-# test for warning if the distance and neighbor matrices do not have the same shape
-# test for if either one of the distance and neighbor matrices don't match the number of neighbors specified
-# test to ensure the distance matrix functionality is performing well (measure comparison between sklearn euclicdean and internal implementation) for standard implementation
-# test to ensure that the stream functionality works as intended when using distance matrix
-# test to ensure

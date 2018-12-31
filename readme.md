@@ -318,7 +318,9 @@ plt.close()
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated.
-In some applications, it may be beneficial to refit the data periodically.
+In some applications, it may be beneficial to refit the data periodically. The stream functionality
+also assumes that either data or a distance matrix (or value) will be used across in both fitting
+and streaming, with no changes in specification between steps.
 
 ## Contributing
 If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.

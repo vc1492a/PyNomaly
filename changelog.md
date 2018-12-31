@@ -9,13 +9,19 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 - [Issue #25](https://github.com/vc1492a/PyNomaly/issues/25) - Fixed an issue
 that caused zero division errors when all the values in a neighborhood are
 duplicate samples.
-
-- Introduced a unit test that checks for the proper
-behavior when duplicate samples are present.
-
-- to do:
-    - add a test for ensuring it works with duplicate values, results should be same or similar to using np.unique
-    -
+### Changed
+- Changed the error behavior when attempting to use the stream approach
+before calling `fit`. While the previous implementation resulted in a
+warning and system exit, PyNomaly now attempts to `fit` (assumes data or a
+distance matrix is available) and then later calls `stream`.
+### Added
+- [Issue #24](https://github.com/vc1492a/PyNomaly/issues/24) - Added
+the ability to use one's on distance matrix,
+provided a neighbor index matrix is also provided. See the file
+`iris_dist_grid.py` for examples.
+- Unit tests to cover the issues and features covered
+in [24](https://github.com/vc1492a/PyNomaly/issues/24) and
+[25](https://github.com/vc1492a/PyNomaly/issues/25).
 
 
 ## [0.2.5](https://github.com/vc1492a/PyNomaly/commit/1ff9bdad72948053c8fddb9b6a44eb6183dd4e49)
@@ -47,7 +53,6 @@ that was causing a ZeroDivisionError when the specified neighborhood size
 is larger than the total number of observations in the smallest cluster.
 
 ## [0.2.2](https://github.com/vc1492a/PyNomaly/commit/e02c03599fed5dcc0db3dc6de70433e39f466656)
-
 ### Changed
 - This implementation to align more closely with the specification of the
 approach in the original paper. The extent parameter now takes an integer
@@ -55,7 +60,6 @@ value of 1, 2, or 3 that corresponds to the lambda parameter specified
 in the paper. See the [readme](https://github.com/vc1492a/PyNomaly/blob/master/readme.md) for more details.
 - Refactored the code base and created the Validate class, which includes
 checks for data type, correct specification, and other dependencies.
-
 ### Added
 - Automated tests to ensure the desired functionality is being met can now be
 found in the `PyNomaly/tests` directory.

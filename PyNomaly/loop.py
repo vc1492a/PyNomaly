@@ -150,7 +150,7 @@ class LocalOutlierProbability(object):
 
         @staticmethod
         def fit(obj):
-            if obj.points_vector is None:
+            if obj.is_fit is False:
                 warnings.warn(
                     "Must fit on historical data by calling fit() prior to "
                     "calling stream(x).",
@@ -231,9 +231,9 @@ class LocalOutlierProbability(object):
         self.norm_prob_local_outlier_factor = None
         self.local_outlier_probabilities = None
         self._objects = {}
+        self.is_fit = False
 
-        if self.Validate().inputs(self) is False:
-            sys.exit()
+        self.Validate().inputs(self)
         self.Validate.extent(self)
 
     @staticmethod
@@ -395,8 +395,6 @@ class LocalOutlierProbability(object):
 
     def fit(self):
 
-        if self.Validate().inputs(self) is False:
-            sys.exit()
         if self.data is not None:
             self.Validate.n_neighbors(self, set_neighbors=True)
             self.Validate.cluster_size(self)
@@ -417,28 +415,33 @@ class LocalOutlierProbability(object):
         store = self._local_outlier_probabilities(store)
         self.local_outlier_probabilities = store[:, 10]
 
+        self.is_fit = True
+
         return self
 
-    def stream(self, observation=None, distance=None):
+    def stream(self, x):
 
         if self.Validate.no_cluster_labels(self) is False:
             self.cluster_labels = np.array([0] * len(self.data))
             self.fit()
 
         if self.Validate.fit(self) is False:
-            sys.exit()
+            self.fit()
 
+        point_vector = self.Validate.data(x)
         distances = np.full([1, self.n_neighbors], 9e10, dtype=float)
-
-        point_vector = self.Validate.data(observation)
-        dist_vector = self.Validate.data(distance)
-
-        for p in range(0, self.points_vector.shape[0]):
-            d = self._euclidean(self.points_vector[p, :], point_vector)
+        if self.data is not None:
+            matrix = self.points_vector
+        else:
+            matrix = self.distance_matrix
+        for p in range(0, matrix.shape[0]):
+            if self.data is not None:
+                d = self._euclidean(matrix[p, :], point_vector)
+            else:
+                d = point_vector
             idx_max = np.argmax(distances[0])
             if d < distances[0][idx_max]:
                 distances[0][idx_max] = d
-
 
         ssd = np.sum(np.power(distances, 2))
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
