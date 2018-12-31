@@ -4,6 +4,18 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.6]()
+### Fixed
+- [Issue #25](https://github.com/vc1492a/PyNomaly/issues/25) - Fixed an issue
+that caused zero division errors when all the values in a neighborhood are
+duplicate samples. Introduced a unit test that checks for the proper
+behavior when duplicate samples are present.
+
+- to do:
+    - add a test for ensuring it works with duplicate values, results should be same or similar to using np.unique
+    -
+
+
 ## [0.2.5](https://github.com/vc1492a/PyNomaly/commit/1ff9bdad72948053c8fddb9b6a44eb6183dd4e49)
 ### Fixed
 - [Issue #20](https://github.com/vc1492a/PyNomaly/issues/20) - Fixed

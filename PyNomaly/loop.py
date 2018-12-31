@@ -5,7 +5,7 @@ import sys
 import warnings
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -45,13 +45,32 @@ class LocalOutlierProbability(object):
                 return points_vector
             else:
                 warnings.warn(
-                    'Provided data must be in ndarray or DataFrame.',
+                    'Provided data or distance martix must be in ndarray or '
+                    'DataFrame.',
                     UserWarning)
                 if isinstance(obj, list):
                     points_vector = np.array(obj)
                     return points_vector
                 points_vector = np.array([obj])
                 return points_vector
+
+        def inputs(self, data_obj, dist_obj):
+            if all(v is None for v in [data_obj, dist_obj]):
+                warnings.warn(
+                    'Data or a distance matrix must be provided.'
+                )
+                return False
+            elif all(v is not None for v in [data_obj, dist_obj]):
+                warnings.warn(
+                    'Only one of the following may be provided: data or a '
+                    'distance matrix (not both).'
+                )
+                return False
+            if data_obj is not None:
+                self.data(data_obj)
+            if dist_obj is not None:
+                self.data(dist_obj)
+            return data_obj, dist_obj
 
         @staticmethod
         def cluster_size(obj):
@@ -131,13 +150,13 @@ class LocalOutlierProbability(object):
                                       UserWarning)
                 opt_types = {
                     'extent': {
-                        'type': types[2]
-                    },
-                    'n_neighbors': {
                         'type': types[3]
                     },
-                    'cluster_labels': {
+                    'n_neighbors': {
                         'type': types[4]
+                    },
+                    'cluster_labels': {
+                        'type': types[5]
                     }
                 }
                 for x in kwds:
@@ -157,9 +176,11 @@ class LocalOutlierProbability(object):
 
         return decorator
 
-    @accepts(object, np.ndarray, (int, np.integer), (int, np.integer), list)
-    def __init__(self, data, extent=3, n_neighbors=10, cluster_labels=None):
+    @accepts(object, np.ndarray, np.ndarray, (int, np.integer), (int, np.integer), list)
+    def __init__(self, data=None, distance_matrix=None, extent=3,
+                 n_neighbors=10, cluster_labels=None):
         self.data = data
+        self.distance_matrix = distance_matrix
         self.extent = extent
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
@@ -170,7 +191,7 @@ class LocalOutlierProbability(object):
         self.local_outlier_probabilities = None
         self._objects = {}
 
-        self.Validate.data(self.data)
+        self.Validate().inputs(self.data, self.distance_matrix)
         self.Validate.n_neighbors(self)
         self.Validate.cluster_size(self)
         self.Validate.extent(self)
@@ -191,7 +212,9 @@ class LocalOutlierProbability(object):
         if np.all(probabilistic_distance == ev_prob_dist):
             return np.zeros(probabilistic_distance.shape)
         else:
-            return (probabilistic_distance / ev_prob_dist) - 1.
+            ev_prob_dist[ev_prob_dist == 0.] = 1.e-8
+            result = np.divide(probabilistic_distance, ev_prob_dist) - 1.
+            return result
 
     @staticmethod
     def _norm_prob_outlier_factor(extent, ev_probabilistic_outlier_factor):
@@ -223,6 +246,9 @@ class LocalOutlierProbability(object):
     def _euclidean(vector1, vector2):
         diff = vector1 - vector2
         return np.dot(diff, diff) ** 0.5
+
+    # in the case where some or all the points have a zero distance or zero EV dist
+    # then we want to return 0? or -1?
 
     def _distances(self, data_store):
         distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
@@ -326,7 +352,7 @@ class LocalOutlierProbability(object):
 
     def fit(self):
 
-        self.Validate.data(self.data)
+        self.Validate().inputs(self.data, self.distance_matrix)
         self.Validate.n_neighbors(self, set_neighbors=True)
         self.Validate.cluster_size(self)
         if self.Validate.missing_values(self) is False:
@@ -348,7 +374,7 @@ class LocalOutlierProbability(object):
 
         return self
 
-    def stream(self, x):
+    def stream(self, observation=None, distance=None):
 
         if self.Validate.no_cluster_labels(self) is False:
             self.cluster_labels = np.array([0] * len(self.data))
@@ -358,7 +384,9 @@ class LocalOutlierProbability(object):
             sys.exit()
 
         distances = np.full([1, self.n_neighbors], 9e10, dtype=float)
-        point_vector = self.Validate.data(x)
+        point_vector, dist_vector = self.Validate().inputs(
+            observation, distance)
+
         for p in range(0, self.points_vector.shape[0]):
             d = self._euclidean(self.points_vector[p, :], point_vector)
             idx_max = np.argmax(distances[0])
@@ -368,7 +396,9 @@ class LocalOutlierProbability(object):
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
         prob_dist = self._prob_distance(self.extent, std_dist)
         plof = self._prob_outlier_factor(prob_dist,
-                                         np.mean(self.prob_distances_ev))
+                                         np.array(
+                                             np.mean(self.prob_distances_ev))
+                                         )
         loop = self._local_outlier_probability(
             plof, self.norm_prob_local_outlier_factor)
 
