@@ -12,13 +12,18 @@ __license__ = 'Apache License, Version 2.0'
 class LocalOutlierProbability(object):
     """
     :param data: a Pandas DataFrame or Numpy array of float data
-    :param extent: an integer value [1, 2, 3] that controls the statistical extent, e.g. lambda times the standard deviation from the mean (optional, default 3)
-    :param n_neighbors: the total number of neighbors to consider w.r.t. each sample (optional, default 10)
-    :param cluster_labels: a numpy array of cluster assignments w.r.t. each sample (optional, default None)
+    :param extent: an integer value [1, 2, 3] that controls the statistical 
+    extent, e.g. lambda times the standard deviation from the mean (optional, 
+    default 3)
+    :param n_neighbors: the total number of neighbors to consider w.r.t. each 
+    sample (optional, default 10)
+    :param cluster_labels: a numpy array of cluster assignments w.r.t. each 
+    sample (optional, default None)
     :return:
     """"""
 
-    Based on the work of Kriegel, Kröger, Schubert, and Zimek (2009) in LoOP: Local Outlier Probabilities.
+    Based on the work of Kriegel, Kröger, Schubert, and Zimek (2009) in LoOP: 
+    Local Outlier Probabilities.
     ----------
 
     References
@@ -45,8 +50,8 @@ class LocalOutlierProbability(object):
                 return points_vector
             else:
                 warnings.warn(
-                    'Provided data or distance martix must be in ndarray or '
-                    'DataFrame.',
+                    "Provided data or distance matrix must be in ndarray " 
+                    "or DataFrame.",
                     UserWarning)
                 if isinstance(obj, list):
                     points_vector = np.array(obj)
@@ -54,23 +59,45 @@ class LocalOutlierProbability(object):
                 points_vector = np.array([obj])
                 return points_vector
 
-        def inputs(self, data_obj, dist_obj):
-            if all(v is None for v in [data_obj, dist_obj]):
+        def inputs(self, obj):
+            if all(v is None for v in [obj.data, obj.distance_matrix]):
                 warnings.warn(
-                    'Data or a distance matrix must be provided.'
+                    "Data or a distance matrix must be provided."
                 )
                 return False
-            elif all(v is not None for v in [data_obj, dist_obj]):
+            elif all(v is not None for v in [obj.data, obj.distance_matrix]):
                 warnings.warn(
-                    'Only one of the following may be provided: data or a '
-                    'distance matrix (not both).'
+                    "Only one of the following may be provided: data or a "
+                    "distance matrix (not both)."
                 )
                 return False
-            if data_obj is not None:
-                self.data(data_obj)
-            if dist_obj is not None:
-                self.data(dist_obj)
-            return data_obj, dist_obj
+            if obj.data is not None:
+                points_vector = self.data(obj.data)
+                return points_vector, obj.distance_matrix, obj.neighbor_matrix
+            if obj.distance_matrix is not None:
+                dist_vector = self.data(obj.distance_matrix)
+                if obj.neighbor_matrix is not None:
+                    neigh_vector = self.data(obj.neighbor_matrix)
+                    if obj.distance_matrix.shape == obj.neighbor_matrix.shape:
+                        if (obj.distance_matrix.shape[1] != obj.n_neighbors) \
+                                or (obj.neighbor_matrix.shape[1] !=
+                                    obj.n_neighbors):
+                            warnings.warn("The shape of the distance or "
+                                          "neighbor index matrix does not "
+                                          "match the number of neighbors "
+                                          "specified.")
+                            return False
+                        return obj.data, dist_vector, neigh_vector
+                    else:
+                        warnings.warn("The shape of the distance and neighbor "
+                                      "index matrices must match.")
+                        return False
+                else:
+                    warnings.warn(
+                        "A neighbor index matrix must be provided when using "
+                        "a distance matrix."
+                    )
+                    return False
 
         @staticmethod
         def cluster_size(obj):
@@ -79,29 +106,33 @@ class LocalOutlierProbability(object):
                 c_size = np.where(c_labels == cluster_id)[0].shape[0]
                 if c_size <= obj.n_neighbors:
                     warnings.warn(
-                        'Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).',
+                        "Number of neighbors specified larger than smallest "
+                        "cluster. Specify a number of neighbors smaller than "
+                        "the smallest cluster size (observations in smallest "
+                        "cluster minus one).",
                         UserWarning)
                     return False
 
         @staticmethod
         def n_neighbors(obj, set_neighbors=False):
             if not obj.n_neighbors > 0:
-                warnings.warn('n_neighbors must be greater than 0.',
+                warnings.warn("n_neighbors must be greater than 0.",
                               UserWarning)
                 return False
             elif obj.n_neighbors >= obj._n_observations():
                 if set_neighbors is True:
                     obj.n_neighbors = obj._n_observations() - 1
                 warnings.warn(
-                    'n_neighbors must be less than the number of observations. Fit with ' + str(
-                        obj.n_neighbors) + ' instead.', UserWarning)
+                    "n_neighbors must be less than the number of observations."
+                    " Fit with " + str(obj.n_neighbors) + " instead.",
+                    UserWarning)
                 return True
 
         @staticmethod
         def extent(obj):
             if obj.extent not in [1, 2, 3]:
                 warnings.warn(
-                    'extent parameter (lambda) must be 1, 2, or 3.',
+                    "extent parameter (lambda) must be 1, 2, or 3.",
                     UserWarning)
                 return False
             else:
@@ -111,7 +142,7 @@ class LocalOutlierProbability(object):
         def missing_values(obj):
             if np.any(np.isnan(obj.data)):
                 warnings.warn(
-                    'Method does not support missing values in input data. ',
+                    "Method does not support missing values in input data. ",
                     UserWarning)
                 return False
             else:
@@ -121,7 +152,8 @@ class LocalOutlierProbability(object):
         def fit(obj):
             if obj.points_vector is None:
                 warnings.warn(
-                    "Must fit on historical data by calling fit() prior to calling stream(x).",
+                    "Must fit on historical data by calling fit() prior to "
+                    "calling stream(x).",
                     UserWarning)
                 return False
             else:
@@ -131,7 +163,8 @@ class LocalOutlierProbability(object):
         def no_cluster_labels(obj):
             if len(set(obj._cluster_labels())) > 1:
                 warnings.warn(
-                    'Stream approach does not support clustered data. Automatically refit using single cluster of points.',
+                    "Stream approach does not support clustered data. "
+                    "Automatically refit using single cluster of points.",
                     UserWarning)
                 return False
             else:
@@ -149,14 +182,20 @@ class LocalOutlierProbability(object):
                         warnings.warn("Argument %r is not of type %s" % (a, t),
                                       UserWarning)
                 opt_types = {
-                    'extent': {
+                    'distance_matrix': {
+                        'type': types[2]
+                    },
+                    'neighbor_matrix': {
                         'type': types[3]
                     },
-                    'n_neighbors': {
+                    'extent': {
                         'type': types[4]
                     },
-                    'cluster_labels': {
+                    'n_neighbors': {
                         'type': types[5]
+                    },
+                    'cluster_labels': {
+                        'type': types[6]
                     }
                 }
                 for x in kwds:
@@ -176,11 +215,13 @@ class LocalOutlierProbability(object):
 
         return decorator
 
-    @accepts(object, np.ndarray, np.ndarray, (int, np.integer), (int, np.integer), list)
-    def __init__(self, data=None, distance_matrix=None, extent=3,
-                 n_neighbors=10, cluster_labels=None):
+    @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
+             (int, np.integer), list)
+    def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
+                 extent=3, n_neighbors=10, cluster_labels=None):
         self.data = data
         self.distance_matrix = distance_matrix
+        self.neighbor_matrix = neighbor_matrix
         self.extent = extent
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
@@ -191,11 +232,9 @@ class LocalOutlierProbability(object):
         self.local_outlier_probabilities = None
         self._objects = {}
 
-        self.Validate().inputs(self.data, self.distance_matrix)
-        self.Validate.n_neighbors(self)
-        self.Validate.cluster_size(self)
+        if self.Validate().inputs(self) is False:
+            sys.exit()
         self.Validate.extent(self)
-        self.Validate.missing_values(self)
 
     @staticmethod
     def _standard_distance(cardinality, sum_squared_distance):
@@ -231,14 +270,18 @@ class LocalOutlierProbability(object):
             return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.))))
 
     def _n_observations(self):
-        return len(self.data)
+        if self.data is not None:
+            return len(self.data)
+        return len(self.distance_matrix)
 
     def _store(self):
         return np.empty([self._n_observations(), 3], dtype=object)
 
     def _cluster_labels(self):
         if self.cluster_labels is None:
-            return np.array([0] * len(self.data))
+            if self.data is not None:
+                return np.array([0] * len(self.data))
+            return np.array([0] * len(self.distance_matrix))
         else:
             return np.array(self.cluster_labels)
 
@@ -247,33 +290,33 @@ class LocalOutlierProbability(object):
         diff = vector1 - vector2
         return np.dot(diff, diff) ** 0.5
 
-    # in the case where some or all the points have a zero distance or zero EV dist
-    # then we want to return 0? or -1?
-
     def _distances(self, data_store):
-        distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
-                            dtype=float)
-        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
-                          dtype=float)
-        self.points_vector = self.Validate.data(self.data)
-        for cluster_id in set(self._cluster_labels()):
-            indices = np.where(self._cluster_labels() == cluster_id)
-            clust_points_vector = self.points_vector.take(indices, axis=0)[0]
-            pairs = itertools.permutations(
-                np.ndindex(clust_points_vector.shape[0]), 2)
-            for p in pairs:
-                d = self._euclidean(clust_points_vector[p[0]],
-                                    clust_points_vector[p[1]])
-                idx = indices[0][p[0]]
-                idx_max = np.argmax(distances[idx])
-                if d < distances[idx][idx_max]:
-                    distances[idx][idx_max] = d
-                    indexes[idx][idx_max] = p[1][0]
-        for vec, cluster_id in zip(range(distances.shape[0]),
+        if self.data is not None:
+            distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
+                                dtype=float)
+            indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
+                              dtype=float)
+            self.points_vector = self.Validate.data(self.data)
+            for cluster_id in set(self._cluster_labels()):
+                indices = np.where(self._cluster_labels() == cluster_id)
+                clust_points_vector = self.points_vector.take(indices, axis=0)[0]
+                pairs = itertools.permutations(
+                    np.ndindex(clust_points_vector.shape[0]), 2)
+                for p in pairs:
+                    d = self._euclidean(clust_points_vector[p[0]],
+                                        clust_points_vector[p[1]])
+                    idx = indices[0][p[0]]
+                    idx_max = np.argmax(distances[idx])
+                    if d < distances[idx][idx_max]:
+                        distances[idx][idx_max] = d
+                        indexes[idx][idx_max] = p[1][0]
+            self.distance_matrix = distances
+            self.neighbor_matrix = indexes
+        for vec, cluster_id in zip(range(self.distance_matrix.shape[0]),
                                    self._cluster_labels()):
             data_store[vec][0] = cluster_id
-            data_store[vec][1] = distances[vec]
-            data_store[vec][2] = indexes[vec]
+            data_store[vec][1] = self.distance_matrix[vec]
+            data_store[vec][2] = self.neighbor_matrix[vec]
         return data_store
 
     def _ssd(self, data_store):
@@ -331,9 +374,9 @@ class LocalOutlierProbability(object):
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
             prob_local_outlier_factor_ev_dict[cluster_id] = np.sum(
-                np.power(prob_local_outlier_factors_nonan, 2)) / \
-                                                            float(
-                                                                prob_local_outlier_factors_nonan.size)
+                np.power(
+                    prob_local_outlier_factors_nonan, 2)
+            ) / float(prob_local_outlier_factors_nonan.size)
         data_store = np.hstack(
             (data_store, np.array([[prob_local_outlier_factor_ev_dict[x] for x
                                     in data_store[:, 0].tolist()]]).T))
@@ -352,11 +395,13 @@ class LocalOutlierProbability(object):
 
     def fit(self):
 
-        self.Validate().inputs(self.data, self.distance_matrix)
-        self.Validate.n_neighbors(self, set_neighbors=True)
-        self.Validate.cluster_size(self)
-        if self.Validate.missing_values(self) is False:
+        if self.Validate().inputs(self) is False:
             sys.exit()
+        if self.data is not None:
+            self.Validate.n_neighbors(self, set_neighbors=True)
+            self.Validate.cluster_size(self)
+            if self.Validate.missing_values(self) is False:
+                sys.exit()
 
         store = self._store()
         store = self._distances(store)
@@ -384,14 +429,17 @@ class LocalOutlierProbability(object):
             sys.exit()
 
         distances = np.full([1, self.n_neighbors], 9e10, dtype=float)
-        point_vector, dist_vector = self.Validate().inputs(
-            observation, distance)
+
+        point_vector = self.Validate.data(observation)
+        dist_vector = self.Validate.data(distance)
 
         for p in range(0, self.points_vector.shape[0]):
             d = self._euclidean(self.points_vector[p, :], point_vector)
             idx_max = np.argmax(distances[0])
             if d < distances[0][idx_max]:
                 distances[0][idx_max] = d
+
+
         ssd = np.sum(np.power(distances, 2))
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
         prob_dist = self._prob_distance(self.extent, std_dist)

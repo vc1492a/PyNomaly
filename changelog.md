@@ -8,7 +8,9 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - [Issue #25](https://github.com/vc1492a/PyNomaly/issues/25) - Fixed an issue
 that caused zero division errors when all the values in a neighborhood are
-duplicate samples. Introduced a unit test that checks for the proper
+duplicate samples.
+
+- Introduced a unit test that checks for the proper
 behavior when duplicate samples are present.
 
 - to do:

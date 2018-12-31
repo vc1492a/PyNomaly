@@ -170,7 +170,9 @@ def test_small_cluster_size():
 
     with pytest.warns(UserWarning) as record:
         warnings.warn(
-            "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one).",
+            "Number of neighbors specified larger than smallest cluster. "
+            "Specify a number of neighbors smaller than the smallest cluster "
+            "size (observations in smallest cluster minus one).",
             UserWarning)
 
     loop.LocalOutlierProbability(X, n_neighbors=50, cluster_labels=cluster_labels)
@@ -179,7 +181,10 @@ def test_small_cluster_size():
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Number of neighbors specified larger than smallest cluster. Specify a number of neighbors smaller than the smallest cluster size (observations in smallest cluster minus one)."
+               0] == "Number of neighbors specified larger than smallest " \
+                     "cluster. Specify a number of neighbors smaller than " \
+                     "the smallest cluster size (observations in smallest " \
+                     "cluster minus one)."
 
 
 def test_stream_fit():
@@ -224,7 +229,8 @@ def test_stream_cluster():
 
     with pytest.warns(UserWarning) as record:
         warnings.warn(
-            "Stream approach does not support clustered data. Automatically refit using single cluster of points.",
+            "Stream approach does not support clustered data. Automatically "
+            "refit using single cluster of points.",
             UserWarning)
 
     clf.stream(X_test)
@@ -233,7 +239,8 @@ def test_stream_cluster():
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Stream approach does not support clustered data. Automatically refit using single cluster of points."
+               0] == "Stream approach does not support clustered data. " \
+                     "Automatically refit using single cluster of points."
 
 
 def test_stream_performance():
@@ -266,3 +273,12 @@ def test_stream_performance():
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
     assert_greater(0.35, rmse)
+
+
+# test for warning if distance and neighbor matrix aren't both provided
+# test to ensure only one (data or distance) is provided
+# test for warning if the distance and neighbor matrices do not have the same shape
+# test for if either one of the distance and neighbor matrices don't match the number of neighbors specified
+# test to ensure the distance matrix functionality is performing well (measure comparison between sklearn euclicdean and internal implementation) for standard implementation
+# test to ensure that the stream functionality works as intended when using distance matrix
+# test to ensure
