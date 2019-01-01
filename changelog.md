@@ -4,27 +4,31 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.6]()
+## 0.2.6
 ### Fixed
 - [Issue #25](https://github.com/vc1492a/PyNomaly/issues/25) - Fixed an issue
 that caused zero division errors when all the values in a neighborhood are
 duplicate samples.
 ### Changed
-- Changed the error behavior when attempting to use the stream approach
+- The error behavior when attempting to use the stream approach
 before calling `fit`. While the previous implementation resulted in a
 warning and system exit, PyNomaly now attempts to `fit` (assumes data or a
-distance matrix is available) and then later calls `stream`.
+distance matrix is available) and then later calls `stream`. If no
+data or distance matrix is provided, a warning is raised.
 ### Added
 - [Issue #24](https://github.com/vc1492a/PyNomaly/issues/24) - Added
-the ability to use one's on distance matrix,
-provided a neighbor index matrix is also provided. See the file
-`iris_dist_grid.py` for examples.
-- Unit tests to cover the issues and features covered
-in [24](https://github.com/vc1492a/PyNomaly/issues/24) and
+the ability to use one's own distance matrix,
+provided a neighbor index matrix is also provided. This ensures
+PyNomaly can be used with distances other than the euclidean.
+See the file `iris_dist_grid.py` for examples.
+- [Issue #23](https://github.com/vc1492a/PyNomaly/issues/23) - Added
+Python 3.7 to the tested distributions in Travis CI and passed tests.
+- Unit tests to monitor the issues and features covered
+in issues [24](https://github.com/vc1492a/PyNomaly/issues/24) and
 [25](https://github.com/vc1492a/PyNomaly/issues/25).
 
 
-## [0.2.5](https://github.com/vc1492a/PyNomaly/commit/1ff9bdad72948053c8fddb9b6a44eb6183dd4e49)
+## 0.2.5
 ### Fixed
 - [Issue #20](https://github.com/vc1492a/PyNomaly/issues/20) - Fixed
 a bug that inadvertently used global means of the probabilistic distance
@@ -38,7 +42,7 @@ This pull request addressed the issue noted above.
 use of missing values in the input data, as opposed to the soft enforcement
 (a simple user warning) used in the previous behavior.
 
-## [0.2.4](https://github.com/vc1492a/PyNomaly/commit/184e221438da6718ba85bb679027708ab9d3f4fd)
+## 0.2.4
 ### Fixed
 - [Issue #17](https://github.com/vc1492a/PyNomaly/issues/17) - Fixed
 a bug that allowed for a column of empty values in the primary data store.
@@ -46,13 +50,13 @@ a bug that allowed for a column of empty values in the primary data store.
 Fixed a bug that was not causing dependencies such as numpy to skip
 installation when installing PyNomaly via pip.
 
-## [0.2.3](https://github.com/vc1492a/PyNomaly/commit/75803b3ee801191574f4a91ed06b604a4e1b7142)
+## 0.2.3
 ### Fixed
 - [Issue #14](https://github.com/vc1492a/PyNomaly/issues/14) - Fixed an issue
 that was causing a ZeroDivisionError when the specified neighborhood size
 is larger than the total number of observations in the smallest cluster.
 
-## [0.2.2](https://github.com/vc1492a/PyNomaly/commit/e02c03599fed5dcc0db3dc6de70433e39f466656)
+## 0.2.2
 ### Changed
 - This implementation to align more closely with the specification of the
 approach in the original paper. The extent parameter now takes an integer
@@ -66,7 +70,7 @@ found in the `PyNomaly/tests` directory.
 - Code for the examples in the readme can now be found in the `examples` directory.
 - Additional information for parameter selection in the [readme](https://github.com/vc1492a/PyNomaly/blob/master/readme.md).
 
-## [0.2.1](https://github.com/vc1492a/PyNomaly/commit/bb62253b94b4a3683cf64455905092a6a29a2088)
+## 0.2.1
 ### Fixed
 - [Issue #10](https://github.com/vc1492a/PyNomaly/issues/10) - Fixed error on line
 142 which was causing the class to fail. More explicit examples
@@ -76,7 +80,7 @@ were also included in the readme for using numpy arrays.
 - An improvement to the Euclidean distance calculation by [MichaelSchreier](https://github.com/MichaelSchreier)
 which brings a over a 50% reduction in computation time.
 
-## [0.2.0](https://github.com/vc1492a/PyNomaly/commit/9e1996f08da3d151461adbb2b86c5d9447aaafa4)
+## 0.2.0
 ### Added
 - Added new functionality to PyNomaly by integrating a modified LoOP
 approach introduced by Hamlet et al. which can be used for streaming
@@ -84,17 +88,17 @@ data applications or in the case where computational expense is a concern.
 Data is first fit to a "training set", with any additional observations
 considered for outlierness against this initial set.
 
-## [0.1.8](https://github.com/vc1492a/PyNomaly/commit/da203acdb50a013667ba5e57dd2facc7a7e4b8a5)
+## 0.1.8
 ### Fixed
 - Fixed an issue which allowed the number of neighbors considered to exceed the number of observations. Added a check
 to ensure this is no longer possible.
 
-## [0.1.7](https://github.com/vc1492a/PyNomaly/commit/8df501ab5c5605873c2812f6d8fe8730e2586975)
+## 0.1.7
 ### Fixed
 - Fixed an issue inadvertently introduced in 0.1.6 that caused distance calculations to be incorrect, 
 thus resulting in incorrect LoOP values.  
 
-## [0.1.6](https://github.com/vc1492a/PyNomaly/commit/2526879b1f941c887eeb24a267b5ea010e20d5d7) - 2017-12-17
+## 0.1.6
 ### Fixed
 - Updated the distance calculation such that the euclidean distance calculation has been separated from 
 the main distance calculation function.
@@ -105,7 +109,7 @@ the main distance calculation function.
 be now be retrieved by calling .local_outlier_probabilities. See the readme for an example. 
 - Some private functions have been renamed. 
 
-## [0.1.5](https://github.com/vc1492a/PyNomaly/commit/d203c402dd657e8240365d538c723f831237326e) - 2017-07-30
+## 0.1.5
 ### Fixed
 - [Issue #4](https://github.com/vc1492a/PyNomaly/issues/4) - Separated parameter type checks 
 from checks for invalid parameter values.
@@ -114,7 +118,7 @@ from checks for invalid parameter values.
 - Fixed parameter check to ensure extent value is in the range (0., 1.] instead of [0, 1] (extent cannot be zero). 
 - [Issue #1](https://github.com/vc1492a/PyNomaly/issues/1) -  Added type check using @accepts decorator for cluster_labels.    
 
-## [0.1.4](https://github.com/vc1492a/PyNomaly/commit/8f5a640c7b7ecfd824113dbba77fff19cc153424) - 2017-06-29
+## 0.1.4
 ### Fixed
 - [Issue #3](https://github.com/vc1492a/PyNomaly/issues/3) - .fit() fails if the sum of squared distances sums to 0.
     - Added check to ensure the sum of square distances is greater than zero.
@@ -124,13 +128,13 @@ from checks for invalid parameter values.
 - Changed calculation of the probabilistic local outlier factor expected value to Numpy operation
     from base Python. 
 
-## [0.1.3](https://github.com/vc1492a/PyNomaly/commit/ae4692b6f2d0871130a02b9ee54049321b854524) - 2017-06-10
+## 0.1.3
 ### Fixed
 - Altered the distance matrix computation to return a triangular matrix instead of a 
 fully populated matrix. This was made to ensure no duplicate neighbors were present 
 in computing the neighborhood distance for each observation. 
 
-## [0.1.2](https://pypi.python.org/pypi?:action=display&name=PyNomaly&version=0.1.2) - 2017-06-01
+## 0.1.2
 ### Added
 - LICENSE.txt file of Apache License, Version 2.0.
 - setup.py, setup.cfg files configured for release to PyPi.

@@ -35,7 +35,7 @@ This Python 3 implementation uses Numpy and the formulas outlined in
 sto calculate the Local Outlier Probability of each sample.
 
 ## Dependencies
-- Python 3.4 - 3.6
+- Python 3.4 - 3.7
 - Numpy >= 1.12.0
 
 ## Quick Start
@@ -209,7 +209,7 @@ according to the distribution of each cluster. Which approach is suitable depend
 
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
 
-## Numpy Example
+## Using Numpy
 
 When using numpy, make sure to use 2-dimensional arrays in tabular format:
 
@@ -243,6 +243,35 @@ scores = loop.LocalOutlierProbability(data).fit().local_outlier_probabilities
 print(scores)
 ```
 
+## Specifying a Distance Matrix
+
+PyNomaly provides the ability to specify a distance matrix so that any
+distance metric can be used (a neighbor index matrix must also be provided).
+This can be useful when wanting to use a distance other than the euclidean.
+
+```python
+data = np.array([
+    [43.3, 30.2, 90.2],
+    [62.9, 58.3, 49.3],
+    [55.2, 56.2, 134.2],
+    [48.6, 80.3, 50.3],
+    [67.1, 60.0, 55.9],
+    [421.5, 90.3, 50.0]
+])
+
+neigh = NearestNeighbors(n_neighbors=3, metric='hamming')
+neigh.fit(data)
+d, idx = neigh.kneighbors(data, return_distance=True)
+
+m = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx, n_neighbors=3).fit()
+scores = m.local_outlier_probabilities
+```
+
+The below visualization shows the results by a few known distance metrics:
+
+**LoOP Scores by Distance Metric**
+![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_by_distance_metric.png)
+
 ## Streaming Data
 
 PyNomaly also contains an implementation of Hamlet et. al.'s modifications
@@ -254,8 +283,6 @@ called when calculating the score of the incoming streaming data due to the use 
 fit, such as the use of a global value for the expected value of the probabilistic distance. Despite the potential
 for increased error when compared to the standard approach, but it may be effective in streaming applications where
 refitting the standard approach over all points could be computationally expensive.
-
-### Example
 
 While the iris dataset is not streaming data, we'll use it in this example by taking the first 120 observations
 as training data and take the remaining 30 observations as a stream, scoring each observation

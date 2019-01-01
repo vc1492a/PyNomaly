@@ -421,11 +421,11 @@ class LocalOutlierProbability(object):
 
     def stream(self, x):
 
-        if self.Validate.no_cluster_labels(self) is False:
-            self.cluster_labels = np.array([0] * len(self.data))
+        if self.Validate.fit(self) is False:
             self.fit()
 
-        if self.Validate.fit(self) is False:
+        if self.Validate.no_cluster_labels(self) is False:
+            self.cluster_labels = np.array([0] * len(self.data))
             self.fit()
 
         point_vector = self.Validate.data(x)
