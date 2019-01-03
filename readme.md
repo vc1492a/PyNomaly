@@ -32,7 +32,7 @@ Ludwig-Maximilians University Munich - Institute for Informatics;
 
 This Python 3 implementation uses Numpy and the formulas outlined in
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf)
-sto calculate the Local Outlier Probability of each sample.
+to calculate the Local Outlier Probability of each sample.
 
 ## Dependencies
 - Python 3.4 - 3.7
