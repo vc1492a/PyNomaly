@@ -16,7 +16,8 @@ install:
   - python setup.py -q install
   - pip install coveralls
   - pip install pandas
-  - pip install pytest pytest-cov
+  - pip install pytest
+  - pip install "pytest-cov<=2.5.1"
   - pip install scikit-learn
   - pip install scipy
 # command to run tests
