@@ -18,7 +18,7 @@ threshold = 0.1
 color = np.where(scores > threshold, "white", "black")
 label_mask = np.where(scores > threshold)
 area = (20 * scores) ** 2
-plt.scatter(df['x'], df['y'], c=color, s=list(area), edgecolor='red', linewidth='1')
+plt.scatter(df['x'], df['y'], c=color, s=area.astype(float), edgecolor='red', linewidth=1)
 plt.scatter(df['x'], df['y'], c='black', s=3)
 for i in range(len(scores)):
     if scores[i] > threshold:
