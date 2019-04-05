@@ -300,16 +300,24 @@ class LocalOutlierProbability(object):
             for cluster_id in set(self._cluster_labels()):
                 indices = np.where(self._cluster_labels() == cluster_id)
                 clust_points_vector = self.points_vector.take(indices, axis=0)[0]
-                pairs = itertools.permutations(
+                pairs = itertools.combinations(
                     np.ndindex(clust_points_vector.shape[0]), 2)
                 for p in pairs:
                     d = self._euclidean(clust_points_vector[p[0]],
                                         clust_points_vector[p[1]])
                     idx = indices[0][p[0]]
-                    idx_max = np.argmax(distances[idx])
+                    idx_max = distances[idx].argmax()
+
                     if d < distances[idx][idx_max]:
                         distances[idx][idx_max] = d
                         indexes[idx][idx_max] = p[1][0]
+
+                    idx = indices[0][p[1]]
+                    idx_max = distances[idx].argmax()
+
+                    if d < distances[idx][idx_max]:
+                        distances[idx][idx_max] = d
+                        indexes[idx][idx_max] = p[0][0]
             self.distance_matrix = distances
             self.neighbor_matrix = indexes
         for vec, cluster_id in zip(range(self.distance_matrix.shape[0]),
@@ -325,7 +333,7 @@ class LocalOutlierProbability(object):
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
             cluster_distances = np.take(data_store[:, 1], indices).tolist()
-            ssd = np.sum(np.power(cluster_distances[0], 2), axis=1)
+            ssd = np.power(cluster_distances[0], 2).sum(axis=1)
             for i, j in zip(indices[0], ssd):
                 ssd_array[i] = j
         data_store = np.hstack((data_store, ssd_array))
@@ -352,8 +360,8 @@ class LocalOutlierProbability(object):
                                                  nbrhood).astype(float)
                 nbrhood_prob_distances_nonan = nbrhood_prob_distances[
                     np.logical_not(np.isnan(nbrhood_prob_distances))]
-                prob_set_distance_ev[index] = np.mean(
-                    nbrhood_prob_distances_nonan)
+                prob_set_distance_ev[index] = \
+                    nbrhood_prob_distances_nonan.mean()
         self.prob_distances_ev = prob_set_distance_ev
         data_store = np.hstack((data_store, prob_set_distance_ev))
         return data_store
@@ -373,10 +381,10 @@ class LocalOutlierProbability(object):
                                                  indices).astype(float)
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
-            prob_local_outlier_factor_ev_dict[cluster_id] = np.sum(
-                np.power(
-                    prob_local_outlier_factors_nonan, 2)
-            ) / float(prob_local_outlier_factors_nonan.size)
+            prob_local_outlier_factor_ev_dict[cluster_id] = (
+                np.power(prob_local_outlier_factors_nonan, 2).sum() /
+                float(prob_local_outlier_factors_nonan.size)
+            )
         data_store = np.hstack(
             (data_store, np.array([[prob_local_outlier_factor_ev_dict[x] for x
                                     in data_store[:, 0].tolist()]]).T))
@@ -411,7 +419,7 @@ class LocalOutlierProbability(object):
         store = self._prob_local_outlier_factors(store)
         store = self._prob_local_outlier_factors_ev(store)
         store = self._norm_prob_local_outlier_factors(store)
-        self.norm_prob_local_outlier_factor = np.max(store[:, 9])
+        self.norm_prob_local_outlier_factor = store[:, 9].max()
         store = self._local_outlier_probabilities(store)
         self.local_outlier_probabilities = store[:, 10]
 
@@ -439,16 +447,16 @@ class LocalOutlierProbability(object):
                 d = self._euclidean(matrix[p, :], point_vector)
             else:
                 d = point_vector
-            idx_max = np.argmax(distances[0])
+            idx_max = distances[0].argmax()
             if d < distances[0][idx_max]:
                 distances[0][idx_max] = d
 
-        ssd = np.sum(np.power(distances, 2))
+        ssd = np.power(distances, 2).sum()
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
         prob_dist = self._prob_distance(self.extent, std_dist)
         plof = self._prob_outlier_factor(prob_dist,
                                          np.array(
-                                             np.mean(self.prob_distances_ev))
+                                            self.prob_distances_ev.mean())
                                          )
         loop = self._local_outlier_probability(
             plof, self.norm_prob_local_outlier_factor)
