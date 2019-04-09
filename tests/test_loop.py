@@ -5,21 +5,17 @@ from PyNomaly import loop
 
 import numpy as np
 from numpy.testing import assert_array_equal
-
+import pandas as pd
 import pytest
-
+from sklearn.datasets import load_iris
 from sklearn.metrics import roc_auc_score
-
+from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_warns
-
-from sklearn.datasets import load_iris
-from sklearn.neighbors import NearestNeighbors
-
 import warnings
 
 # load the iris dataset
@@ -38,6 +34,19 @@ def test_loop():
 
     # Test LocalOutlierProbability:
     clf = loop.LocalOutlierProbability(X, n_neighbors=5)
+    score = clf.fit().local_outlier_probabilities
+    share_outlier = 2. / 8.
+    predictions = [-1 if s > share_outlier else 1 for s in score]
+    assert_array_equal(predictions, 6 * [1] + 2 * [-1])
+
+    # Assert smallest outlier score is greater than largest inlier score:
+    assert_greater(np.min(score[-2:]), np.max(score[:-2]))
+
+    # Test the DataFrame functionality
+    X_df = pd.DataFrame(X)
+
+    # Test LocalOutlierProbability:
+    clf = loop.LocalOutlierProbability(X_df, n_neighbors=5)
     score = clf.fit().local_outlier_probabilities
     share_outlier = 2. / 8.
     predictions = [-1 if s > share_outlier else 1 for s in score]
@@ -80,12 +89,9 @@ def test_input_nodata():
     X_test = np.r_[X, X_outliers]
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "Data or a distance matrix must be provided.",
-            UserWarning)
 
-    # attempt to fit loop without data or a distance matrix
-    loop.LocalOutlierProbability(n_neighbors=X_test.shape[0] - 1)
+        # attempt to fit loop without data or a distance matrix
+        loop.LocalOutlierProbability(n_neighbors=X_test.shape[0] - 1)
 
     # check that only one warning was raised
     assert len(record) == 1
@@ -94,31 +100,68 @@ def test_input_nodata():
                0] == "Data or a distance matrix must be provided."
 
 
+def test_bad_input_argument():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X_test = np.r_[X, X_outliers]
+
+    with pytest.warns(UserWarning) as record:
+
+        # attempt to fit loop without data or a distance matrix
+        loop.LocalOutlierProbability(X, n_neighbors=str(X_test.shape[0] - 1))
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "Argument 'n_neighbors' is not of type (<class 'int'>, " \
+                     "<class 'numpy.integer'>)."
+
+
+def test_neighbor_zero():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(120, 2)
+
+    clf = loop.LocalOutlierProbability(X, n_neighbors=0)
+
+    with pytest.warns(UserWarning) as record:
+
+        # attempt to fit loop with a 0 neighbor count
+        clf.fit()
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    assert record[0].message.args[
+               0] == "n_neighbors must be greater than 0. Fit with 10 instead."
+
+
 def test_input_distonly():
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X)
-    d, idx = neigh.kneighbors(X, return_distance=True)
+    d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "A neighbor index matrix must be provided when using "
-            "a distance matrix.",
-            UserWarning)
 
-    # attempt to fit loop with only a distance matrix and no neighbor matrix
-    loop.LocalOutlierProbability(distance_matrix=d)
+        # attempt to fit loop with only a distance matrix and no neighbor matrix
+        loop.LocalOutlierProbability(distance_matrix=d)
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "A neighbor index matrix must be provided when using " \
-                     "a distance matrix."
+               0] == "A neighbor index matrix and distance matrix must both " \
+                     "be provided when not using raw input data."
 
 
 def test_input_neighboronly():
@@ -127,25 +170,20 @@ def test_input_neighboronly():
     X = 0.3 * rng.randn(120, 2)
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X)
-    d, idx = neigh.kneighbors(X, return_distance=True)
+    d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "A neighbor index matrix must be provided when using "
-            "a distance matrix.",
-            UserWarning)
 
-    # attempt to fit loop with only a distance matrix and no neighbor matrix
-    loop.LocalOutlierProbability(neighbor_matrix=idx)
+        # attempt to fit loop with only a distance matrix and no neighbor matrix
+        loop.LocalOutlierProbability(neighbor_matrix=idx)
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "A neighbor index matrix must be provided when using " \
-                     "a distance matrix."
+               0] == "Data or a distance matrix must be provided."
 
 
 def test_input_too_many():
@@ -154,18 +192,14 @@ def test_input_too_many():
     X = 0.3 * rng.randn(120, 2)
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X)
-    d, idx = neigh.kneighbors(X, return_distance=True)
+    d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "Only one of the following may be provided: data or a "
-            "distance matrix (not both).",
-            UserWarning)
 
-    # attempt to fit loop with only a distance matrix and no neighbor matrix
-    loop.LocalOutlierProbability(X, distance_matrix=d, neighbor_matrix=idx)
+        # attempt to fit loop with only a distance matrix and no neighbor matrix
+        loop.LocalOutlierProbability(X, distance_matrix=d, neighbor_matrix=idx)
 
     # check that only one warning was raised
     assert len(record) == 1
@@ -175,29 +209,28 @@ def test_input_too_many():
                      "distance matrix (not both)."
 
 
-def test_input_shape_mismatch():
+def test_distance_neighbor_shape_mismatch():
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X)
-    d, idx = neigh.kneighbors(X, return_distance=True)
+    d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     # generate distance and neighbor indices of a different shape
-    neigh_2 = NearestNeighbors(n_neighbors=5, metric='euclidean')
+    neigh_2 = NearestNeighbors(metric='euclidean')
     neigh_2.fit(X)
-    d_2, idx_2 = neigh.kneighbors(X, return_distance=True)
+    d_2, idx_2 = neigh.kneighbors(X, n_neighbors=5, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "The shape of the distance and neighbor "
-            "index matrices must match.",
-            UserWarning)
 
-    # attempt to fit loop with only a distance matrix and no neighbor matrix
-    loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx_2)
+        # attempt to fit loop with a mismatch in shapes
+        loop.LocalOutlierProbability(
+            distance_matrix=d,
+            neighbor_matrix=idx_2,
+            n_neighbors=5)
 
     # check that only one warning was raised
     assert len(record) == 1
@@ -213,20 +246,16 @@ def test_input_neighbor_mismatch():
     X = 0.3 * rng.randn(120, 2)
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=5, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X)
-    d, idx = neigh.kneighbors(X, return_distance=True)
+    d, idx = neigh.kneighbors(X, n_neighbors=5, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "The shape of the distance or "
-            "neighbor index matrix does not "
-            "match the number of neighbors "
-            "specified.",
-            UserWarning)
 
-    # attempt to fit loop with only a distance matrix and no neighbor matrix
-    loop.LocalOutlierProbability(distance_matrix=d)
+        # attempt to fit loop with a neighbor size mismatch
+        loop.LocalOutlierProbability(distance_matrix=d,
+                                     neighbor_matrix=idx,
+                                     n_neighbors=10)
 
     # check that only one warning was raised
     assert len(record) == 1
@@ -244,9 +273,9 @@ def test_loop_dist_matrix():
     X = 0.3 * rng.randn(120, 2)
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X)
-    d, idx = neigh.kneighbors(X, return_distance=True)
+    d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     # fit loop using data and distance matrix
     clf1 = loop.LocalOutlierProbability(X)
@@ -357,19 +386,20 @@ def test_small_cluster_size():
     b = [1] * 18
     cluster_labels = a + b
 
-    with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "Number of neighbors specified larger than smallest cluster. "
-            "Specify a number of neighbors smaller than the smallest cluster "
-            "size (observations in smallest cluster minus one).",
-            UserWarning)
+    clf = loop.LocalOutlierProbability(
+        X,
+        n_neighbors=50,
+        cluster_labels=cluster_labels)
 
-    loop.LocalOutlierProbability(X, n_neighbors=50, cluster_labels=cluster_labels)
+    with pytest.raises(SystemExit) as record_a, pytest.warns(UserWarning) as record_b:
+        clf.fit()
+
+    assert record_a.type == SystemExit
 
     # check that only one warning was raised
-    assert len(record) == 1
+    assert len(record_b) == 1
     # check that the message matches
-    assert record[0].message.args[
+    assert record_b[0].message.args[
                0] == "Number of neighbors specified larger than smallest " \
                      "cluster. Specify a number of neighbors smaller than " \
                      "the smallest cluster size (observations in smallest " \
@@ -391,12 +421,8 @@ def test_stream_fit():
     clf = loop.LocalOutlierProbability(X_train)
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "Must fit on historical data by calling fit() prior to "
-            "calling stream(x).",
-            UserWarning)
 
-    clf.stream(X_test)
+        clf.stream(X_test)
 
     # check that only one warning was raised
     assert len(record) == 1
@@ -419,9 +445,9 @@ def test_stream_distance():
     X_test = X[100:140]
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(n_neighbors=10, metric='euclidean')
+    neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_train)
-    d, idx = neigh.kneighbors(X_train, return_distance=True)
+    d, idx = neigh.kneighbors(X_train, n_neighbors=10, return_distance=True)
 
     # Fit the models in standard and distance matrix form
     m = loop.LocalOutlierProbability(X_train).fit()
@@ -442,7 +468,7 @@ def test_stream_distance():
 
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((X_test_scores - X_test_dist_scores) ** 2).mean(axis=None))
-    assert_greater(0.05, rmse)
+    assert_greater(0.075, rmse)
 
 
 def test_stream_cluster():
@@ -466,12 +492,8 @@ def test_stream_cluster():
                                        cluster_labels=cluster_labels).fit()
 
     with pytest.warns(UserWarning) as record:
-        warnings.warn(
-            "Stream approach does not support clustered data. Automatically "
-            "refit using single cluster of points.",
-            UserWarning)
 
-    clf.stream(X_test)
+        clf.stream(X_test)
 
     # check that only one warning was raised
     assert len(record) == 1

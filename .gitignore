@@ -11,3 +11,6 @@ build
 htmlcov/
 *.egg
 *.pyc
+.coverage
+*.coverage.*
+.coveragerc

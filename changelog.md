@@ -4,6 +4,19 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.2.7
+### Changed
+- Integrated various performance enhancements as described in 
+[pull request #30](https://github.com/vc1492a/PyNomaly/pull/30) that 
+increase PyNomaly's performance by at least up to 50% in some cases.
+- The Validate classes functions from public to private, as they are only 
+used in validating specification and data input into PyNomaly.
+### Added
+- [Issue #27](https://github.com/vc1492a/PyNomaly/issues/27) - Added 
+docstring to key functions in PyNomaly to ease future development and 
+provide additional information.
+- Additional unit tests to raise code coverage from 96% to 100%.
+
 ## 0.2.6
 ### Fixed
 - [Issue #25](https://github.com/vc1492a/PyNomaly/issues/25) - Fixed an issue
