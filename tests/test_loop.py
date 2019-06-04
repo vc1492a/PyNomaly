@@ -5,6 +5,7 @@ from PyNomaly import loop
 
 import numpy as np
 from numpy.testing import assert_array_equal
+import os
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
@@ -16,7 +17,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_warns
-import warnings
+import time
 
 # load the iris dataset
 # and randomly permute it
@@ -25,6 +26,23 @@ iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
+
+
+def test_loop_numba():
+    # disable numba and get a pure Python speed
+    os.environ["NUMBA_DISABLE_JIT"] = "1"
+    r1 = _test_loop_numba()
+
+    # re-enable, run the first time (compilation)
+    os.environ["NUMBA_DISABLE_JIT"] = "0"
+    _test_loop_numba()
+
+    # now run the second time once it's been compiled and check the difference
+    r2 = _test_loop_numba()
+    perc_change = (r2 - r1) / r1
+
+    # assert at least a 20% speed improvement is achieved
+    assert perc_change <= -0.2
 
 
 def test_loop():
@@ -89,7 +107,6 @@ def test_input_nodata():
     X_test = np.r_[X, X_outliers]
 
     with pytest.warns(UserWarning) as record:
-
         # attempt to fit loop without data or a distance matrix
         loop.LocalOutlierProbability(n_neighbors=X_test.shape[0] - 1)
 
@@ -110,8 +127,7 @@ def test_bad_input_argument():
     X_test = np.r_[X, X_outliers]
 
     with pytest.warns(UserWarning) as record:
-
-        # attempt to fit loop without data or a distance matrix
+        # attempt to fit loop with a string input for n_neighbors
         loop.LocalOutlierProbability(X, n_neighbors=str(X_test.shape[0] - 1))
 
     # check that only one warning was raised
@@ -130,7 +146,6 @@ def test_neighbor_zero():
     clf = loop.LocalOutlierProbability(X, n_neighbors=0)
 
     with pytest.warns(UserWarning) as record:
-
         # attempt to fit loop with a 0 neighbor count
         clf.fit()
 
@@ -152,8 +167,7 @@ def test_input_distonly():
     d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-
-        # attempt to fit loop with only a distance matrix and no neighbor matrix
+        # attempt to fit loop with a distance matrix and no neighbor matrix
         loop.LocalOutlierProbability(distance_matrix=d)
 
     # check that only one warning was raised
@@ -175,8 +189,7 @@ def test_input_neighboronly():
     d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-
-        # attempt to fit loop with only a distance matrix and no neighbor matrix
+        # attempt to fit loop with a neighbor matrix and no distance matrix
         loop.LocalOutlierProbability(neighbor_matrix=idx)
 
     # check that only one warning was raised
@@ -197,8 +210,7 @@ def test_input_too_many():
     d, idx = neigh.kneighbors(X, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-
-        # attempt to fit loop with only a distance matrix and no neighbor matrix
+        # attempt to fit loop with data and a distance matrix
         loop.LocalOutlierProbability(X, distance_matrix=d, neighbor_matrix=idx)
 
     # check that only one warning was raised
@@ -225,7 +237,6 @@ def test_distance_neighbor_shape_mismatch():
     d_2, idx_2 = neigh.kneighbors(X, n_neighbors=5, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-
         # attempt to fit loop with a mismatch in shapes
         loop.LocalOutlierProbability(
             distance_matrix=d,
@@ -251,7 +262,6 @@ def test_input_neighbor_mismatch():
     d, idx = neigh.kneighbors(X, n_neighbors=5, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
-
         # attempt to fit loop with a neighbor size mismatch
         loop.LocalOutlierProbability(distance_matrix=d,
                                      neighbor_matrix=idx,
@@ -367,10 +377,17 @@ def test_missing_values():
     X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
     clf = loop.LocalOutlierProbability(X, n_neighbors=3)
 
-    with pytest.raises(SystemExit) as record:
+    with pytest.raises(SystemExit) as record_a, pytest.warns(
+            UserWarning) as record_b:
         clf.fit()
 
-    assert record.type == SystemExit
+    assert record_a.type == SystemExit
+
+    # check that only one warning was raised
+    assert len(record_b) == 1
+    # check that the message matches
+    assert record_b[0].message.args[
+               0] == "Method does not support missing values in input data."
 
 
 def test_small_cluster_size():
@@ -391,7 +408,8 @@ def test_small_cluster_size():
         n_neighbors=50,
         cluster_labels=cluster_labels)
 
-    with pytest.raises(SystemExit) as record_a, pytest.warns(UserWarning) as record_b:
+    with pytest.raises(SystemExit) as record_a, pytest.warns(
+            UserWarning) as record_b:
         clf.fit()
 
     assert record_a.type == SystemExit
@@ -421,15 +439,12 @@ def test_stream_fit():
     clf = loop.LocalOutlierProbability(X_train)
 
     with pytest.warns(UserWarning) as record:
-
         clf.stream(X_test)
 
-    # check that only one warning was raised
-    assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-               0] == "Must fit on historical data by calling fit() prior to " \
-                     "calling stream(x)."
+    messages = [i.message.args[0] for i in record]
+    assert "Must fit on historical data by calling fit() prior to " \
+           "calling stream(x)." in messages
 
 
 def test_stream_distance():
@@ -457,7 +472,7 @@ def test_stream_distance():
     # Collect the scores
     X_test_scores = []
     for i in range(X_test.shape[0]):
-        X_test_scores.append(m.stream(X_test[i]))
+        X_test_scores.append(m.stream(np.array(X_test[i])))
     X_test_scores = np.array(X_test_scores)
 
     X_test_dist_scores = []
@@ -492,7 +507,6 @@ def test_stream_cluster():
                                        cluster_labels=cluster_labels).fit()
 
     with pytest.warns(UserWarning) as record:
-
         clf.stream(X_test)
 
     # check that only one warning was raised
@@ -533,3 +547,37 @@ def test_stream_performance():
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
     assert_greater(0.35, rmse)
+
+
+def _test_loop_numba():
+    # Generate train/test data
+    rng = check_random_state(2)
+    X = 0.3 * rng.randn(1000, 2)
+
+    # Generate some abnormal novel observations
+    X_outliers = rng.uniform(low=-4, high=4, size=(200, 2))
+    X_test = np.r_[X, X_outliers]
+
+    # start timer
+    t1 = time.time()
+
+    # fit the model
+    clf = loop.LocalOutlierProbability(X_test, n_neighbors=X_test.shape[0] - 1)
+
+    # predict scores (the lower, the more normal)
+    clf.fit().local_outlier_probabilities
+
+    # end timer
+    t2 = time.time()
+
+    # get the time
+    spread = t2 - t1
+
+    return spread
+
+# TODO: wheels and setup.py if wheel fails
+
+# TODO: create some fixtures and classes for the unit tests
+# TODO: pytest fixtures and type hints to clean up unit testing
+
+# TODO: pynomaly speed comparison repo. use travis to run analysis code with various versions
