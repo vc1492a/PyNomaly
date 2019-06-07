@@ -1,4 +1,4 @@
-coveralls=>1.8.0
+coveralls>=1.8.0
 pandas>=0.24.2
 pytest>=4.6.2
 pytest-cov>=2.7.1
