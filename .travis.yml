@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 
 # some configuration for llvm (numba)
@@ -7,15 +8,9 @@ env:
 
 # Existing Python versions
 python:
-  - 3.5
-  - 3.6
-
-# Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
-matrix:
-  include:
-    - python: 3.7
-      sudo: true
-
+  - "3.5"
+  - "3.6"
+  - "3.7"
 
 # command to install dependencies
 install:
