@@ -1,26 +1,32 @@
 language: python
+
+# some configuration for llvm (numba)
+env:
+  global:
+    PIP_PREFER_BINARY=true # https://github.com/numba/llvmlite/issues/471
+
 # Existing Python versions
 python:
   - 3.5
   - 3.6
+
 # Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
 matrix:
   include:
     - python: 3.7
-      dist: xenial
       sudo: true
+
+
 # command to install dependencies
 install:
   - pip install -r requirements.txt
   - python setup.py -q install
-  - pip install coveralls
-  - pip install pandas
-  - pip install pytest
-  - pip install pytest-cov
-  - pip install scikit-learn
-  - pip install scipy
-# command to run tests
+  - pip install -r requirements_ci.txt
+
+# run tests
 script:
   - python -m pytest --cov=PyNomaly
+
+# report results
 after_success:
   - coveralls
