@@ -81,7 +81,7 @@ def test_loop_numba(X_n1000):
 
     # assert at least a 20% speed improvement is achieved
     logging.info(str(perc_change) + '% speed improvement achieved with numba JIT compilation.')
-    assert perc_change <= -0.05
+    assert perc_change <= -0.035
 
 
 def _test_loop_numba(X_n140_outliers):

@@ -14,7 +14,7 @@ time for that specific calculation by approximately 75%.
 - Raised the minimum numpy version requirement from 1.12.0 to 1.16.3.
 ### Added 
 - Numba just in time (JIT) compilation to improve the speed of some 
-of the core functionality, consistently achieving a further 5% reduction 
+of the core functionality, consistently achieving a further 3.5% reduction 
 in compute time when _n_ = 1000. Future optimizations could yield 
 further reductions in computation time. For now, requiring a strict numba version of `0.43.1` 
 in anticipation of [this deprecation](http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-reflection-for-list-and-set-types) - 
