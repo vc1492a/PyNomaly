@@ -1,5 +1,5 @@
 import itertools
-from math import erf
+from math import erf, sqrt
 from numba import jit
 import numpy as np
 import sys
@@ -324,7 +324,7 @@ class LocalOutlierProbability(object):
     """
 
     @staticmethod
-    @jit
+    @jit(nopython=True)
     def _standard_distance(cardinality: float, sum_squared_distance: float) \
             -> float:
         """
@@ -333,13 +333,13 @@ class LocalOutlierProbability(object):
         :param sum_squared_distance: the sum squared distance between all
         neighbors of the input observation.
         :return: the standard distance.
-        """
-        division_result = np.divide(sum_squared_distance, cardinality).tolist()
-        st_dist = np.sqrt(division_result)
+        # """
+        division_result = sum_squared_distance / cardinality
+        st_dist = sqrt(division_result)
         return st_dist
 
     @staticmethod
-    @jit
+    @jit(nopython=True)
     def _prob_distance(extent: int, standard_distance: float) -> float:
         """
         Calculates the probabilistic distance of an observation.
@@ -351,7 +351,6 @@ class LocalOutlierProbability(object):
         return extent * standard_distance
 
     @staticmethod
-    @jit
     def _prob_outlier_factor(probabilistic_distance: np.ndarray, ev_prob_dist:
                              np.ndarray) -> np.ndarray:
         """
@@ -369,10 +368,10 @@ class LocalOutlierProbability(object):
             return result
 
     @staticmethod
-    @jit
+    @jit(nopython=True)
     def _norm_prob_outlier_factor(extent: float,
-                                  ev_probabilistic_outlier_factor: np.ndarray) \
-            -> np.ndarray:
+                                  ev_probabilistic_outlier_factor: list) \
+            -> list:
         """
         Calculates the normalized probabilistic outlier factor of an
         observation.
@@ -381,10 +380,12 @@ class LocalOutlierProbability(object):
         outlier factor of the input observation.
         :return: the normalized probabilistic outlier factor.
         """
-        return extent * np.sqrt(ev_probabilistic_outlier_factor.tolist())
+        npofs = []
+        for i in ev_probabilistic_outlier_factor:
+            npofs.append(extent * sqrt(i))
+        return npofs
 
     @staticmethod
-    @jit
     def _local_outlier_probability(plof_val: np.ndarray, nplof_val: np.ndarray) \
             -> np.ndarray:
         """
@@ -432,7 +433,6 @@ class LocalOutlierProbability(object):
         return np.array(self.cluster_labels)
 
     @staticmethod
-    @jit
     def _euclidean(vector1: np.ndarray, vector2: np.ndarray) -> np.ndarray:
         """
         Calculates the euclidean distance between two observations in the
@@ -444,7 +444,6 @@ class LocalOutlierProbability(object):
         diff = vector1 - vector2
         return np.dot(diff, diff) ** 0.5
 
-    @jit
     def _assign_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Takes a distance matrix, produced by _distances or provided through
@@ -462,7 +461,6 @@ class LocalOutlierProbability(object):
             data_store[vec][2] = self.neighbor_matrix[vec]
         return data_store
 
-    @jit
     def _distances(self):
         """
         Provides the distances between each observation and it's closest
@@ -501,7 +499,6 @@ class LocalOutlierProbability(object):
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
 
-    @jit
     def _ssd(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the sum squared distance between neighbors for each
@@ -533,11 +530,12 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        cardinality = np.array([self.n_neighbors] * self._n_observations())
-        return np.hstack(
-            (data_store,
-             np.array([np.apply_along_axis(self._standard_distance, 0,
-                                           cardinality, data_store[:, 3])]).T))
+        cardinality = [self.n_neighbors] * self._n_observations()
+        vals = data_store[:, 3].tolist()
+        std_distances = []
+        for c, v in zip(cardinality, vals):
+            std_distances.append(self._standard_distance(c, v))
+        return np.hstack((data_store, np.array([std_distances]).T))
 
     def _prob_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
@@ -548,10 +546,11 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        return np.hstack((data_store, np.array(
-            [self._prob_distance(self.extent, data_store[:, 4])]).T))
+        prob_distances = []
+        for i in range(data_store[:, 4].shape[0]):
+            prob_distances.append(self._prob_distance(self.extent, data_store[:, 4][i]))
+        return np.hstack((data_store, np.array([prob_distances]).T))
 
-    @jit
     def _prob_distances_ev(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the expected value of the probabilistic distance for
@@ -629,7 +628,7 @@ class LocalOutlierProbability(object):
         each observation.
         """
         return np.hstack((data_store, np.array([self._norm_prob_outlier_factor(
-            self.extent, data_store[:, 8])]).T))
+            self.extent, data_store[:, 8].tolist())]).T))
 
     def _local_outlier_probabilities(self, data_store: np.ndarray) -> np.ndarray:
         """
@@ -687,7 +686,6 @@ class LocalOutlierProbability(object):
 
         return self
 
-    @jit
     def stream(self, x: np.ndarray) -> np.ndarray:
 
         """
