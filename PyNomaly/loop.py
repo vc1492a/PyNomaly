@@ -75,7 +75,7 @@ class LocalOutlierProbability(object):
                 return points_vector
             else:
                 warnings.warn(
-                    "Provided data or distance matrix must be in ndarray " 
+                    "Provided data or distance matrix must be in ndarray "
                     "or DataFrame.",
                     UserWarning)
                 if isinstance(obj, list):
@@ -245,6 +245,7 @@ class LocalOutlierProbability(object):
     """
     Decorators.
     """
+
     def accepts(*types):
         """
         A decorator that facilitates a form of type checking for the inputs
@@ -254,6 +255,7 @@ class LocalOutlierProbability(object):
         in __init__.
         :return: a decorator.
         """
+
         def decorator(f):
             assert len(types) == f.__code__.co_argcount
 
@@ -352,7 +354,7 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _prob_outlier_factor(probabilistic_distance: np.ndarray, ev_prob_dist:
-                             np.ndarray) -> np.ndarray:
+    np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic outlier factor of an observation.
         :param probabilistic_distance: the probabilistic distance of the
@@ -554,7 +556,8 @@ class LocalOutlierProbability(object):
         """
         prob_distances = []
         for i in range(data_store[:, 4].shape[0]):
-            prob_distances.append(self._prob_distance(self.extent, data_store[:, 4][i]))
+            prob_distances.append(
+                self._prob_distance(self.extent, data_store[:, 4][i]))
         return np.hstack((data_store, np.array([prob_distances]).T))
 
     @jit(nopython=False)
@@ -583,7 +586,8 @@ class LocalOutlierProbability(object):
         data_store = np.hstack((data_store, prob_set_distance_ev))
         return data_store
 
-    def _prob_local_outlier_factors(self, data_store: np.ndarray) -> np.ndarray:
+    def _prob_local_outlier_factors(self,
+                                    data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic local outlier factor for each
         observation in the input data.
@@ -598,7 +602,8 @@ class LocalOutlierProbability(object):
                                            data_store[:, 5],
                                            data_store[:, 6])]).T))
 
-    def _prob_local_outlier_factors_ev(self, data_store: np.ndarray) -> np.ndarray:
+    def _prob_local_outlier_factors_ev(self,
+                                       data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the expected value of the probabilistic local outlier factor
         for each observation in the input data with respect to the cluster the
@@ -616,8 +621,8 @@ class LocalOutlierProbability(object):
             prob_local_outlier_factors_nonan = prob_local_outlier_factors[
                 np.logical_not(np.isnan(prob_local_outlier_factors))]
             prob_local_outlier_factor_ev_dict[cluster_id] = (
-                np.power(prob_local_outlier_factors_nonan, 2).sum() /
-                float(prob_local_outlier_factors_nonan.size)
+                    np.power(prob_local_outlier_factors_nonan, 2).sum() /
+                    float(prob_local_outlier_factors_nonan.size)
             )
         data_store = np.hstack(
             (data_store, np.array([[prob_local_outlier_factor_ev_dict[x] for x
@@ -637,7 +642,8 @@ class LocalOutlierProbability(object):
         return np.hstack((data_store, np.array([self._norm_prob_outlier_factor(
             self.extent, data_store[:, 8].tolist())]).T))
 
-    def _local_outlier_probabilities(self, data_store: np.ndarray) -> np.ndarray:
+    def _local_outlier_probabilities(self,
+                                     data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the local outlier probability for each observation in the
         input data.
@@ -735,7 +741,7 @@ class LocalOutlierProbability(object):
         prob_dist = self._prob_distance(self.extent, std_dist)
         plof = self._prob_outlier_factor(np.array(prob_dist),
                                          np.array(
-                                            self.prob_distances_ev.mean())
+                                             self.prob_distances_ev.mean())
                                          )
         loop = self._local_outlier_probability(
             plof, self.norm_prob_local_outlier_factor)
