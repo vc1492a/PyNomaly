@@ -402,7 +402,7 @@ class LocalOutlierProbability(object):
         else:
             return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.))))
 
-    def _n_observations(self):
+    def _n_observations(self) -> int:
         """
         Calculates the number of observations in the data.
         :return: the number of observations in the input data.
@@ -411,7 +411,7 @@ class LocalOutlierProbability(object):
             return len(self.data)
         return len(self.distance_matrix)
 
-    def _store(self):
+    def _store(self) -> np.ndarray:
         """
         Initializes the storage matrix that includes the input value,
         cluster labels, local outlier probability, etc. for the input data.
@@ -419,7 +419,7 @@ class LocalOutlierProbability(object):
         """
         return np.empty([self._n_observations(), 3], dtype=object)
 
-    def _cluster_labels(self):
+    def _cluster_labels(self) -> np.ndarray:
         """
         Returns a numpy array of cluster labels that corresponds to the
         input labels or that is an array of all 0 values to indicate all
@@ -464,7 +464,7 @@ class LocalOutlierProbability(object):
         return data_store
 
     @jit(nopython=False)
-    def _distances(self):
+    def _distances(self) -> None:
         """
         Provides the distances between each observation and it's closest
         neighbors. When input data is provided, calculates the euclidean
@@ -656,7 +656,7 @@ class LocalOutlierProbability(object):
     Public methods
     """
 
-    def fit(self):
+    def fit(self) -> 'LocalOutlierProbability':
 
         """
         Calculates the local outlier probability for each observation in the
