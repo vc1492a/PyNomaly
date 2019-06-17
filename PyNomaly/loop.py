@@ -433,6 +433,7 @@ class LocalOutlierProbability(object):
         return np.array(self.cluster_labels)
 
     @staticmethod
+    @jit(nopython=False)
     def _euclidean(vector1: np.ndarray, vector2: np.ndarray) -> np.ndarray:
         """
         Calculates the euclidean distance between two observations in the
@@ -444,6 +445,7 @@ class LocalOutlierProbability(object):
         diff = vector1 - vector2
         return np.dot(diff, diff) ** 0.5
 
+    @jit(nopython=False)
     def _assign_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Takes a distance matrix, produced by _distances or provided through
@@ -461,6 +463,7 @@ class LocalOutlierProbability(object):
             data_store[vec][2] = self.neighbor_matrix[vec]
         return data_store
 
+    @jit(nopython=False)
     def _distances(self):
         """
         Provides the distances between each observation and it's closest
@@ -499,6 +502,7 @@ class LocalOutlierProbability(object):
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
 
+    @jit(nopython=False)
     def _ssd(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the sum squared distance between neighbors for each
@@ -519,6 +523,7 @@ class LocalOutlierProbability(object):
         data_store = np.hstack((data_store, ssd_array))
         return data_store
 
+    @jit(nopython=False)
     def _standard_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculated the standard distance for each observation in the input
@@ -537,6 +542,7 @@ class LocalOutlierProbability(object):
             std_distances.append(self._standard_distance(c, v))
         return np.hstack((data_store, np.array([std_distances]).T))
 
+    @jit(nopython=False)
     def _prob_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic distance for each observation in the
@@ -551,6 +557,7 @@ class LocalOutlierProbability(object):
             prob_distances.append(self._prob_distance(self.extent, data_store[:, 4][i]))
         return np.hstack((data_store, np.array([prob_distances]).T))
 
+    @jit(nopython=False)
     def _prob_distances_ev(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the expected value of the probabilistic distance for
