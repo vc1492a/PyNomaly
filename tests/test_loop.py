@@ -6,7 +6,6 @@ from PyNomaly import loop
 import logging
 import numpy as np
 from numpy.testing import assert_array_equal
-import os
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
@@ -18,7 +17,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_warns
 import sys
-import time
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -29,10 +27,6 @@ iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
-
-
-# flag to turn on unit tests which test numba performance improvement
-TEST_SPEED = True
 
 
 # fixtures
@@ -66,49 +60,6 @@ def X_n1000():
     rng = check_random_state(2)
     X = 0.3 * rng.randn(1000, 2)
     return X
-
-
-if TEST_SPEED:
-
-    def test_loop_numba(X_n1000):
-
-        # disable numba and get a pure Python speed
-        os.environ["NUMBA_DISABLE_JIT"] = "1"
-        r1 = _test_loop_numba(X_n1000)
-
-        # re-enable, run the first time (compilation)
-        os.environ["NUMBA_DISABLE_JIT"] = "0"
-        _test_loop_numba(X_n1000)
-
-        # now run the second time once it's been compiled and check the difference
-        r2 = _test_loop_numba(X_n1000)
-        perc_change = (r2 - r1) / r1
-
-        # assert at least a 20% speed improvement is achieved
-        logging.info(str(perc_change) + '% speed improvement achieved with numba JIT compilation.')
-        assert perc_change <= -0.2
-
-
-    def _test_loop_numba(X_n140_outliers):
-
-        # start timer
-        t1 = time.time()
-
-        # fit the model
-        clf = loop.LocalOutlierProbability(X_n140_outliers,
-                                           n_neighbors=X_n140_outliers.shape[0] - 1
-                                           )
-
-        # predict scores (the lower, the more normal)
-        clf.fit().local_outlier_probabilities
-
-        # end timer
-        t2 = time.time()
-
-        # get the time
-        spread = t2 - t1
-
-        return spread
 
 
 def test_loop(X_n8):

@@ -20,6 +20,8 @@ install:
 
 # run tests
 script:
+  # first disable Numba so the Python coverage reporting is correct
+  - export NUMBA_DISABLE_JIT=1
   - python -m pytest --cov=PyNomaly
 
 # report results
