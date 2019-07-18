@@ -465,6 +465,41 @@ class LocalOutlierProbability(object):
             data_store[vec][2] = self.neighbor_matrix[vec]
         return data_store
 
+    @staticmethod
+    @jit(nopython=False)
+    def _compute_distance_and_neighbor_matrix(
+            clust_points_vector,
+            indices,
+            distances,
+            indexes
+    ):
+        """
+        This helper method provides the heavy lifting for the _distances
+        method in a way that can make full use of numba's jit capabilities.
+        """
+        for i in range(clust_points_vector.shape[0]):
+            for j in range(i+1, clust_points_vector.shape[0]):
+                p = ((i, ), (j, ))
+
+                diff = clust_points_vector[p[0]] - clust_points_vector[p[1]]
+                d = np.dot(diff, diff) ** 0.5
+
+                idx = indices[0][p[0]]
+                idx_max = distances[idx].argmax()
+
+                if d < distances[idx][idx_max]:
+                    distances[idx][idx_max] = d
+                    indexes[idx][idx_max] = p[1][0]
+
+                idx = indices[0][p[1]]
+                idx_max = distances[idx].argmax()
+
+                if d < distances[idx][idx_max]:
+                    distances[idx][idx_max] = d
+                    indexes[idx][idx_max] = p[0][0]
+
+        return distances, indexes
+
     @jit(nopython=False)
     def _distances(self) -> None:
         """
@@ -482,25 +517,13 @@ class LocalOutlierProbability(object):
         self.points_vector = self.Validate._data(self.data)
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
-            clust_points_vector = self.points_vector.take(indices, axis=0)[0]
-            pairs = itertools.combinations(
-                np.ndindex(clust_points_vector.shape[0]), 2)
-            for p in pairs:
-                d = self._euclidean(clust_points_vector[p[0]],
-                                    clust_points_vector[p[1]])
-                idx = indices[0][p[0]]
-                idx_max = distances[idx].argmax()
+            clust_points_vector = np.array(
+                self.points_vector.take(indices, axis=0)[0],
+                dtype=np.float64
+            )
+            distances, indexes = self._compute_distance_and_neighbor_matrix(
+                clust_points_vector, indices, distances, indexes)
 
-                if d < distances[idx][idx_max]:
-                    distances[idx][idx_max] = d
-                    indexes[idx][idx_max] = p[1][0]
-
-                idx = indices[0][p[1]]
-                idx_max = distances[idx].argmax()
-
-                if d < distances[idx][idx_max]:
-                    distances[idx][idx_max] = d
-                    indexes[idx][idx_max] = p[0][0]
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
 
