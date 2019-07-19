@@ -1,9 +1,11 @@
-import itertools
 from math import erf, sqrt
-from numba import jit
 import numpy as np
 import sys
 import warnings
+try:
+    import numba
+except ImportError:
+    pass
 
 __author__ = 'Valentino Constantinou'
 __version__ = '0.3.0'
@@ -281,7 +283,10 @@ class LocalOutlierProbability(object):
                     },
                     'cluster_labels': {
                         'type': types[6]
-                    }
+                    },
+					'use_numba': {
+						'type': types[7]
+					}
                 }
                 for x in kwds:
                     opt_types[x]['value'] = kwds[x]
@@ -301,15 +306,16 @@ class LocalOutlierProbability(object):
         return decorator
 
     @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
-             (int, np.integer), list)
+             (int, np.integer), list, bool)
     def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
-                 extent=3, n_neighbors=10, cluster_labels=None):
+                 extent=3, n_neighbors=10, cluster_labels=None, use_numba=True):
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
         self.extent = extent
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
+        self.use_numba = use_numba
         self.points_vector = None
         self.prob_distances = None
         self.prob_distances_ev = None
@@ -317,6 +323,12 @@ class LocalOutlierProbability(object):
         self.local_outlier_probabilities = None
         self._objects = {}
         self.is_fit = False
+
+        if self.use_numba and 'numba' not in sys.modules:
+            self.use_numba = False
+            warnings.warn(
+                "Numba is not available, falling back to pure python mode.",
+                UserWarning)
 
         self.Validate()._inputs(self)
         self.Validate._extent(self)
@@ -326,7 +338,6 @@ class LocalOutlierProbability(object):
     """
 
     @staticmethod
-    @jit(nopython=True)
     def _standard_distance(cardinality: float, sum_squared_distance: float) \
             -> float:
         """
@@ -341,7 +352,6 @@ class LocalOutlierProbability(object):
         return st_dist
 
     @staticmethod
-    @jit(nopython=True)
     def _prob_distance(extent: int, standard_distance: float) -> float:
         """
         Calculates the probabilistic distance of an observation.
@@ -354,7 +364,7 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _prob_outlier_factor(probabilistic_distance: np.ndarray, ev_prob_dist:
-    np.ndarray) -> np.ndarray:
+        np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic outlier factor of an observation.
         :param probabilistic_distance: the probabilistic distance of the
@@ -370,7 +380,6 @@ class LocalOutlierProbability(object):
             return result
 
     @staticmethod
-    @jit(nopython=True)
     def _norm_prob_outlier_factor(extent: float,
                                   ev_probabilistic_outlier_factor: list) \
             -> list:
@@ -435,7 +444,6 @@ class LocalOutlierProbability(object):
         return np.array(self.cluster_labels)
 
     @staticmethod
-    @jit(nopython=False)
     def _euclidean(vector1: np.ndarray, vector2: np.ndarray) -> np.ndarray:
         """
         Calculates the euclidean distance between two observations in the
@@ -447,7 +455,6 @@ class LocalOutlierProbability(object):
         diff = vector1 - vector2
         return np.dot(diff, diff) ** 0.5
 
-    @jit(nopython=False)
     def _assign_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Takes a distance matrix, produced by _distances or provided through
@@ -466,7 +473,6 @@ class LocalOutlierProbability(object):
         return data_store
 
     @staticmethod
-    @jit(nopython=False)
     def _compute_distance_and_neighbor_matrix(
             clust_points_vector,
             indices,
@@ -475,7 +481,9 @@ class LocalOutlierProbability(object):
     ):
         """
         This helper method provides the heavy lifting for the _distances
-        method in a way that can make full use of numba's jit capabilities.
+        method and is only intended for use therein. The code has been
+        written so that it can make full use of numba's jit capabilities if
+        desired.
         """
         for i in range(clust_points_vector.shape[0]):
             for j in range(i+1, clust_points_vector.shape[0]):
@@ -500,7 +508,6 @@ class LocalOutlierProbability(object):
 
         return distances, indexes
 
-    @jit(nopython=False)
     def _distances(self) -> None:
         """
         Provides the distances between each observation and it's closest
@@ -515,19 +522,21 @@ class LocalOutlierProbability(object):
         indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
                           dtype=float)
         self.points_vector = self.Validate._data(self.data)
+        compute = numba.jit(self._compute_distance_and_neighbor_matrix,
+                            cache=True) if self.use_numba else \
+                            self._compute_distance_and_neighbor_matrix
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
             clust_points_vector = np.array(
                 self.points_vector.take(indices, axis=0)[0],
                 dtype=np.float64
             )
-            distances, indexes = self._compute_distance_and_neighbor_matrix(
-                clust_points_vector, indices, distances, indexes)
+            distances, indexes = compute(clust_points_vector, indices,
+                                         distances, indexes)
 
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
 
-    @jit(nopython=False)
     def _ssd(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the sum squared distance between neighbors for each
@@ -548,7 +557,6 @@ class LocalOutlierProbability(object):
         data_store = np.hstack((data_store, ssd_array))
         return data_store
 
-    @jit(nopython=False)
     def _standard_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculated the standard distance for each observation in the input
@@ -567,7 +575,6 @@ class LocalOutlierProbability(object):
             std_distances.append(self._standard_distance(c, v))
         return np.hstack((data_store, np.array([std_distances]).T))
 
-    @jit(nopython=False)
     def _prob_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic distance for each observation in the
@@ -583,7 +590,6 @@ class LocalOutlierProbability(object):
                 self._prob_distance(self.extent, data_store[:, 4][i]))
         return np.hstack((data_store, np.array([prob_distances]).T))
 
-    @jit(nopython=False)
     def _prob_distances_ev(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the expected value of the probabilistic distance for
