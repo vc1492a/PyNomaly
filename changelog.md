@@ -9,7 +9,7 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 - Removed Numba JIT compilation from the `_standard_distance` and 
 `_prob_distance` calculations. Using Numba JIT compilation there does 
 not result in a speed improvement and only add compilation overhead.
-- Integrated pull requestr [#33](https://github.com/vc1492a/PyNomaly/pull/33) 
+- Integrated [pull request #33](https://github.com/vc1492a/PyNomaly/pull/33) 
 which decreases runtime about 30 to more than 90 percent in some cases, in 
 particular on repeated calls with larger datasets. 
 ### Added
