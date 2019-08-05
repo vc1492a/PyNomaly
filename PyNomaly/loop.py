@@ -2,13 +2,14 @@ from math import erf, sqrt
 import numpy as np
 import sys
 import warnings
+
 try:
     import numba
 except ImportError:
     pass
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -284,9 +285,9 @@ class LocalOutlierProbability(object):
                     'cluster_labels': {
                         'type': types[6]
                     },
-					'use_numba': {
-						'type': types[7]
-					}
+                    'use_numba': {
+                        'type': types[7]
+                    }
                 }
                 for x in kwds:
                     opt_types[x]['value'] = kwds[x]
@@ -308,7 +309,8 @@ class LocalOutlierProbability(object):
     @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
              (int, np.integer), list, bool)
     def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
-                 extent=3, n_neighbors=10, cluster_labels=None, use_numba=True):
+                 extent=3, n_neighbors=10, cluster_labels=None,
+                 use_numba=True):
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
@@ -364,7 +366,7 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _prob_outlier_factor(probabilistic_distance: np.ndarray, ev_prob_dist:
-        np.ndarray) -> np.ndarray:
+    np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic outlier factor of an observation.
         :param probabilistic_distance: the probabilistic distance of the
@@ -486,8 +488,8 @@ class LocalOutlierProbability(object):
         desired.
         """
         for i in range(clust_points_vector.shape[0]):
-            for j in range(i+1, clust_points_vector.shape[0]):
-                p = ((i, ), (j, ))
+            for j in range(i + 1, clust_points_vector.shape[0]):
+                p = ((i,), (j,))
 
                 diff = clust_points_vector[p[0]] - clust_points_vector[p[1]]
                 d = np.dot(diff, diff) ** 0.5
@@ -524,7 +526,7 @@ class LocalOutlierProbability(object):
         self.points_vector = self.Validate._data(self.data)
         compute = numba.jit(self._compute_distance_and_neighbor_matrix,
                             cache=True) if self.use_numba else \
-                            self._compute_distance_and_neighbor_matrix
+            self._compute_distance_and_neighbor_matrix
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
             clust_points_vector = np.array(

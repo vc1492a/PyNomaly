@@ -4,6 +4,17 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.3.1
+### Changed
+- Removed Numba JIT compilation from the `_standard_distance` and 
+`_prob_distance` calculations. Using Numba JIT compilation there does 
+not result in a speed improvement and only add compilation overhead.
+- Integrated pull requestr [#33](https://github.com/vc1492a/PyNomaly/pull/33) 
+which decreases runtime about 30 to more than 90 percent in some cases, in 
+particular on repeated calls with larger datasets. 
+### Added
+- Type hinting for unit tests in `tests/test_loop.py`.
+
 ## 0.3.0
 ### Changed
 - The manner in which the standard distance is calculated from list 
@@ -156,7 +167,7 @@ from checks for invalid parameter values.
 - Added UserWarning to check for integer type n_neighbor conditions versus float type.
 - Changed calculation of the probabilistic local outlier factor expected value to Numpy operation
     from base Python. 
-
+    
 ## 0.1.3
 ### Fixed
 - Altered the distance matrix computation to return a triangular matrix instead of a 

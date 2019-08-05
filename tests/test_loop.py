@@ -31,7 +31,7 @@ iris.target = iris.target[perm]
 
 # fixtures
 @pytest.fixture()
-def X_n8():
+def X_n8() -> np.ndarray:
     # Toy sample (the last two samples are outliers):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 2], [1, 2], [2, 1], [5, 3],
                   [-4, 2]])
@@ -39,7 +39,7 @@ def X_n8():
 
 
 @pytest.fixture()
-def X_n120():
+def X_n120() -> np.ndarray:
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
@@ -47,7 +47,7 @@ def X_n120():
 
 
 @pytest.fixture()
-def X_n140_outliers(X_n120):
+def X_n140_outliers(X_n120) -> np.ndarray:
     # Generate some abnormal novel observations
     X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
     X = np.r_[X_n120, X_outliers]
@@ -55,14 +55,14 @@ def X_n140_outliers(X_n120):
 
 
 @pytest.fixture()
-def X_n1000():
+def X_n1000() -> np.ndarray:
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(1000, 2)
     return X
 
 
-def test_loop(X_n8):
+def test_loop(X_n8) -> None:
 
     # Test LocalOutlierProbability:
     clf = loop.LocalOutlierProbability(X_n8, n_neighbors=5)
@@ -88,7 +88,7 @@ def test_loop(X_n8):
     assert_greater(np.min(score[-2:]), np.max(score[:-2]))
 
 
-def test_loop_performance(X_n120):
+def test_loop_performance(X_n120) -> None:
 
     # Generate some abnormal novel observations
     X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
@@ -108,7 +108,7 @@ def test_loop_performance(X_n120):
     assert_greater(roc_auc_score(X_pred, X_labels), .98)
 
 
-def test_input_nodata(X_n140_outliers):
+def test_input_nodata(X_n140_outliers) -> None:
 
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop without data or a distance matrix
@@ -121,7 +121,7 @@ def test_input_nodata(X_n140_outliers):
                0] == "Data or a distance matrix must be provided."
 
 
-def test_bad_input_argument(X_n140_outliers):
+def test_bad_input_argument(X_n140_outliers) -> None:
 
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop with a string input for n_neighbors
@@ -138,7 +138,7 @@ def test_bad_input_argument(X_n140_outliers):
                      "<class 'numpy.integer'>)."
 
 
-def test_neighbor_zero(X_n120):
+def test_neighbor_zero(X_n120) -> None:
 
     clf = loop.LocalOutlierProbability(X_n120, n_neighbors=0)
 
@@ -153,7 +153,7 @@ def test_neighbor_zero(X_n120):
                0] == "n_neighbors must be greater than 0. Fit with 10 instead."
 
 
-def test_input_distonly(X_n120):
+def test_input_distonly(X_n120) -> None:
 
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
@@ -172,7 +172,7 @@ def test_input_distonly(X_n120):
                      "be provided when not using raw input data."
 
 
-def test_input_neighboronly(X_n120):
+def test_input_neighboronly(X_n120) -> None:
 
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
@@ -190,7 +190,7 @@ def test_input_neighboronly(X_n120):
                0] == "Data or a distance matrix must be provided."
 
 
-def test_input_too_many(X_n120):
+def test_input_too_many(X_n120) -> None:
 
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
@@ -209,7 +209,7 @@ def test_input_too_many(X_n120):
                      "distance matrix (not both)."
 
 
-def test_distance_neighbor_shape_mismatch(X_n120):
+def test_distance_neighbor_shape_mismatch(X_n120) -> None:
 
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
@@ -236,7 +236,7 @@ def test_distance_neighbor_shape_mismatch(X_n120):
                      "index matrices must match."
 
 
-def test_input_neighbor_mismatch(X_n120):
+def test_input_neighbor_mismatch(X_n120) -> None:
 
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
@@ -259,7 +259,7 @@ def test_input_neighbor_mismatch(X_n120):
                      "specified."
 
 
-def test_loop_dist_matrix(X_n120):
+def test_loop_dist_matrix(X_n120) -> None:
 
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
@@ -276,7 +276,7 @@ def test_loop_dist_matrix(X_n120):
     assert_almost_equal(scores1, scores2, decimal=1)
 
 
-def test_lambda_values(X_n140_outliers):
+def test_lambda_values(X_n140_outliers) -> None:
 
     # Fit the model with different extent (lambda) values
     clf1 = loop.LocalOutlierProbability(X_n140_outliers, extent=1)
@@ -298,7 +298,7 @@ def test_lambda_values(X_n140_outliers):
     assert_greater(score_mean2, score_mean3)
 
 
-def test_parameters(X_n120):
+def test_parameters(X_n120) -> None:
 
     # fit the model
     clf = loop.LocalOutlierProbability(X_n120).fit()
@@ -320,7 +320,7 @@ def test_parameters(X_n120):
                 clf.local_outlier_probabilities is not None)
 
 
-def test_n_neighbors():
+def test_n_neighbors() -> None:
 
     X = iris.data
     clf = loop.LocalOutlierProbability(X, n_neighbors=500).fit()
@@ -331,21 +331,21 @@ def test_n_neighbors():
     assert_equal(clf.n_neighbors, X.shape[0] - 1)
 
 
-def test_extent():
+def test_extent() -> None:
 
     X = np.array([[1, 1], [1, 0]])
     clf = loop.LocalOutlierProbability(X, n_neighbors=2, extent=4)
     assert_warns(UserWarning, clf.fit)
 
 
-def test_data_format():
+def test_data_format() -> None:
 
     X = [1.3, 1.1, 0.9, 1.4, 1.5, 3.2]
     clf = loop.LocalOutlierProbability(X, n_neighbors=3)
     assert_warns(UserWarning, clf.fit)
 
 
-def test_missing_values():
+def test_missing_values() -> None:
 
     X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
     clf = loop.LocalOutlierProbability(X, n_neighbors=3)
@@ -363,7 +363,7 @@ def test_missing_values():
                0] == "Method does not support missing values in input data."
 
 
-def test_small_cluster_size(X_n140_outliers):
+def test_small_cluster_size(X_n140_outliers) -> None:
 
     # Generate cluster labels
     a = [0] * 120
@@ -391,7 +391,7 @@ def test_small_cluster_size(X_n140_outliers):
                      "cluster minus one)."
 
 
-def test_stream_fit(X_n140_outliers):
+def test_stream_fit(X_n140_outliers) -> None:
 
     # Fit the model
     X_train = X_n140_outliers[0:138]
@@ -407,7 +407,7 @@ def test_stream_fit(X_n140_outliers):
            "calling stream(x)." in messages
 
 
-def test_stream_distance(X_n140_outliers):
+def test_stream_distance(X_n140_outliers) -> None:
 
     X_train = X_n140_outliers[0:100]
     X_test = X_n140_outliers[100:140]
@@ -439,7 +439,7 @@ def test_stream_distance(X_n140_outliers):
     assert_greater(0.075, rmse)
 
 
-def test_stream_cluster(X_n140_outliers):
+def test_stream_cluster(X_n140_outliers) -> None:
 
     # Generate cluster labels
     a = [0] * 120
@@ -463,7 +463,7 @@ def test_stream_cluster(X_n140_outliers):
                      "Automatically refit using single cluster of points."
 
 
-def test_stream_performance(X_n140_outliers):
+def test_stream_performance(X_n140_outliers) -> None:
 
     X_train = X_n140_outliers[0:100]
     X_test = X_n140_outliers[100:140]
