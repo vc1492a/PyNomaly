@@ -97,7 +97,12 @@ def test_loop_performance(X_n120) -> None:
         np.repeat(1, X_n120.shape[0]), np.repeat(-1, X_outliers.shape[0])]
 
     # fit the model
-    clf = loop.LocalOutlierProbability(X_test, n_neighbors=X_test.shape[0] - 1)
+    clf = loop.LocalOutlierProbability(
+        X_test,
+        n_neighbors=X_test.shape[0] - 1,
+        # test the progress bar
+        progress_bar=True
+    )
 
     # predict scores (the lower, the more normal)
     score = clf.fit().local_outlier_probabilities

@@ -4,6 +4,20 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.3.2
+### Changed
+- Removed numba as a strict dependency, which is now an optional dependency 
+that is not needed to use PyNomaly but which provides performance enhancements 
+when functions are called repeatedly, such as when the number of observations 
+is large. This relaxes the numba requirement introduced in version 0.3.0. 
+### Added
+- Added progress bar functionality that can be called using 
+`LocalOutlierProbability(progress_bar=True)` in both native 
+Python and numba just-in-time (JIT) compiled modes. 
+This is helpful in cases where PyNomaly is processing a large amount 
+of observations.  
+
+
 ## 0.3.1
 ### Changed
 - Removed Numba JIT compilation from the `_standard_distance` and 

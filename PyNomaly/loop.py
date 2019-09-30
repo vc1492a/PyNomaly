@@ -1,6 +1,8 @@
 from math import erf, sqrt
 import numpy as np
+from python_utils.terminal import get_terminal_size
 import sys
+from typing import Tuple, Union
 import warnings
 
 try:
@@ -9,8 +11,34 @@ except ImportError:
     pass
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 __license__ = 'Apache License, Version 2.0'
+
+
+class Utils:
+
+    @staticmethod
+    def emit_progress_bar(progress: str, index: int, total: int) -> str:
+        """
+        A progress bar that is continuously updated in Python's standard
+        out.
+        :param progress: a string printed to stdout that is updated and later
+        returned.
+        :param index: the current index of the iteration within the tracked
+        process.
+        :param total: the total length of the tracked process.
+        :return: progress string.
+        """
+
+        w, h = get_terminal_size()
+        sys.stdout.write("\r")
+        block_size = int(total / w)
+        if index % block_size == 0:
+            progress += "="
+        percent = index / total
+        sys.stdout.write("[ %s ] %.2f%%" % (progress, percent * 100))
+        sys.stdout.flush()
+        return progress
 
 
 class LocalOutlierProbability(object):
@@ -62,7 +90,7 @@ class LocalOutlierProbability(object):
         """
 
         @staticmethod
-        def _data(obj):
+        def _data(obj: Union['pd.DataFrame', np.ndarray]) -> np.ndarray:
             """
             Validates the input data to ensure it is either a Pandas DataFrame
             or Numpy array.
@@ -87,7 +115,7 @@ class LocalOutlierProbability(object):
                 points_vector = np.array([obj])
                 return points_vector
 
-        def _inputs(self, obj):
+        def _inputs(self, obj: 'LocalOutlierProbability'):
             """
             Validates the inputs provided during initialization to ensure
             that the needed objects are provided.
@@ -136,7 +164,7 @@ class LocalOutlierProbability(object):
             return obj.data, dist_vector, neigh_vector
 
         @staticmethod
-        def _cluster_size(obj):
+        def _cluster_size(obj) -> bool:
             """
             Validates the cluster labels to ensure that the smallest cluster
             size (number of observations in the cluster) is larger than the
@@ -158,7 +186,7 @@ class LocalOutlierProbability(object):
             return True
 
         @staticmethod
-        def _n_neighbors(obj):
+        def _n_neighbors(obj) -> bool:
             """
             Validates the specified number of neighbors to ensure that it is
             greater than 0 and that the specified value is less than the total
@@ -182,7 +210,7 @@ class LocalOutlierProbability(object):
             return True
 
         @staticmethod
-        def _extent(obj):
+        def _extent(obj) -> bool:
             """
             Validates the specified extent parameter to ensure it is either 1,
             2, or 3.
@@ -197,7 +225,7 @@ class LocalOutlierProbability(object):
             return True
 
         @staticmethod
-        def _missing_values(obj):
+        def _missing_values(obj) -> bool:
             """
             Validates the provided data to ensure that it contains no
             missing values.
@@ -212,7 +240,7 @@ class LocalOutlierProbability(object):
             return True
 
         @staticmethod
-        def _fit(obj):
+        def _fit(obj) -> bool:
             """
             Validates that the model was fit prior to calling the stream()
             method.
@@ -228,7 +256,7 @@ class LocalOutlierProbability(object):
             return True
 
         @staticmethod
-        def _no_cluster_labels(obj):
+        def _no_cluster_labels(obj) -> bool:
             """
             Checks to see if cluster labels are attempting to be used in
             stream() and, if so, calls fit() once again but without cluster
@@ -287,6 +315,9 @@ class LocalOutlierProbability(object):
                     },
                     'use_numba': {
                         'type': types[7]
+                    },
+                    'progress_bar': {
+                        'type': types[8]
                     }
                 }
                 for x in kwds:
@@ -307,10 +338,10 @@ class LocalOutlierProbability(object):
         return decorator
 
     @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
-             (int, np.integer), list, bool)
+             (int, np.integer), list, bool, bool)
     def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
                  extent=3, n_neighbors=10, cluster_labels=None,
-                 use_numba=True):
+                 use_numba=False, progress_bar=False) -> None:
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
@@ -324,8 +355,10 @@ class LocalOutlierProbability(object):
         self.norm_prob_local_outlier_factor = None
         self.local_outlier_probabilities = None
         self._objects = {}
+        self.progress_bar = progress_bar
         self.is_fit = False
 
+        # TODO: write unit test for the below
         if self.use_numba and 'numba' not in sys.modules:
             self.use_numba = False
             warnings.warn(
@@ -476,17 +509,18 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _compute_distance_and_neighbor_matrix(
-            clust_points_vector,
-            indices,
-            distances,
-            indexes
-    ):
+            clust_points_vector: np.ndarray,
+            indices: np.ndarray,
+            distances: np.ndarray,
+            indexes: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, int]:
         """
         This helper method provides the heavy lifting for the _distances
         method and is only intended for use therein. The code has been
-        written so that it can make full use of numba's jit capabilities if
+        written so that it can make full use of Numba's jit capabilities if
         desired.
         """
+
         for i in range(clust_points_vector.shape[0]):
             for j in range(i + 1, clust_points_vector.shape[0]):
                 p = ((i,), (j,))
@@ -508,9 +542,9 @@ class LocalOutlierProbability(object):
                     distances[idx][idx_max] = d
                     indexes[idx][idx_max] = p[0][0]
 
-        return distances, indexes
+            yield distances, indexes, i
 
-    def _distances(self) -> None:
+    def _distances(self, progress_bar: bool = False) -> None:
         """
         Provides the distances between each observation and it's closest
         neighbors. When input data is provided, calculates the euclidean
@@ -527,14 +561,20 @@ class LocalOutlierProbability(object):
         compute = numba.jit(self._compute_distance_and_neighbor_matrix,
                             cache=True) if self.use_numba else \
             self._compute_distance_and_neighbor_matrix
+        progress = "="
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
             clust_points_vector = np.array(
                 self.points_vector.take(indices, axis=0)[0],
                 dtype=np.float64
             )
-            distances, indexes = compute(clust_points_vector, indices,
-                                         distances, indexes)
+            # a generator that yields an updated distance matrix on each loop
+            for c in compute(clust_points_vector, indices, distances, indexes):
+                distances, indexes, i = c
+                # update the progress bar
+                if progress_bar is True:
+                    progress = Utils.emit_progress_bar(
+                        progress, i+1, clust_points_vector.shape[0])
 
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
@@ -712,7 +752,7 @@ class LocalOutlierProbability(object):
 
         store = self._store()
         if self.data is not None:
-            self._distances()
+            self._distances(progress_bar=self.progress_bar)
         store = self._assign_distances(store)
         store = self._ssd(store)
         store = self._standard_distances(store)
