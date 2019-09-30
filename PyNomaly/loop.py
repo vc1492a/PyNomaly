@@ -358,8 +358,7 @@ class LocalOutlierProbability(object):
         self.progress_bar = progress_bar
         self.is_fit = False
 
-        # TODO: write unit test for the below
-        if self.use_numba and 'numba' not in sys.modules:
+        if self.use_numba is True and 'numba' not in sys.modules:
             self.use_numba = False
             warnings.warn(
                 "Numba is not available, falling back to pure python mode.",

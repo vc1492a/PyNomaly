@@ -5,7 +5,7 @@ LoOP is a local density based outlier detection method by Kriegel, Kröger, Schu
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.1-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.1)
+[![PyPi](https://img.shields.io/badge/pypi-0.3.2-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.2)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
@@ -39,7 +39,7 @@ to calculate the Local Outlier Probability of each sample.
 - Python 3.5 - 3.7
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
-- (optional) numba == 0.43.1
+- (optional) numba >= 0.45.1
 
 Numba just-in-time (JIT) compiles the function with calculates the Euclidean 
 distance between observations, providing a reduction in computation time 
@@ -104,6 +104,10 @@ m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, use_numba=True,
 scores = m.local_outlier_probabilities
 print(scores)
 ```
+
+Numba must be installed if the above to use JIT compilation and improve the 
+speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
+tested with Numba version 0.45.1. 
 
 You may also choose to print progress bars _with our without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
