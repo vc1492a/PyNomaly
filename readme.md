@@ -107,7 +107,8 @@ print(scores)
 
 Numba must be installed if the above to use JIT compilation and improve the 
 speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
-tested with Numba version 0.45.1. 
+tested with Numba version 0.45.1. An example of the speed difference that can 
+be realized with using Numba is avaialble in `examples/numba_speed_diff.py`. 
 
 You may also choose to print progress bars _with our without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
@@ -279,6 +280,8 @@ distance metric can be used (a neighbor index matrix must also be provided).
 This can be useful when wanting to use a distance other than the euclidean.
 
 ```python
+from sklearn.neighbors import NearestNeighbors
+
 data = np.array([
     [43.3, 30.2, 90.2],
     [62.9, 58.3, 49.3],
@@ -310,7 +313,7 @@ First, the standard LoOP algorithm is used on "training" data, with certain attr
 stored from the original LoOP approach. Then, as new points are considered, these fitted attributes are
 called when calculating the score of the incoming streaming data due to the use of averages from the initial
 fit, such as the use of a global value for the expected value of the probabilistic distance. Despite the potential
-for increased error when compared to the standard approach, but it may be effective in streaming applications where
+for increased error when compared to the standard approach, it may be effective in streaming applications where
 refitting the standard approach over all points could be computationally expensive.
 
 While the iris dataset is not streaming data, we'll use it in this example by taking the first 120 observations

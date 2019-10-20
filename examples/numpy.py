@@ -1,6 +1,5 @@
-from PyNomaly import loop
 import numpy as np
-
+from PyNomaly import loop
 
 data = np.array([
     [43.3, 30.2, 90.2],
@@ -11,6 +10,9 @@ data = np.array([
     [421.5, 90.3, 50.0]
 ])
 
+scores = loop.LocalOutlierProbability(
+    data,
+    n_neighbors=3,
+).fit().local_outlier_probabilities
 
-scores = loop.LocalOutlierProbability(data, n_neighbors=3).fit().local_outlier_probabilities
 print(scores)
