@@ -36,7 +36,7 @@ This Python 3 implementation uses Numpy and the formulas outlined in
 to calculate the Local Outlier Probability of each sample.
 
 ## Dependencies
-- Python 3.5 - 3.7
+- Python 3.5 - 3.8
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
@@ -393,13 +393,6 @@ versioning guidelines when submitting a pull request.
 This project is licensed under the Apache 2.0 license.
 
 ## Research
-PyNomaly has been used in the following research:
-
-- Y. Zhao and M.K. Hryniewicki, "XGBOD: Improving Supervised Outlier Detection with Unsupervised Representation Learning," International Joint Conference on Neural Networks (IJCNN), IEEE, 2018.
-
-If your research is missing from this list and should be listed,
-please submit a pull request with an addition to the readme. 
-
 If citing PyNomaly, use the following: 
 
 ```
