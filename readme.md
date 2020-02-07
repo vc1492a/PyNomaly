@@ -385,6 +385,18 @@ and streaming, with no changes in specification between steps.
 If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.
 Feel free to open an issue if you notice any erroneous behavior.
 
+### Tests
+When contributing, please ensure to run unit tests and add additional tests as 
+necessary if adding new functionality. To run the unit tests, use `pytest`: 
+
+```
+python3 -m pytest --cov=PyNomaly
+```
+
+To run the tests with Numba enabled, simply set the flag `NUMBA` in `test_loop.py` 
+to `True`. Note that a drop in coverage is expected due to portions of the code 
+being compiled upon code execution. 
+
 ## Versioning
 [Semantic versioning](http://semver.org/) is used for this project. If contributing, please conform to semantic
 versioning guidelines when submitting a pull request.
