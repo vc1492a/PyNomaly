@@ -382,8 +382,19 @@ also assumes that either data or a distance matrix (or value) will be used acros
 and streaming, with no changes in specification between steps.
 
 ## Contributing
-If you would like to contribute, please fork the repository and make any changes locally prior to submitting a pull request.
-Feel free to open an issue if you notice any erroneous behavior.
+
+Please use the issue tracker to report any erroneous behavior or desired 
+feature requests. 
+
+If you would like to contribute to development, please fork the repository and make 
+any changes to a branch which corresponds to an open issue. Hot fixes 
+and bug fixes can be represented by branches with the prefix `fix/` versus 
+`feature/` for new capabilities or code improvements. Pull requests will 
+then be made from these branches into the repository's `dev` branch 
+prior to being pulled into `master`. Pull requests which are works in 
+progress or ready for merging should be indicated by their respective 
+prefixes ([WIP] and [MRG]). Pull requests with the [MRG] prefix will be 
+reviewed prior to being pulled into the `master` branch. 
 
 ### Tests
 When contributing, please ensure to run unit tests and add additional tests as 
