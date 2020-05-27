@@ -4,7 +4,9 @@ from python_utils.terminal import get_terminal_size
 import sys
 from typing import Tuple, Union
 import warnings
-
+import numba
+#print(">"*15)
+import time 
 try:
     import numba
 except ImportError:
@@ -552,31 +554,82 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
+        '''
         distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
                             dtype=float)
         indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
                           dtype=float)
         self.points_vector = self.Validate._data(self.data)
+        t1 = time.time()
         compute = numba.jit(self._compute_distance_and_neighbor_matrix,
                             cache=True) if self.use_numba else \
             self._compute_distance_and_neighbor_matrix
+        t2 = time.time()
+        #print("compute:",t2-t1)
         progress = "="
+        #print(self._cluster_labels())--> [0 0 0 ... 0]
+        #print(set(self._cluster_labels()))
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
             clust_points_vector = np.array(
                 self.points_vector.take(indices, axis=0)[0],
                 dtype=np.float64
             )
+            #print(len(clust_points_vector))
             # a generator that yields an updated distance matrix on each loop
+            t3 = time.time()
             for c in compute(clust_points_vector, indices, distances, indexes):
                 distances, indexes, i = c
                 # update the progress bar
                 if progress_bar is True:
                     progress = Utils.emit_progress_bar(
                         progress, i+1, clust_points_vector.shape[0])
-
+            t4 = time.time()
+            #print("compute:", t4-t3)
         self.distance_matrix = distances
+        #print(len(distances))
+        #print(len(distances[0]))
         self.neighbor_matrix = indexes
+        #print(len(indexes))
+        #print(len(indexes[0]))
+        '''
+        ####################################################################
+        #--------------------------------DN's code--------------------------
+        # Code does not include cluster or something like that
+
+        
+        self.points_vector = self.Validate._data(self.data)
+        distances, indexes = self.distance_dn(self.points_vector)
+        self.distance_matrix = distances
+        #print(len(distances))
+        #print(len(distances[0]))
+        self.neighbor_matrix = indexes
+        #print(len(indexes))
+        #print(len(indexes[0]))
+
+        
+
+
+    def distance_dn(self,point_vector):
+        """
+        Calculate distances from each point to the remaining points
+        """
+        data = point_vector
+        k = self.n_neighbors
+        distance = np.zeros((len(data),k))
+        index = np.zeros((len(data),k))
+        t1 =time.time()
+        for i in range(len(data)):
+            data_i = np.array([[data[i][0],data[i][1]]])
+            point_arr = np.repeat(data_i,len(data),axis=0)
+            diff = (point_arr - data)**2
+            dis = (np.sum(diff,axis=1))**0.5
+            index[i] = (np.argpartition(dis,k))[0:k]
+            distance[i] = dis[(np.argpartition(dis,k))[0:k]]
+        #print(distance)
+        t2 = time.time()
+        #print(t2-t1)
+        return distance, index
 
     def _ssd(self, data_store: np.ndarray) -> np.ndarray:
         """
@@ -741,7 +794,7 @@ class LocalOutlierProbability(object):
         :return: self, which contains the local outlier probabilities as
         self.local_outlier_probabilities.
         """
-
+        t1 = time.time()
         self.Validate._n_neighbors(self)
         if self.Validate._cluster_size(self) is False:
             sys.exit()
@@ -749,24 +802,49 @@ class LocalOutlierProbability(object):
                 self) is False:
             sys.exit()
 
+        t2 = time.time()
         store = self._store()
         if self.data is not None:
             self._distances(progress_bar=self.progress_bar)
+        t3 = time.time()
         store = self._assign_distances(store)
+        t4 = time.time()
         store = self._ssd(store)
+        t5 = time.time()
         store = self._standard_distances(store)
+        t6 = time.time()
         store = self._prob_distances(store)
+        t7 = time.time()
         self.prob_distances = store[:, 5]
         store = self._prob_distances_ev(store)
+        t8 = time.time()
         store = self._prob_local_outlier_factors(store)
+        t9 = time.time()
         store = self._prob_local_outlier_factors_ev(store)
+        t10 = time.time()
         store = self._norm_prob_local_outlier_factors(store)
+        t11 = time.time()
         self.norm_prob_local_outlier_factor = store[:, 9].max()
         store = self._local_outlier_probabilities(store)
         self.local_outlier_probabilities = store[:, 10]
-
+        t12 = time.time()
         self.is_fit = True
 
+        print("Time of LoOP training")
+        print("-"*35)
+        print("validation:",t2-t1)
+        print("_distances:",t3-t2)
+        print("_assign_distances:",t4-t3)
+        print("_ssd:",t5-t4)
+        print("_standard_distances:",t6-t5)
+        print("_prob_distances:",t7-t6)
+        print("_prob_distances_ev:",t8-t7)
+        print("_prob_local_outlier_factors:",t9-t8)
+        print("_prob_local_outlier_factors_ev:",t10-t9)
+        print("_norm_prob_local_outlier_factors:",t11-t10)
+        print("_local_outlier_probabilities",t12-t11)
+        print("Total training time:", t12-t1)
+        print("-"*35)
         return self
 
     def stream(self, x: np.ndarray) -> np.ndarray:
@@ -782,7 +860,7 @@ class LocalOutlierProbability(object):
         :param x: an observation to score for its local outlier probability.
         :return: the local outlier probability of the input observation.
         """
-
+        t1 = time.time()
         orig_cluster_labels = None
         if self.Validate._no_cluster_labels(self) is False:
             orig_cluster_labels = self.cluster_labels
@@ -790,13 +868,15 @@ class LocalOutlierProbability(object):
 
         if self.Validate._fit(self) is False:
             self.fit()
-
+        t2= time.time()
         point_vector = self.Validate._data(x)
         distances = np.full([1, self.n_neighbors], 9e10, dtype=float)
         if self.data is not None:
             matrix = self.points_vector
         else:
             matrix = self.distance_matrix
+        t3 = time.time()
+        '''
         for p in range(0, matrix.shape[0]):
             if self.data is not None:
                 d = self._euclidean(matrix[p, :], point_vector)
@@ -805,18 +885,51 @@ class LocalOutlierProbability(object):
             idx_max = distances[0].argmax()
             if d < distances[0][idx_max]:
                 distances[0][idx_max] = d
+        '''
+        ########## Use distance_point_dn() thay cho vòng for
+        distances = self.distance_point_dn(matrix,point_vector)
+        t4 = time.time()
+
 
         ssd = np.power(distances, 2).sum()
+        t5 = time.time()
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
+        t6 = time.time()
         prob_dist = self._prob_distance(self.extent, std_dist)
+        t7 = time.time()
         plof = self._prob_outlier_factor(np.array(prob_dist),
                                          np.array(
                                              self.prob_distances_ev.mean())
                                          )
+        t8 = time.time()
         loop = self._local_outlier_probability(
             plof, self.norm_prob_local_outlier_factor)
-
+        t9 = time.time()
         if orig_cluster_labels is not None:
             self.cluster_labels = orig_cluster_labels
 
+        #print("Validate:",t2-t1)
+        #print("matrix:",t3-t2)
+        #print("distances:",t4-t3)
+        #print("ssd:",t5-t4)
+        #print("std_dist",t6-t5)
+        #print("prob_dist:",t7-t6)
+        #print("plof:",t8-t7)
+        #print("loop:",t9-t8)
+        print("Total test time:",t9-t1)
         return loop
+
+    def distance_point_dn(self,matrix,point_vector):
+        #Return a distance array of k nearest neighbor from a point to data
+        data = matrix
+        k = self.n_neighbors
+        distance = np.zeros((1,k))
+        #index = np.zeros((len(data),k))
+        t1 =time.time()
+        data_i = np.array([[point_vector[0],point_vector[1]]])
+        point_arr = np.repeat(data_i,len(data),axis=0)
+        diff = (point_arr - data)**2
+        dis = (np.sum(diff,axis=1))**0.5
+        #index[i] = (np.argpartition(dis,k))[0:k]
+        distance = dis[(np.argpartition(dis,k))[0:k]]
+        return distance
