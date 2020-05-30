@@ -35,6 +35,11 @@ iris.target = iris.target[perm]
 # fixtures
 @pytest.fixture()
 def X_n8() -> np.ndarray:
+    """
+    Fixture that generates a small Numpy array with two anomalous values
+    (last two observations).
+    :return: a Numpy array.
+    """
     # Toy sample (the last two samples are outliers):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 2], [1, 2], [2, 1], [5, 3],
                   [-4, 2]])
@@ -43,6 +48,11 @@ def X_n8() -> np.ndarray:
 
 @pytest.fixture()
 def X_n120() -> np.ndarray:
+    """
+    Fixture that generates a Numpy array with 120 observations. Each
+    observation contains two float values.
+    :return: a Numpy array.
+    """
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
@@ -51,6 +61,12 @@ def X_n120() -> np.ndarray:
 
 @pytest.fixture()
 def X_n140_outliers(X_n120) -> np.ndarray:
+    """
+    Fixture that generates a Numpy array with 140 observations, where the
+    first 120 observations are "normal" and the last 20 considered anomalous.
+    :param X_n120: A pytest Fixture that generates the first 120 observations.
+    :return: A Numpy array.
+    """
     # Generate some abnormal novel observations
     X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
     X = np.r_[X_n120, X_outliers]
@@ -59,6 +75,10 @@ def X_n140_outliers(X_n120) -> np.ndarray:
 
 @pytest.fixture()
 def X_n1000() -> np.ndarray:
+    """
+    Fixture that generates a Numpy array with 1000 observations.
+    :return: A Numpy array.
+    """
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(1000, 2)
@@ -66,6 +86,13 @@ def X_n1000() -> np.ndarray:
 
 
 def test_loop(X_n8) -> None:
+    """
+    Tests the basic functionality and asserts that the anomalous observations
+    are detected as anomalies. Tests the functionality using inputs
+    as Numpy arrays and as Pandas dataframes.
+    :param X_n8: A pytest Fixture that generates the 8 observations.
+    :return: None
+    """
     # Test LocalOutlierProbability:
     clf = loop.LocalOutlierProbability(X_n8, n_neighbors=5, use_numba=NUMBA)
     score = clf.fit().local_outlier_probabilities
@@ -91,6 +118,13 @@ def test_loop(X_n8) -> None:
 
 
 def test_loop_performance(X_n120) -> None:
+    """
+    Using a set of known anomalies (labels), tests the performance (using
+    ROC / AUC score) of the software and ensures it is able to capture most
+    anomalies under this basic scenario.
+    :param X_n120: A pytest Fixture that generates the 120 observations.
+    :return: None
+    """
     # Generate some abnormal novel observations
     X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
     X_test = np.r_[X_n120, X_outliers]
@@ -116,6 +150,12 @@ def test_loop_performance(X_n120) -> None:
 
 
 def test_input_nodata(X_n140_outliers) -> None:
+    """
+    Test to ensure that the proper warning is issued if no data is
+    provided.
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop without data or a distance matrix
         loop.LocalOutlierProbability(n_neighbors=X_n140_outliers.shape[0] - 1,
@@ -128,7 +168,13 @@ def test_input_nodata(X_n140_outliers) -> None:
                0] == "Data or a distance matrix must be provided."
 
 
-def test_bad_input_argument(X_n140_outliers) -> None:
+def test_input_incorrect_type(X_n140_outliers) -> None:
+    """
+    Test to ensure that the proper warning is issued if the type of an
+    argument is the incorrect type.
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop with a string input for n_neighbors
         loop.LocalOutlierProbability(X_n140_outliers,
@@ -145,7 +191,13 @@ def test_bad_input_argument(X_n140_outliers) -> None:
                      "<class 'numpy.integer'>)."
 
 
-def test_neighbor_zero(X_n120) -> None:
+def test_input_neighbor_zero(X_n120) -> None:
+    """
+    Test to ensure that the proper warning is issued if the neighbor size
+    is specified as 0 (must be greater than 0).
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     clf = loop.LocalOutlierProbability(X_n120, n_neighbors=0, use_numba=NUMBA)
 
     with pytest.warns(UserWarning) as record:
@@ -160,6 +212,12 @@ def test_neighbor_zero(X_n120) -> None:
 
 
 def test_input_distonly(X_n120) -> None:
+    """
+    Test to ensure that the proper warning is issued if only a distance
+    matrix is provided (without a neighbor matrix).
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_n120)
@@ -178,6 +236,12 @@ def test_input_distonly(X_n120) -> None:
 
 
 def test_input_neighboronly(X_n120) -> None:
+    """
+    Test to ensure that the proper warning is issued if only a neighbor
+    matrix is provided (without a distance matrix).
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_n120)
@@ -195,6 +259,12 @@ def test_input_neighboronly(X_n120) -> None:
 
 
 def test_input_too_many(X_n120) -> None:
+    """
+    Test to ensure that the proper warning is issued if both a data matrix
+    and a distance matrix are provided (can only be data matrix).
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_n120)
@@ -214,6 +284,12 @@ def test_input_too_many(X_n120) -> None:
 
 
 def test_distance_neighbor_shape_mismatch(X_n120) -> None:
+    """
+    Test to ensure that the proper warning is issued if there is a mismatch
+    between the shape of the provided distance and neighbor matrices.
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_n120)
@@ -242,6 +318,12 @@ def test_distance_neighbor_shape_mismatch(X_n120) -> None:
 
 
 def test_input_neighbor_mismatch(X_n120) -> None:
+    """
+    Test to ensure that the proper warning is issued if the supplied distance
+    (and neighbor) matrix and specified number of neighbors do not match.
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_n120)
@@ -265,6 +347,12 @@ def test_input_neighbor_mismatch(X_n120) -> None:
 
 
 def test_loop_dist_matrix(X_n120) -> None:
+    """
+    Tests to ensure the proper results are returned when supplying the
+    appropriate format distance and neighbor matrices.
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # generate distance and neighbor indices
     neigh = NearestNeighbors(metric='euclidean')
     neigh.fit(X_n120)
@@ -282,6 +370,13 @@ def test_loop_dist_matrix(X_n120) -> None:
 
 
 def test_lambda_values(X_n140_outliers) -> None:
+    """
+    Test to ensure results are returned which correspond to what is expected
+    when varying the extent parameter (we expect larger extent values to
+    result in more constrained scores).
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     # Fit the model with different extent (lambda) values
     clf1 = loop.LocalOutlierProbability(X_n140_outliers, extent=1,
                                         use_numba=NUMBA)
@@ -306,6 +401,13 @@ def test_lambda_values(X_n140_outliers) -> None:
 
 
 def test_parameters(X_n120) -> None:
+    """
+    Test to ensure that the model object contains the needed attributes after
+    the model is fit. This is important in the context of the streaming
+    functionality.
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
     # fit the model
     clf = loop.LocalOutlierProbability(X_n120, use_numba=NUMBA).fit()
 
@@ -327,6 +429,12 @@ def test_parameters(X_n120) -> None:
 
 
 def test_n_neighbors() -> None:
+    """
+    Tests the functionality of providing a large number of neighbors that
+    is greater than the number of observations (software defaults to the
+    data input size and provides a UserWarning).
+    :return: None
+    """
     X = iris.data
     clf = loop.LocalOutlierProbability(X, n_neighbors=500,
                                        use_numba=NUMBA).fit()
@@ -338,6 +446,11 @@ def test_n_neighbors() -> None:
 
 
 def test_extent() -> None:
+    """
+    Test to ensure that a UserWarning is issued when providing an invalid
+    extent parameter value (can be 1, 2, or 3).
+    :return: None
+    """
     X = np.array([[1, 1], [1, 0]])
     clf = loop.LocalOutlierProbability(X, n_neighbors=2, extent=4,
                                        use_numba=NUMBA)
@@ -345,12 +458,23 @@ def test_extent() -> None:
 
 
 def test_data_format() -> None:
+    """
+    Test to ensure that a UserWarning is issued when the shape of the input
+    data is not explicitly correct. This is corrected by the software when
+    possible.
+    :return: None
+    """
     X = [1.3, 1.1, 0.9, 1.4, 1.5, 3.2]
     clf = loop.LocalOutlierProbability(X, n_neighbors=3, use_numba=NUMBA)
     assert_warns(UserWarning, clf.fit)
 
 
 def test_missing_values() -> None:
+    """
+    Test to ensure that the program exits of a missing value is encountered
+    in the input data, as this is not allowable.
+    :return: None
+    """
     X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
     clf = loop.LocalOutlierProbability(X, n_neighbors=3, use_numba=NUMBA)
 
@@ -368,6 +492,12 @@ def test_missing_values() -> None:
 
 
 def test_small_cluster_size(X_n140_outliers) -> None:
+    """
+    Test to ensure that the program exits when the specified number of neighbors
+    is larger than the smallest cluster size in the input data.
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     # Generate cluster labels
     a = [0] * 120
     b = [1] * 18
@@ -397,6 +527,12 @@ def test_small_cluster_size(X_n140_outliers) -> None:
 
 
 def test_stream_fit(X_n140_outliers) -> None:
+    """
+    Test to ensure that the proper warning is issued if the user attempts
+    to use the streaming approach prior to the classical approach being fit.
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     # Fit the model
     X_train = X_n140_outliers[0:138]
     X_test = X_n140_outliers[139]
@@ -412,6 +548,13 @@ def test_stream_fit(X_n140_outliers) -> None:
 
 
 def test_stream_distance(X_n140_outliers) -> None:
+    """
+    Test to ensure that the streaming approach functions as desired when
+    providing matrices for use and that the returned results are within some
+    margin of error when compared to the classical approach (using the RMSE).
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     X_train = X_n140_outliers[0:100]
     X_test = X_n140_outliers[100:140]
 
@@ -444,6 +587,13 @@ def test_stream_distance(X_n140_outliers) -> None:
 
 
 def test_stream_cluster(X_n140_outliers) -> None:
+    """
+    Test to ensure that the proper warning is issued if the streaming approach
+    is called on clustered data, as the streaming approach does not support
+    this functionality.
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return: None
+    """
     # Generate cluster labels
     a = [0] * 120
     b = [1] * 18
@@ -468,6 +618,14 @@ def test_stream_cluster(X_n140_outliers) -> None:
 
 
 def test_stream_performance(X_n140_outliers) -> None:
+    """
+    Test to ensure that the streaming approach works as desired when using
+    a regular set of input data (no distance and neighbor matrices) and that
+    the result is within some expected level of error when compared to the
+    classical approach.
+    :param X_n140_outliers: A pytest Fixture that generates 140 observations.
+    :return:
+    """
     X_train = X_n140_outliers[0:100]
     X_test = X_n140_outliers[100:140]
 
@@ -489,3 +647,16 @@ def test_stream_performance(X_n140_outliers) -> None:
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
     assert_greater(0.35, rmse)
+
+
+def test_progress_bar(X_n8) -> None:
+    """
+    Tests the progress bar functionality on a small number of observations,
+    when the number of observations is less than the width of the console
+    window.
+    :param X_n8: a numpy array with 8 observations.
+    :return: None
+    """
+
+    # attempt to use the progress bar on a small number of observations
+    loop.LocalOutlierProbability(X_n8, use_numba=NUMBA, progress_bar=True).fit()

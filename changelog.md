@@ -4,6 +4,15 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.3.3
+### Changed
+- The implementation of the progress bar to support use when the number of 
+observations is less than the width of the Python console in which the code 
+is being executed (tracked in [this issue](https://github.com/vc1492a/PyNomaly/issues/35)).
+### Added
+- Docstring to the testing functions to provide some additional documentation 
+of the testing (tracked in [this issue](https://github.com/vc1492a/PyNomaly/issues/41)).
+
 ## 0.3.2
 ### Changed
 - Removed numba as a strict dependency, which is now an optional dependency 
