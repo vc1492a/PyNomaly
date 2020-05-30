@@ -32,7 +32,10 @@ class Utils:
 
         w, h = get_terminal_size()
         sys.stdout.write("\r")
-        block_size = int(total / w)
+        if total < w:
+            block_size = int(w / total)
+        else:
+            block_size = int(total / w)
         if index % block_size == 0:
             progress += "="
         percent = index / total
