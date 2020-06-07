@@ -17,7 +17,7 @@ import sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 # flag to enable or disable NUMBA
-NUMBA = True
+NUMBA = False
 
 if NUMBA is False:
     logging.info("Numba is disabled. Coverage statistics are reflective of "
