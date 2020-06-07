@@ -12,16 +12,21 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import roc_auc_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_warns
 import sys
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 # flag to enable or disable NUMBA
-NUMBA = False
+NUMBA = True
+
+if NUMBA is False:
+    logging.info("Numba is disabled. Coverage statistics are reflective of "
+                 "testing native Python code. Consider also testing with numba"
+                 " enabled.")
+else:
+    logging.warning(
+        "Numba is enabled. Coverage statistics will be impacted (reduced) to"
+        " due the just-in-time compilation of native Python code.")
 
 # load the iris dataset
 # and randomly permute it
@@ -101,7 +106,7 @@ def test_loop(X_n8) -> None:
     assert_array_equal(predictions, 6 * [1] + 2 * [-1])
 
     # Assert smallest outlier score is greater than largest inlier score:
-    assert_greater(np.min(score[-2:]), np.max(score[:-2]))
+    assert np.min(score[-2:]) > np.max(score[:-2])
 
     # Test the DataFrame functionality
     X_df = pd.DataFrame(X_n8)
@@ -114,7 +119,7 @@ def test_loop(X_n8) -> None:
     assert_array_equal(predictions, 6 * [1] + 2 * [-1])
 
     # Assert smallest outlier score is greater than largest inlier score:
-    assert_greater(np.min(score[-2:]), np.max(score[:-2]))
+    assert np.min(score[-2:]) > np.max(score[:-2])
 
 
 def test_loop_performance(X_n120) -> None:
@@ -146,7 +151,7 @@ def test_loop_performance(X_n120) -> None:
     X_pred = [-1 if s > share_outlier else 1 for s in score]
 
     # check that roc_auc is good
-    assert_greater(roc_auc_score(X_pred, X_labels), .98)
+    assert roc_auc_score(X_pred, X_labels) >= .98
 
 
 def test_input_nodata(X_n140_outliers) -> None:
@@ -366,7 +371,7 @@ def test_loop_dist_matrix(X_n120) -> None:
     scores2 = clf2.fit().local_outlier_probabilities
 
     # compare the agreement between the results
-    assert_almost_equal(scores1, scores2, decimal=1)
+    assert np.abs(scores2 - scores1).all() <= 0.1
 
 
 def test_lambda_values(X_n140_outliers) -> None:
@@ -396,8 +401,8 @@ def test_lambda_values(X_n140_outliers) -> None:
     score_mean3 = np.mean(score3)
 
     # check that expected the means align with expectation
-    assert_greater(score_mean1, score_mean2)
-    assert_greater(score_mean2, score_mean3)
+    assert score_mean1 > score_mean2
+    assert score_mean2 > score_mean3
 
 
 def test_parameters(X_n120) -> None:
@@ -438,11 +443,17 @@ def test_n_neighbors() -> None:
     X = iris.data
     clf = loop.LocalOutlierProbability(X, n_neighbors=500,
                                        use_numba=NUMBA).fit()
-    assert_equal(clf.n_neighbors, X.shape[0] - 1)
+    assert clf.n_neighbors == X.shape[0] - 1
 
     clf = loop.LocalOutlierProbability(X, n_neighbors=500, use_numba=NUMBA)
-    assert_warns(UserWarning, clf.fit)
-    assert_equal(clf.n_neighbors, X.shape[0] - 1)
+
+    with pytest.warns(UserWarning) as record:
+        clf.fit()
+
+    # check that only one warning was raised
+    assert len(record) == 1
+
+    assert clf.n_neighbors == X.shape[0] - 1
 
 
 def test_extent() -> None:
@@ -454,7 +465,12 @@ def test_extent() -> None:
     X = np.array([[1, 1], [1, 0]])
     clf = loop.LocalOutlierProbability(X, n_neighbors=2, extent=4,
                                        use_numba=NUMBA)
-    assert_warns(UserWarning, clf.fit)
+
+    with pytest.warns(UserWarning) as record:
+        clf.fit()
+
+    # check that only one warning was raised
+    assert len(record) == 1
 
 
 def test_data_format() -> None:
@@ -466,7 +482,12 @@ def test_data_format() -> None:
     """
     X = [1.3, 1.1, 0.9, 1.4, 1.5, 3.2]
     clf = loop.LocalOutlierProbability(X, n_neighbors=3, use_numba=NUMBA)
-    assert_warns(UserWarning, clf.fit)
+
+    with pytest.warns(UserWarning) as record:
+        clf.fit()
+
+    # check that only one warning was raised
+    assert len(record) == 1
 
 
 def test_missing_values() -> None:
@@ -583,7 +604,7 @@ def test_stream_distance(X_n140_outliers) -> None:
 
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((X_test_scores - X_test_dist_scores) ** 2).mean(axis=None))
-    assert_greater(0.075, rmse)
+    assert 0.075 >= rmse
 
 
 def test_stream_cluster(X_n140_outliers) -> None:
@@ -646,7 +667,7 @@ def test_stream_performance(X_n140_outliers) -> None:
 
     # calculate the rmse and ensure score is below threshold
     rmse = np.sqrt(((scores_noclust - stream_scores) ** 2).mean(axis=None))
-    assert_greater(0.35, rmse)
+    assert 0.35 > rmse
 
 
 def test_progress_bar(X_n8) -> None:
@@ -659,4 +680,5 @@ def test_progress_bar(X_n8) -> None:
     """
 
     # attempt to use the progress bar on a small number of observations
-    loop.LocalOutlierProbability(X_n8, use_numba=NUMBA, progress_bar=True).fit()
+    loop.LocalOutlierProbability(X_n8, use_numba=NUMBA,
+                                 progress_bar=True).fit()
