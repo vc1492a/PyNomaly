@@ -7,8 +7,8 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPi](https://img.shields.io/badge/pypi-0.3.3-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.3)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
-[![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
-[![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
+[![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=main)](https://travis-ci.org/vc1492a/PyNomaly)
+[![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=main)](https://coveralls.io/github/vc1492a/PyNomaly?branch=main)
 [![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -391,10 +391,10 @@ any changes to a branch which corresponds to an open issue. Hot fixes
 and bug fixes can be represented by branches with the prefix `fix/` versus 
 `feature/` for new capabilities or code improvements. Pull requests will 
 then be made from these branches into the repository's `dev` branch 
-prior to being pulled into `master`. Pull requests which are works in 
+prior to being pulled into `main`. Pull requests which are works in 
 progress or ready for merging should be indicated by their respective 
 prefixes ([WIP] and [MRG]). Pull requests with the [MRG] prefix will be 
-reviewed prior to being pulled into the `master` branch. 
+reviewed prior to being pulled into the `main` branch. 
 
 ### Tests
 When contributing, please ensure to run unit tests and add additional tests as 
