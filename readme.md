@@ -224,13 +224,13 @@ plt.close()
 Your results should look like the following:
 
 **LoOP Scores without Clustering**
-![LoOP Scores without Clustering](https://github.com/vc1492a/PyNomaly/blob/master/images/scores.png)
+![LoOP Scores without Clustering](https://github.com/vc1492a/PyNomaly/blob/main/images/scores.png)
 
 **LoOP Scores with Clustering**
-![LoOP Scores with Clustering](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_clust.png)
+![LoOP Scores with Clustering](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_clust.png)
 
 **DBSCAN Cluster Assignments**
-![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/cluster_assignments.png)
+![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/main/images/cluster_assignments.png)
 
 
 Note the differences between using LocalOutlierProbability with and without clustering. In the example without clustering, samples are
@@ -302,7 +302,7 @@ scores = m.local_outlier_probabilities
 The below visualization shows the results by a few known distance metrics:
 
 **LoOP Scores by Distance Metric**
-![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_by_distance_metric.png)
+![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_by_distance_metric.png)
 
 ## Streaming Data
 
@@ -373,7 +373,7 @@ plt.close()
 ```
 
 **LoOP Scores using Stream Approach with n=10**
-![LoOP Scores using Stream Approach with n=10](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
+![LoOP Scores using Stream Approach with n=10](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_stream.png)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated.
