@@ -4,7 +4,12 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 0.3.4
+## 0.4.0
+### Added
+- Parallel processing capability through numba just-in-time 
+compilation was added as an option for computing the Local Outlier 
+Probability. 
+
 ### Changed 
 - Unit tests from using the `sklearn.utils.testing` submodule 
 to standard Python assertions, as the submodule will be changed 

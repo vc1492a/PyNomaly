@@ -24,8 +24,21 @@ scores_numba = loop.LocalOutlierProbability(
     data,
     n_neighbors=3,
     use_numba=True,
-    progress_bar=True
+    progress_bar=True,
+    parallel=False
 ).fit().local_outlier_probabilities
 t4 = time.time()
 seconds_numba = t4 - t3
 print("\nComputation took " + str(seconds_numba) + " seconds with Numba JIT.")
+
+t5 = time.time()
+scores_numba_parallel = loop.LocalOutlierProbability(
+    data,
+    n_neighbors=3,
+    use_numba=True,
+    progress_bar=True,
+    parallel=True
+).fit().local_outlier_probabilities
+t6 = time.time()
+seconds_numba_parallel = t6 - t5
+print("\nComputation took " + str(seconds_numba_parallel) + " seconds with Numba JIT with parallel processing.")

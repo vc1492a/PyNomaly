@@ -11,7 +11,7 @@ except ImportError:
     pass
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.3.4'
+__version__ = '0.4.0'
 __license__ = 'Apache License, Version 2.0'
 
 
@@ -321,6 +321,9 @@ class LocalOutlierProbability(object):
                     },
                     'progress_bar': {
                         'type': types[8]
+                    },
+                    'parallel': {
+                        'type': types[9]
                     }
                 }
                 for x in kwds:
@@ -341,10 +344,10 @@ class LocalOutlierProbability(object):
         return decorator
 
     @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
-             (int, np.integer), list, bool, bool)
+             (int, np.integer), list, bool, bool, bool)
     def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
                  extent=3, n_neighbors=10, cluster_labels=None,
-                 use_numba=False, progress_bar=False) -> None:
+                 use_numba=False, progress_bar=False, parallel=False) -> None:
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
@@ -359,6 +362,7 @@ class LocalOutlierProbability(object):
         self.local_outlier_probabilities = None
         self._objects = {}
         self.progress_bar = progress_bar
+        self.parallel = parallel
         self.is_fit = False
 
         if self.use_numba is True and 'numba' not in sys.modules:
@@ -546,7 +550,7 @@ class LocalOutlierProbability(object):
 
             yield distances, indexes, i
 
-    def _distances(self, progress_bar: bool = False) -> None:
+    def _distances(self, progress_bar: bool = False, parallel: bool = False) -> None:
         """
         Provides the distances between each observation and it's closest
         neighbors. When input data is provided, calculates the euclidean
@@ -561,7 +565,7 @@ class LocalOutlierProbability(object):
                           dtype=float)
         self.points_vector = self.Validate._data(self.data)
         compute = numba.jit(self._compute_distance_and_neighbor_matrix,
-                            cache=True) if self.use_numba else \
+                            cache=True, parallel=parallel) if self.use_numba else \
             self._compute_distance_and_neighbor_matrix
         progress = "="
         for cluster_id in set(self._cluster_labels()):
@@ -754,7 +758,7 @@ class LocalOutlierProbability(object):
 
         store = self._store()
         if self.data is not None:
-            self._distances(progress_bar=self.progress_bar)
+            self._distances(progress_bar=self.progress_bar, parallel=self.parallel)
         store = self._assign_distances(store)
         store = self._ssd(store)
         store = self._standard_distances(store)

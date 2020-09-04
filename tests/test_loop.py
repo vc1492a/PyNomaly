@@ -486,8 +486,8 @@ def test_data_format() -> None:
     with pytest.warns(UserWarning) as record:
         clf.fit()
 
-    # check that only one warning was raised
-    assert len(record) == 1
+    # check that at least one warning was raised
+    assert len(record) >= 1
 
 
 def test_missing_values() -> None:

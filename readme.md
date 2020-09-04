@@ -5,7 +5,7 @@ LoOP is a local density based outlier detection method by Kriegel, Kröger, Schu
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.4-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.4)
+[![PyPi](https://img.shields.io/badge/pypi-0.4.0-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.4.0)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
@@ -109,6 +109,16 @@ Numba must be installed if the above to use JIT compilation and improve the
 speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
 tested with Numba version 0.45.1. An example of the speed difference that can 
 be realized with using Numba is avaialble in `examples/numba_speed_diff.py`. 
+
+Parallel processing is available when using PyNomaly with Numbam - 
+simply set `parallel=True`:
+
+```python
+from PyNomaly import loop
+m = loop.LocalOutlierProbability(data, use_numba=True, progress_bar=True, parallel=True).fit()
+scores = m.local_outlier_probabilities
+print(scores)
+```
 
 You may also choose to print progress bars _with our without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
