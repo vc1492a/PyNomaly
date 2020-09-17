@@ -1,4 +1,5 @@
 from math import erf, sqrt
+import multiprocessing as mp
 import numpy as np
 from python_utils.terminal import get_terminal_size
 import sys
@@ -326,6 +327,9 @@ class LocalOutlierProbability(object):
                     },
                     'parallel': {
                         'type': types[9]
+                    },
+                    'num_threads': {
+                        'type': types[10]
                     }
                 }
                 for x in kwds:
@@ -346,10 +350,11 @@ class LocalOutlierProbability(object):
         return decorator
 
     @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
-             (int, np.integer), list, bool, bool, bool)
+             (int, np.integer), list, bool, bool, bool, int)
     def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
                  extent=3, n_neighbors=10, cluster_labels=None,
-                 use_numba=False, progress_bar=False, parallel=False) -> None:
+                 use_numba=False, progress_bar=False, parallel=False,
+                 num_threads=mp.cpu_count()) -> None:
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
@@ -365,6 +370,7 @@ class LocalOutlierProbability(object):
         self._objects = {}
         self.progress_bar = progress_bar
         self.parallel = parallel
+        self.num_threads = num_threads
         self.is_fit = False
 
         if self.use_numba is True and 'numba' not in sys.modules:
@@ -552,7 +558,7 @@ class LocalOutlierProbability(object):
 
             yield distances, indexes, i
 
-    def _distances(self, progress_bar: bool = False, parallel: bool = False) -> None:
+    def _distances(self, progress_bar: bool = False, parallel: bool = False, num_threads: int = mp.cpu_count()) -> None:
         """
         Provides the distances between each observation and it's closest
         neighbors. When input data is provided, calculates the euclidean
@@ -566,13 +572,17 @@ class LocalOutlierProbability(object):
         indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
                           dtype=float)
         self.points_vector = self.Validate._data(self.data)
-        compute = numba.jit(self._compute_distance_and_neighbor_matrix,
-                            cache=False,
-                            parallel=parallel,
-                            nopython=parallel,
-                            nogil=parallel
-                            ) if self.use_numba else \
-            self._compute_distance_and_neighbor_matrix
+
+        if self.use_numba:
+            numba.set_num_threads(num_threads)
+            compute = numba.jit(self._compute_distance_and_neighbor_matrix,
+                                cache=False,
+                                parallel=parallel,
+                                nopython=parallel,
+                                nogil=parallel
+                                )
+        else:
+            compute = self._compute_distance_and_neighbor_matrix
         progress = "="
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
@@ -764,7 +774,7 @@ class LocalOutlierProbability(object):
 
         store = self._store()
         if self.data is not None:
-            self._distances(progress_bar=self.progress_bar, parallel=self.parallel)
+            self._distances(progress_bar=self.progress_bar, parallel=self.parallel, num_threads=self.num_threads)
         store = self._assign_distances(store)
         store = self._ssd(store)
         store = self._standard_distances(store)
