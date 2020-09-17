@@ -39,7 +39,7 @@ to calculate the Local Outlier Probability of each sample.
 - Python 3.5 - 3.8
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
-- (optional) numba >= 0.45.1
+- (optional) numba >= 0.51.2
 
 Numba just-in-time (JIT) compiles the function with calculates the Euclidean 
 distance between observations, providing a reduction in computation time 
