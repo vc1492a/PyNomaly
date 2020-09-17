@@ -110,7 +110,7 @@ speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been
 tested with Numba version 0.45.1. An example of the speed difference that can 
 be realized with using Numba is avaialble in `examples/numba_speed_diff.py`. 
 
-Parallel processing is available when using PyNomaly with Numbam - 
+Parallel processing is available when using PyNomaly with Numba - 
 simply set `parallel=True`:
 
 ```python
