@@ -40,12 +40,14 @@ to calculate the Local Outlier Probability of each sample.
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.51.2
+- (optional) SciPy >= 1.5.2
 
 Numba just-in-time (JIT) compiles the function with calculates the Euclidean 
 distance between observations, providing a reduction in computation time 
 (significantly when a large number of observations are scored). Numba is not a 
 requirement and PyNomaly may still be used solely with numpy if desired
-(details below). 
+(details below). When using Numba, [SciPy](https://www.scipy.org/) should 
+also be installed within the environment. 
 
 ## Quick Start
 
@@ -119,6 +121,13 @@ m = loop.LocalOutlierProbability(data, use_numba=True, progress_bar=True, parall
 scores = m.local_outlier_probabilities
 print(scores)
 ```
+
+The benefits of using parallelism will vary depending on the CPU architecture (number of cores, 
+clock speed, etc.) and the shape of the data processed (number of observations 
+and features). In some cases, it may be best to use Numba to compile LoOP without 
+parallelization. Additionally, parallelization only applies to calculation of 
+distances between observations and thus will not be applied when supplying a 
+distance matrix from outside PyNomaly (more details below).
 
 You may also choose to print progress bars _with our without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
