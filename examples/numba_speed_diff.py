@@ -10,10 +10,10 @@ data = np.ones(shape=(10000, 4))
 
 t1 = time.time()
 scores_numpy = loop.LocalOutlierProbability(
-    data,
-    n_neighbors=3,
-    use_numba=False,
-    progress_bar=True
+   data,
+   n_neighbors=3,
+   use_numba=False,
+   progress_bar=True
 ).fit().local_outlier_probabilities
 t2 = time.time()
 seconds_no_numba = t2 - t1

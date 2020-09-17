@@ -7,7 +7,9 @@ import warnings
 
 try:
     import numba
+    dynamic_range = numba.prange
 except ImportError:
+    dynamic_range = range
     pass
 
 __author__ = 'Valentino Constantinou'
@@ -528,7 +530,7 @@ class LocalOutlierProbability(object):
         """
 
         for i in range(clust_points_vector.shape[0]):
-            for j in range(i + 1, clust_points_vector.shape[0]):
+            for j in dynamic_range(i + 1, clust_points_vector.shape[0]):
                 p = ((i,), (j,))
 
                 diff = clust_points_vector[p[0]] - clust_points_vector[p[1]]
@@ -565,7 +567,11 @@ class LocalOutlierProbability(object):
                           dtype=float)
         self.points_vector = self.Validate._data(self.data)
         compute = numba.jit(self._compute_distance_and_neighbor_matrix,
-                            cache=True, parallel=parallel) if self.use_numba else \
+                            cache=False,
+                            parallel=parallel,
+                            nopython=parallel,
+                            nogil=parallel
+                            ) if self.use_numba else \
             self._compute_distance_and_neighbor_matrix
         progress = "="
         for cluster_id in set(self._cluster_labels()):
