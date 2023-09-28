@@ -29,6 +29,16 @@ The authors' 2009 paper detailing LoOP's theory, formulation, and application is
 Ludwig-Maximilians University Munich - Institute for Informatics;
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
 
+## PyNomaly Seeks Maintainers! :sparkles:
+
+Love using PyNomaly? Want to develop your open source software (OSS) experience and credentials? 
+
+PyNomaly is looking for maintainers! PyNomaly doesn't need much on a day to day basis, but needs some attention. 
+
+On the flip side, the sky is the limit... Have you seen [Mojo](https://docs.modular.com/mojo/notebooks/Matmul.html) and what it can do with matrix multiplication? Would definitely speed things up.  
+
+Interested? Send an email to [vc1492a@gmail.com](vc1492a@gmail.com). 
+
 ## Implementation
 
 This Python 3 implementation uses Numpy and the formulas outlined in
