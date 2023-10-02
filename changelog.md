@@ -4,15 +4,6 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 0.3.4
-### Changed 
-- Unit tests from using the `sklearn.utils.testing` submodule 
-to standard Python assertions, as the submodule will be changed 
-to private functions after scikit-learn version 0.24. 
-- Logging statements or warnings when testing with numba disabled or 
-enabled (respectively) to reflect the effect of numba just-in-time 
-compilation on code coverage statistics. 
-
 ## 0.3.3
 ### Changed
 - The implementation of the progress bar to support use when the number of 
