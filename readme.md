@@ -5,7 +5,7 @@ LoOP is a local density based outlier detection method by Kriegel, Kröger, Schu
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.4-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.4)
+[![PyPi](https://img.shields.io/badge/pypi-0.4.0-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.4.0)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
 [![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
@@ -49,13 +49,15 @@ to calculate the Local Outlier Probability of each sample.
 - Python 3.5 - 3.8
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
-- (optional) numba >= 0.45.1
+- (optional) numba >= 0.51.2
+- (optional) SciPy >= 1.5.2
 
 Numba just-in-time (JIT) compiles the function with calculates the Euclidean 
 distance between observations, providing a reduction in computation time 
 (significantly when a large number of observations are scored). Numba is not a 
 requirement and PyNomaly may still be used solely with numpy if desired
-(details below). 
+(details below). When using Numba, [SciPy](https://www.scipy.org/) should 
+also be installed within the environment. 
 
 ## Quick Start
 
@@ -119,6 +121,23 @@ Numba must be installed if the above to use JIT compilation and improve the
 speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
 tested with Numba version 0.45.1. An example of the speed difference that can 
 be realized with using Numba is avaialble in `examples/numba_speed_diff.py`. 
+
+Parallel processing is available when using PyNomaly with Numba - 
+simply set `parallel=True`:
+
+```python
+from PyNomaly import loop
+m = loop.LocalOutlierProbability(data, use_numba=True, progress_bar=True, parallel=True).fit()
+scores = m.local_outlier_probabilities
+print(scores)
+```
+
+The benefits of using parallelism will vary depending on the CPU architecture (number of cores, 
+clock speed, etc.) and the shape of the data processed (number of observations 
+and features). In some cases, it may be best to use Numba to compile LoOP without 
+parallelization. Additionally, parallelization only applies to calculation of 
+distances between observations and thus will not be applied when supplying a 
+distance matrix from outside PyNomaly (more details below).
 
 You may also choose to print progress bars _with our without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.

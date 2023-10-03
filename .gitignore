@@ -15,3 +15,4 @@ htmlcov/
 *.coverage.*
 .coveragerc
 venv/
+*.cache
