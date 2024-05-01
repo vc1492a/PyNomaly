@@ -5,10 +5,10 @@ LoOP is a local density based outlier detection method by Kriegel, Kröger, Schu
 scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.4-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.4)
+[![PyPi](https://img.shields.io/badge/pypi-0.3.3-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.3)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
-[![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=master)](https://travis-ci.org/vc1492a/PyNomaly)
-[![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=master)](https://coveralls.io/github/vc1492a/PyNomaly?branch=master)
+[![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=main)](https://travis-ci.org/vc1492a/PyNomaly)
+[![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=main)](https://coveralls.io/github/vc1492a/PyNomaly?branch=main)
 [![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
 
 The outlier score of each sample is called the Local Outlier Probability.
@@ -234,13 +234,13 @@ plt.close()
 Your results should look like the following:
 
 **LoOP Scores without Clustering**
-![LoOP Scores without Clustering](https://github.com/vc1492a/PyNomaly/blob/master/images/scores.png)
+![LoOP Scores without Clustering](https://github.com/vc1492a/PyNomaly/blob/main/images/scores.png)
 
 **LoOP Scores with Clustering**
-![LoOP Scores with Clustering](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_clust.png)
+![LoOP Scores with Clustering](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_clust.png)
 
 **DBSCAN Cluster Assignments**
-![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/cluster_assignments.png)
+![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/main/images/cluster_assignments.png)
 
 
 Note the differences between using LocalOutlierProbability with and without clustering. In the example without clustering, samples are
@@ -312,7 +312,7 @@ scores = m.local_outlier_probabilities
 The below visualization shows the results by a few known distance metrics:
 
 **LoOP Scores by Distance Metric**
-![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_by_distance_metric.png)
+![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_by_distance_metric.png)
 
 ## Streaming Data
 
@@ -383,7 +383,7 @@ plt.close()
 ```
 
 **LoOP Scores using Stream Approach with n=10**
-![LoOP Scores using Stream Approach with n=10](https://github.com/vc1492a/PyNomaly/blob/master/images/scores_stream.png)
+![LoOP Scores using Stream Approach with n=10](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_stream.png)
 
 ### Notes
 When calculating the LoOP score of incoming data, the original fitted scores are not updated.
@@ -401,10 +401,10 @@ any changes to a branch which corresponds to an open issue. Hot fixes
 and bug fixes can be represented by branches with the prefix `fix/` versus 
 `feature/` for new capabilities or code improvements. Pull requests will 
 then be made from these branches into the repository's `dev` branch 
-prior to being pulled into `master`. Pull requests which are works in 
+prior to being pulled into `main`. Pull requests which are works in 
 progress or ready for merging should be indicated by their respective 
 prefixes ([WIP] and [MRG]). Pull requests with the [MRG] prefix will be 
-reviewed prior to being pulled into the `master` branch. 
+reviewed prior to being pulled into the `main` branch. 
 
 ### Tests
 When contributing, please ensure to run unit tests and add additional tests as 

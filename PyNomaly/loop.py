@@ -11,7 +11,7 @@ except ImportError:
     pass
 
 __author__ = 'Valentino Constantinou'
-__version__ = '0.3.4'
+__version__ = '0.3.3'
 __license__ = 'Apache License, Version 2.0'
 
 
