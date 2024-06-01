@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "gh_actions_ci_cd" ]
   pull_request:
     branches: [ "main", "dev" ]
 
