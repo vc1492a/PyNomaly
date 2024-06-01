@@ -52,6 +52,28 @@ def X_n8() -> np.ndarray:
 
 
 @pytest.fixture()
+def X_n20_scores() -> tuple[np.ndarray, np.ndarray]:
+    """
+    Fixture that returns a tuple containing a 20 element numpy array
+    and the precalculated loOP scores based on that array.
+    :return: tuple(input_data,exptected_scores)
+    """
+    input_data = np.array([0.02059752, 0.32629926, 0.63036653, 0.94409321,
+                           0.63251097, 0.47598494, 0.80204026, 0.34845067,
+                           0.81556468, 0.89183, 0.25210317, 0.11460502,
+                           0.19953434, 0.36955067, 0.06038041, 0.34527368,
+                           0.56621582, 0.90533649, 0.33773613, 0.71573306])
+
+    expected_scores = np.array([0.6356276742921594, 0.0, 0.0,
+                                0.48490790006974044, 0.0, 0.0, 0.0, 0.0,
+                                0.021728288376168012, 0.28285086151683225,
+                                0.0, 0.18881886507113213, 0.0, 0.0,
+                                0.45350246469681843, 0.0, 0.07886635748113013,
+                                0.3349068501560546, 0.0, 0.0])
+    return (input_data, expected_scores)
+
+
+@pytest.fixture()
 def X_n120() -> np.ndarray:
     """
     Fixture that generates a Numpy array with 120 observations. Each
@@ -122,6 +144,18 @@ def test_loop(X_n8) -> None:
     assert np.min(score[-2:]) > np.max(score[:-2])
 
 
+def test_regression(X_n20_scores) -> None:
+    """
+    Tests for potential regression errors by comparing current results
+    to the exptected results. Any changes to the code should still return
+    the same result given the same dataset
+    """
+    input_data, expected_scores = X_n20_scores
+    clf = loop.LocalOutlierProbability(input_data).fit()
+    scores = clf.local_outlier_probabilities
+    assert np.array_equal(scores, expected_scores)
+
+
 def test_loop_performance(X_n120) -> None:
     """
     Using a set of known anomalies (labels), tests the performance (using
@@ -170,7 +204,7 @@ def test_input_nodata(X_n140_outliers) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Data or a distance matrix must be provided."
+        0] == "Data or a distance matrix must be provided."
 
 
 def test_input_incorrect_type(X_n140_outliers) -> None:
@@ -192,8 +226,8 @@ def test_input_incorrect_type(X_n140_outliers) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Argument 'n_neighbors' is not of type (<class 'int'>, " \
-                     "<class 'numpy.integer'>)."
+        0] == "Argument 'n_neighbors' is not of type (<class 'int'>, " \
+        "<class 'numpy.integer'>)."
 
 
 def test_input_neighbor_zero(X_n120) -> None:
@@ -213,7 +247,7 @@ def test_input_neighbor_zero(X_n120) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "n_neighbors must be greater than 0. Fit with 10 instead."
+        0] == "n_neighbors must be greater than 0. Fit with 10 instead."
 
 
 def test_input_distonly(X_n120) -> None:
@@ -236,8 +270,8 @@ def test_input_distonly(X_n120) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "A neighbor index matrix and distance matrix must both " \
-                     "be provided when not using raw input data."
+        0] == "A neighbor index matrix and distance matrix must both " \
+        "be provided when not using raw input data."
 
 
 def test_input_neighboronly(X_n120) -> None:
@@ -260,7 +294,7 @@ def test_input_neighboronly(X_n120) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Data or a distance matrix must be provided."
+        0] == "Data or a distance matrix must be provided."
 
 
 def test_input_too_many(X_n120) -> None:
@@ -284,8 +318,8 @@ def test_input_too_many(X_n120) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Only one of the following may be provided: data or a " \
-                     "distance matrix (not both)."
+        0] == "Only one of the following may be provided: data or a " \
+        "distance matrix (not both)."
 
 
 def test_distance_neighbor_shape_mismatch(X_n120) -> None:
@@ -318,8 +352,8 @@ def test_distance_neighbor_shape_mismatch(X_n120) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "The shape of the distance and neighbor " \
-                     "index matrices must match."
+        0] == "The shape of the distance and neighbor " \
+        "index matrices must match."
 
 
 def test_input_neighbor_mismatch(X_n120) -> None:
@@ -345,10 +379,10 @@ def test_input_neighbor_mismatch(X_n120) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "The shape of the distance or " \
-                     "neighbor index matrix does not " \
-                     "match the number of neighbors " \
-                     "specified."
+        0] == "The shape of the distance or " \
+        "neighbor index matrix does not " \
+        "match the number of neighbors " \
+        "specified."
 
 
 def test_loop_dist_matrix(X_n120) -> None:
@@ -509,13 +543,13 @@ def test_missing_values() -> None:
     assert len(record_b) == 1
     # check that the message matches
     assert record_b[0].message.args[
-               0] == "Method does not support missing values in input data."
+        0] == "Method does not support missing values in input data."
 
 
 def test_small_cluster_size(X_n140_outliers) -> None:
     """
-    Test to ensure that the program exits when the specified number of neighbors
-    is larger than the smallest cluster size in the input data.
+    Test to ensure that the program exits when the specified number of
+    neighbors is larger than the smallest cluster size in the input data.
     :param X_n140_outliers: A pytest Fixture that generates 140 observations.
     :return: None
     """
@@ -541,10 +575,10 @@ def test_small_cluster_size(X_n140_outliers) -> None:
     assert len(record_b) == 1
     # check that the message matches
     assert record_b[0].message.args[
-               0] == "Number of neighbors specified larger than smallest " \
-                     "cluster. Specify a number of neighbors smaller than " \
-                     "the smallest cluster size (observations in smallest " \
-                     "cluster minus one)."
+        0] == "Number of neighbors specified larger than smallest " \
+        "cluster. Specify a number of neighbors smaller than " \
+        "the smallest cluster size (observations in smallest " \
+        "cluster minus one)."
 
 
 def test_stream_fit(X_n140_outliers) -> None:
@@ -634,8 +668,8 @@ def test_stream_cluster(X_n140_outliers) -> None:
     assert len(record) == 1
     # check that the message matches
     assert record[0].message.args[
-               0] == "Stream approach does not support clustered data. " \
-                     "Automatically refit using single cluster of points."
+        0] == "Stream approach does not support clustered data. " \
+        "Automatically refit using single cluster of points."
 
 
 def test_stream_performance(X_n140_outliers) -> None:
