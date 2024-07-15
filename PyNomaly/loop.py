@@ -235,7 +235,7 @@ class LocalOutlierProbability(object):
             :param obj: a PyNomaly object.
             :return: a boolean indicating whether validation has passed.
             """
-            if obj.data[obj.data.isna().any(axis=1)].shape[0] > 0:
+            if obj.data[obj.data.isna().any(axis = 1)].shape[0] > 0:
                 warnings.warn(
                     "Method does not support missing values in input data.",
                     UserWarning)
