@@ -154,7 +154,7 @@ def test_regression(X_n20_scores) -> None:
     input_data, expected_scores = X_n20_scores
     clf = loop.LocalOutlierProbability(input_data).fit()
     scores = clf.local_outlier_probabilities
-    assert np.array_equal(scores, expected_scores)
+    assert_array_equal(scores, expected_scores)
 
 
 def test_loop_performance(X_n120) -> None:
