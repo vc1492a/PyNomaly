@@ -4,6 +4,7 @@
 from PyNomaly import loop
 
 import logging
+from typing import Tuple
 import numpy as np
 from numpy.testing import assert_array_equal
 import pandas as pd
@@ -52,7 +53,7 @@ def X_n8() -> np.ndarray:
 
 
 @pytest.fixture()
-def X_n20_scores() -> tuple[np.ndarray, np.ndarray]:
+def X_n20_scores() -> Tuple[np.ndarray, np.ndarray]:
     """
     Fixture that returns a tuple containing a 20 element numpy array
     and the precalculated loOP scores based on that array.
