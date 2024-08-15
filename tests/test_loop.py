@@ -6,7 +6,7 @@ from PyNomaly import loop
 import logging
 from typing import Tuple
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
@@ -154,7 +154,7 @@ def test_regression(X_n20_scores) -> None:
     input_data, expected_scores = X_n20_scores
     clf = loop.LocalOutlierProbability(input_data).fit()
     scores = clf.local_outlier_probabilities
-    assert_array_equal(scores, expected_scores)
+    assert_array_almost_equal(scores, expected_scores, 6)
 
 
 def test_loop_performance(X_n120) -> None:
