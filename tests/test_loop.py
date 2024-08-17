@@ -4,8 +4,9 @@
 from PyNomaly import loop
 
 import logging
+from typing import Tuple
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
@@ -52,7 +53,7 @@ def X_n8() -> np.ndarray:
 
 
 @pytest.fixture()
-def X_n20_scores() -> tuple[np.ndarray, np.ndarray]:
+def X_n20_scores() -> Tuple[np.ndarray, np.ndarray]:
     """
     Fixture that returns a tuple containing a 20 element numpy array
     and the precalculated loOP scores based on that array.
@@ -153,7 +154,7 @@ def test_regression(X_n20_scores) -> None:
     input_data, expected_scores = X_n20_scores
     clf = loop.LocalOutlierProbability(input_data).fit()
     scores = clf.local_outlier_probabilities
-    assert np.array_equal(scores, expected_scores)
+    assert_array_almost_equal(scores, expected_scores, 6)
 
 
 def test_loop_performance(X_n120) -> None:

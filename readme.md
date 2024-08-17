@@ -7,7 +7,7 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPi](https://img.shields.io/badge/pypi-0.3.3-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.3)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
-[![Build Status](https://travis-ci.org/vc1492a/PyNomaly.svg?branch=main)](https://travis-ci.org/vc1492a/PyNomaly)
+![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=main)](https://coveralls.io/github/vc1492a/PyNomaly?branch=main)
 [![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
 
