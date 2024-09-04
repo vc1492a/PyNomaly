@@ -401,10 +401,15 @@ any changes to a branch which corresponds to an open issue. Hot fixes
 and bug fixes can be represented by branches with the prefix `fix/` versus 
 `feature/` for new capabilities or code improvements. Pull requests will 
 then be made from these branches into the repository's `dev` branch 
-prior to being pulled into `main`. Pull requests which are works in 
-progress or ready for merging should be indicated by their respective 
-prefixes ([WIP] and [MRG]). Pull requests with the [MRG] prefix will be 
-reviewed prior to being pulled into the `main` branch. 
+prior to being pulled into `main`. 
+
+### Commit Messages and Releases
+
+**Your commit messages are important** - here's why. 
+
+PyNomaly leverages [release-please](https://github.com/googleapis/release-please-action) to help automate the release process using the [Conventional Commits](https://www.conventionalcommits.org/) specification. When pull requests are opened to the `main` branch, release-please will collate the git commit messages and prepare an organized changelog and release notes. This process can be completed because of the Conventional Commits specification. 
+
+Conventional Commits provides an easy set of rules for creating an explicit commit history; which makes it easier to write automated tools on top of. This convention dovetails with SemVer, by describing the features, fixes, and breaking changes made in commit messages. You can check out examples [here](https://www.conventionalcommits.org/en/v1.0.0/#examples). Make a best effort to use the specification when contributing to Infactory code as it dramatically eases the documentation around releases and their features, breaking changes, bug fixes and documentation updates. 
 
 ### Tests
 When contributing, please ensure to run unit tests and add additional tests as 
