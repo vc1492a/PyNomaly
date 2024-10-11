@@ -2,7 +2,9 @@
 
 PyNomaly is a Python 3 implementation of LoOP (Local Outlier Probabilities).
 LoOP is a local density based outlier detection method by Kriegel, Kröger, Schubert, and Zimek which provides outlier
-scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier.
+scores in the range of [0,1] that are directly interpretable as the probability of a sample being an outlier. 
+
+PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepchecks) and [pysad](https://github.com/selimfirat/pysad). 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPi](https://img.shields.io/badge/pypi-0.3.3-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.3)
@@ -29,16 +31,6 @@ The authors' 2009 paper detailing LoOP's theory, formulation, and application is
 Ludwig-Maximilians University Munich - Institute for Informatics;
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf).
 
-## PyNomaly Seeks Maintainers! :sparkles:
-
-Love using PyNomaly? Want to develop your open source software (OSS) experience and credentials? 
-
-PyNomaly is looking for maintainers! PyNomaly doesn't need much on a day to day basis, but needs some attention. 
-
-On the flip side, the sky is the limit... Have you seen [Mojo](https://docs.modular.com/mojo/notebooks/Matmul.html) and what it can do with matrix multiplication? Would definitely speed things up.  
-
-Interested? Send an email to [vc1492a@gmail.com](vc1492a@gmail.com). 
-
 ## Implementation
 
 This Python 3 implementation uses Numpy and the formulas outlined in
@@ -46,7 +38,7 @@ This Python 3 implementation uses Numpy and the formulas outlined in
 to calculate the Local Outlier Probability of each sample.
 
 ## Dependencies
-- Python 3.5 - 3.8
+- Python 3.6 - 3.12
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
