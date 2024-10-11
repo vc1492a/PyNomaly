@@ -7,7 +7,7 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepchecks) and [pysad](https://github.com/selimfirat/pysad). 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.3-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.3)
+[![PyPi](https://img.shields.io/badge/pypi-0.3.4-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.4)
 ![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
 ![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=main)](https://coveralls.io/github/vc1492a/PyNomaly?branch=main)
