@@ -10,13 +10,12 @@ try:
 except ImportError:
     pass
 
-__author__ = 'Valentino Constantinou'
-__version__ = '0.3.3'
-__license__ = 'Apache License, Version 2.0'
+__author__ = "Valentino Constantinou"
+__version__ = "0.3.4"
+__license__ = "Apache License, Version 2.0"
 
 
 class Utils:
-
     @staticmethod
     def emit_progress_bar(progress: str, index: int, total: int) -> str:
         """
@@ -55,7 +54,7 @@ class LocalOutlierProbability(object):
     :param cluster_labels: a numpy array of cluster assignments w.r.t. each 
     sample (optional, default None)
     :return:
-    """"""
+    """ """
 
     Based on the work of Kriegel, Kröger, Schubert, and Zimek (2009) in LoOP: 
     Local Outlier Probabilities.
@@ -93,7 +92,7 @@ class LocalOutlierProbability(object):
         """
 
         @staticmethod
-        def _data(obj: Union['pd.DataFrame', np.ndarray]) -> np.ndarray:
+        def _data(obj: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
             """
             Validates the input data to ensure it is either a Pandas DataFrame
             or Numpy array.
@@ -101,24 +100,25 @@ class LocalOutlierProbability(object):
             :return: a vector of values to be used in calculating the local
             outlier probability.
             """
-            if obj.__class__.__name__ == 'DataFrame':
+            if obj.__class__.__name__ == "DataFrame":
                 points_vector = obj.values
                 return points_vector
-            elif obj.__class__.__name__ == 'ndarray':
+            elif obj.__class__.__name__ == "ndarray":
                 points_vector = obj
                 return points_vector
             else:
                 warnings.warn(
                     "Provided data or distance matrix must be in ndarray "
                     "or DataFrame.",
-                    UserWarning)
+                    UserWarning,
+                )
                 if isinstance(obj, list):
                     points_vector = np.array(obj)
                     return points_vector
                 points_vector = np.array([obj])
                 return points_vector
 
-        def _inputs(self, obj: 'LocalOutlierProbability'):
+        def _inputs(self, obj: "LocalOutlierProbability"):
             """
             Validates the inputs provided during initialization to ensure
             that the needed objects are provided.
@@ -134,35 +134,43 @@ class LocalOutlierProbability(object):
             elif all(v is not None for v in [obj.data, obj.distance_matrix]):
                 warnings.warn(
                     "Only one of the following may be provided: data or a "
-                    "distance matrix (not both).", UserWarning
+                    "distance matrix (not both).",
+                    UserWarning,
                 )
                 return False
             if obj.data is not None:
                 points_vector = self._data(obj.data)
                 return points_vector, obj.distance_matrix, obj.neighbor_matrix
-            if all(matrix is not None for matrix in [obj.neighbor_matrix,
-                                                     obj.distance_matrix]):
+            if all(
+                matrix is not None
+                for matrix in [obj.neighbor_matrix, obj.distance_matrix]
+            ):
                 dist_vector = self._data(obj.distance_matrix)
                 neigh_vector = self._data(obj.neighbor_matrix)
             else:
                 warnings.warn(
                     "A neighbor index matrix and distance matrix must both be "
-                    "provided when not using raw input data.", UserWarning
+                    "provided when not using raw input data.",
+                    UserWarning,
                 )
                 return False
             if obj.distance_matrix.shape != obj.neighbor_matrix.shape:
                 warnings.warn(
                     "The shape of the distance and neighbor "
-                    "index matrices must match.", UserWarning
+                    "index matrices must match.",
+                    UserWarning,
                 )
                 return False
-            elif (obj.distance_matrix.shape[1] != obj.n_neighbors) \
-                    or (obj.neighbor_matrix.shape[1] !=
-                        obj.n_neighbors):
-                warnings.warn("The shape of the distance or "
-                              "neighbor index matrix does not "
-                              "match the number of neighbors "
-                              "specified.", UserWarning)
+            elif (obj.distance_matrix.shape[1] != obj.n_neighbors) or (
+                obj.neighbor_matrix.shape[1] != obj.n_neighbors
+            ):
+                warnings.warn(
+                    "The shape of the distance or "
+                    "neighbor index matrix does not "
+                    "match the number of neighbors "
+                    "specified.",
+                    UserWarning,
+                )
                 return False
             return obj.data, dist_vector, neigh_vector
 
@@ -184,7 +192,8 @@ class LocalOutlierProbability(object):
                         "cluster. Specify a number of neighbors smaller than "
                         "the smallest cluster size (observations in smallest "
                         "cluster minus one).",
-                        UserWarning)
+                        UserWarning,
+                    )
                     return False
             return True
 
@@ -199,17 +208,19 @@ class LocalOutlierProbability(object):
             """
             if not obj.n_neighbors > 0:
                 obj.n_neighbors = 10
-                warnings.warn("n_neighbors must be greater than 0."
-                              " Fit with " + str(obj.n_neighbors) +
-                              " instead.",
-                              UserWarning)
+                warnings.warn(
+                    "n_neighbors must be greater than 0."
+                    " Fit with " + str(obj.n_neighbors) + " instead.",
+                    UserWarning,
+                )
                 return False
             elif obj.n_neighbors >= obj._n_observations():
                 obj.n_neighbors = obj._n_observations() - 1
                 warnings.warn(
                     "n_neighbors must be less than the number of observations."
                     " Fit with " + str(obj.n_neighbors) + " instead.",
-                    UserWarning)
+                    UserWarning,
+                )
             return True
 
         @staticmethod
@@ -222,8 +233,8 @@ class LocalOutlierProbability(object):
             """
             if obj.extent not in [1, 2, 3]:
                 warnings.warn(
-                    "extent parameter (lambda) must be 1, 2, or 3.",
-                    UserWarning)
+                    "extent parameter (lambda) must be 1, 2, or 3.", UserWarning
+                )
                 return False
             return True
 
@@ -237,8 +248,8 @@ class LocalOutlierProbability(object):
             """
             if np.any(np.isnan(obj.data)):
                 warnings.warn(
-                    "Method does not support missing values in input data.",
-                    UserWarning)
+                    "Method does not support missing values in input data.", UserWarning
+                )
                 return False
             return True
 
@@ -254,7 +265,8 @@ class LocalOutlierProbability(object):
                 warnings.warn(
                     "Must fit on historical data by calling fit() prior to "
                     "calling stream(x).",
-                    UserWarning)
+                    UserWarning,
+                )
                 return False
             return True
 
@@ -272,7 +284,8 @@ class LocalOutlierProbability(object):
                 warnings.warn(
                     "Stream approach does not support clustered data. "
                     "Automatically refit using single cluster of points.",
-                    UserWarning)
+                    UserWarning,
+                )
                 return False
             return True
 
@@ -294,43 +307,35 @@ class LocalOutlierProbability(object):
             assert len(types) == f.__code__.co_argcount
 
             def new_f(*args, **kwds):
-                for (a, t) in zip(args, types):
-                    if type(a).__name__ == 'DataFrame':
+                for a, t in zip(args, types):
+                    if type(a).__name__ == "DataFrame":
                         a = np.array(a)
                     if isinstance(a, t) is False:
-                        warnings.warn("Argument %r is not of type %s" % (a, t),
-                                      UserWarning)
+                        warnings.warn(
+                            "Argument %r is not of type %s" % (a, t), UserWarning
+                        )
                 opt_types = {
-                    'distance_matrix': {
-                        'type': types[2]
-                    },
-                    'neighbor_matrix': {
-                        'type': types[3]
-                    },
-                    'extent': {
-                        'type': types[4]
-                    },
-                    'n_neighbors': {
-                        'type': types[5]
-                    },
-                    'cluster_labels': {
-                        'type': types[6]
-                    },
-                    'use_numba': {
-                        'type': types[7]
-                    },
-                    'progress_bar': {
-                        'type': types[8]
-                    }
+                    "distance_matrix": {"type": types[2]},
+                    "neighbor_matrix": {"type": types[3]},
+                    "extent": {"type": types[4]},
+                    "n_neighbors": {"type": types[5]},
+                    "cluster_labels": {"type": types[6]},
+                    "use_numba": {"type": types[7]},
+                    "progress_bar": {"type": types[8]},
                 }
                 for x in kwds:
-                    opt_types[x]['value'] = kwds[x]
+                    opt_types[x]["value"] = kwds[x]
                 for k in opt_types:
                     try:
-                        if isinstance(opt_types[k]['value'],
-                                      opt_types[k]['type']) is False:
-                            warnings.warn("Argument %r is not of type %s." % (
-                                k, opt_types[k]['type']), UserWarning)
+                        if (
+                            isinstance(opt_types[k]["value"], opt_types[k]["type"])
+                            is False
+                        ):
+                            warnings.warn(
+                                "Argument %r is not of type %s."
+                                % (k, opt_types[k]["type"]),
+                                UserWarning,
+                            )
                     except KeyError:
                         pass
                 return f(*args, **kwds)
@@ -340,11 +345,28 @@ class LocalOutlierProbability(object):
 
         return decorator
 
-    @accepts(object, np.ndarray, np.ndarray, np.ndarray, (int, np.integer),
-             (int, np.integer), list, bool, bool)
-    def __init__(self, data=None, distance_matrix=None, neighbor_matrix=None,
-                 extent=3, n_neighbors=10, cluster_labels=None,
-                 use_numba=False, progress_bar=False) -> None:
+    @accepts(
+        object,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        (int, np.integer),
+        (int, np.integer),
+        list,
+        bool,
+        bool,
+    )
+    def __init__(
+        self,
+        data=None,
+        distance_matrix=None,
+        neighbor_matrix=None,
+        extent=3,
+        n_neighbors=10,
+        cluster_labels=None,
+        use_numba=False,
+        progress_bar=False,
+    ) -> None:
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
@@ -361,11 +383,11 @@ class LocalOutlierProbability(object):
         self.progress_bar = progress_bar
         self.is_fit = False
 
-        if self.use_numba is True and 'numba' not in sys.modules:
+        if self.use_numba is True and "numba" not in sys.modules:
             self.use_numba = False
             warnings.warn(
-                "Numba is not available, falling back to pure python mode.",
-                UserWarning)
+                "Numba is not available, falling back to pure python mode.", UserWarning
+            )
 
         self.Validate()._inputs(self)
         self.Validate._extent(self)
@@ -375,15 +397,14 @@ class LocalOutlierProbability(object):
     """
 
     @staticmethod
-    def _standard_distance(cardinality: float, sum_squared_distance: float) \
-            -> float:
+    def _standard_distance(cardinality: float, sum_squared_distance: float) -> float:
         """
         Calculates the standard distance of an observation.
         :param cardinality: the cardinality of the input observation.
         :param sum_squared_distance: the sum squared distance between all
         neighbors of the input observation.
         :return: the standard distance.
-        # """
+        #"""
         division_result = sum_squared_distance / cardinality
         st_dist = sqrt(division_result)
         return st_dist
@@ -400,8 +421,9 @@ class LocalOutlierProbability(object):
         return extent * standard_distance
 
     @staticmethod
-    def _prob_outlier_factor(probabilistic_distance: np.ndarray, ev_prob_dist:
-    np.ndarray) -> np.ndarray:
+    def _prob_outlier_factor(
+        probabilistic_distance: np.ndarray, ev_prob_dist: np.ndarray
+    ) -> np.ndarray:
         """
         Calculates the probabilistic outlier factor of an observation.
         :param probabilistic_distance: the probabilistic distance of the
@@ -412,14 +434,14 @@ class LocalOutlierProbability(object):
         if np.all(probabilistic_distance == ev_prob_dist):
             return np.zeros(probabilistic_distance.shape)
         else:
-            ev_prob_dist[ev_prob_dist == 0.] = 1.e-8
-            result = np.divide(probabilistic_distance, ev_prob_dist) - 1.
+            ev_prob_dist[ev_prob_dist == 0.0] = 1.0e-8
+            result = np.divide(probabilistic_distance, ev_prob_dist) - 1.0
             return result
 
     @staticmethod
-    def _norm_prob_outlier_factor(extent: float,
-                                  ev_probabilistic_outlier_factor: list) \
-            -> list:
+    def _norm_prob_outlier_factor(
+        extent: float, ev_probabilistic_outlier_factor: list
+    ) -> list:
         """
         Calculates the normalized probabilistic outlier factor of an
         observation.
@@ -434,8 +456,9 @@ class LocalOutlierProbability(object):
         return npofs
 
     @staticmethod
-    def _local_outlier_probability(plof_val: np.ndarray, nplof_val: np.ndarray) \
-            -> np.ndarray:
+    def _local_outlier_probability(
+        plof_val: np.ndarray, nplof_val: np.ndarray
+    ) -> np.ndarray:
         """
         Calculates the local outlier probability of an observation.
         :param plof_val: the probabilistic outlier factor of the input
@@ -448,7 +471,7 @@ class LocalOutlierProbability(object):
         if np.all(plof_val == nplof_val):
             return np.zeros(plof_val.shape)
         else:
-            return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.))))
+            return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.0))))
 
     def _n_observations(self) -> int:
         """
@@ -502,8 +525,9 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        for vec, cluster_id in zip(range(self.distance_matrix.shape[0]),
-                                   self._cluster_labels()):
+        for vec, cluster_id in zip(
+            range(self.distance_matrix.shape[0]), self._cluster_labels()
+        ):
             data_store[vec][0] = cluster_id
             data_store[vec][1] = self.distance_matrix[vec]
             data_store[vec][2] = self.neighbor_matrix[vec]
@@ -511,10 +535,10 @@ class LocalOutlierProbability(object):
 
     @staticmethod
     def _compute_distance_and_neighbor_matrix(
-            clust_points_vector: np.ndarray,
-            indices: np.ndarray,
-            distances: np.ndarray,
-            indexes: np.ndarray
+        clust_points_vector: np.ndarray,
+        indices: np.ndarray,
+        distances: np.ndarray,
+        indexes: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, int]:
         """
         This helper method provides the heavy lifting for the _distances
@@ -522,27 +546,27 @@ class LocalOutlierProbability(object):
         written so that it can make full use of Numba's jit capabilities if
         desired.
         """
-
         for i in range(clust_points_vector.shape[0]):
             for j in range(i + 1, clust_points_vector.shape[0]):
-                p = ((i,), (j,))
+                # Global index of the points
+                global_i = indices[0][i]
+                global_j = indices[0][j]
 
-                diff = clust_points_vector[p[0]] - clust_points_vector[p[1]]
+                # Compute Euclidean distance
+                diff = clust_points_vector[i] - clust_points_vector[j]
                 d = np.dot(diff, diff) ** 0.5
 
-                idx = indices[0][p[0]]
-                idx_max = distances[idx].argmax()
+                # Update distance and neighbor index for global_i
+                idx_max = distances[global_i].argmax()
+                if d < distances[global_i][idx_max]:
+                    distances[global_i][idx_max] = d
+                    indexes[global_i][idx_max] = global_j
 
-                if d < distances[idx][idx_max]:
-                    distances[idx][idx_max] = d
-                    indexes[idx][idx_max] = p[1][0]
-
-                idx = indices[0][p[1]]
-                idx_max = distances[idx].argmax()
-
-                if d < distances[idx][idx_max]:
-                    distances[idx][idx_max] = d
-                    indexes[idx][idx_max] = p[0][0]
+                # Update distance and neighbor index for global_j
+                idx_max = distances[global_j].argmax()
+                if d < distances[global_j][idx_max]:
+                    distances[global_j][idx_max] = d
+                    indexes[global_j][idx_max] = global_i
 
             yield distances, indexes, i
 
@@ -555,20 +579,21 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        distances = np.full([self._n_observations(), self.n_neighbors], 9e10,
-                            dtype=float)
-        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10,
-                          dtype=float)
+        distances = np.full(
+            [self._n_observations(), self.n_neighbors], 9e10, dtype=float
+        )
+        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
         self.points_vector = self.Validate._data(self.data)
-        compute = numba.jit(self._compute_distance_and_neighbor_matrix,
-                            cache=True) if self.use_numba else \
-            self._compute_distance_and_neighbor_matrix
+        compute = (
+            numba.jit(self._compute_distance_and_neighbor_matrix, cache=True)
+            if self.use_numba
+            else self._compute_distance_and_neighbor_matrix
+        )
         progress = "="
         for cluster_id in set(self._cluster_labels()):
             indices = np.where(self._cluster_labels() == cluster_id)
             clust_points_vector = np.array(
-                self.points_vector.take(indices, axis=0)[0],
-                dtype=np.float64
+                self.points_vector.take(indices, axis=0)[0], dtype=np.float64
             )
             # a generator that yields an updated distance matrix on each loop
             for c in compute(clust_points_vector, indices, distances, indexes):
@@ -576,7 +601,8 @@ class LocalOutlierProbability(object):
                 # update the progress bar
                 if progress_bar is True:
                     progress = Utils.emit_progress_bar(
-                        progress, i+1, clust_points_vector.shape[0])
+                        progress, i + 1, clust_points_vector.shape[0]
+                    )
 
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
@@ -630,11 +656,10 @@ class LocalOutlierProbability(object):
         """
         prob_distances = []
         for i in range(data_store[:, 4].shape[0]):
-            prob_distances.append(
-                self._prob_distance(self.extent, data_store[:, 4][i]))
+            prob_distances.append(self._prob_distance(self.extent, data_store[:, 4][i]))
         return np.hstack((data_store, np.array([prob_distances]).T))
 
-    def _prob_distances_ev(self, data_store: np.ndarray) -> np.ndarray:
+    def _prob_distances_ev(self, data_store) -> np.ndarray:
         """
         Calculates the expected value of the probabilistic distance for
         each observation in the input data with respect to the cluster the
@@ -648,19 +673,20 @@ class LocalOutlierProbability(object):
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)[0]
             for index in indices:
-                nbrhood = data_store[index][2].astype(int)
-                nbrhood_prob_distances = np.take(data_store[:, 5],
-                                                 nbrhood).astype(float)
+                # Global neighbor indices for the current point
+                nbrhood = data_store[index][2].astype(int)  # Ensure global indices
+                nbrhood_prob_distances = np.take(data_store[:, 5], nbrhood).astype(
+                    float
+                )
                 nbrhood_prob_distances_nonan = nbrhood_prob_distances[
-                    np.logical_not(np.isnan(nbrhood_prob_distances))]
-                prob_set_distance_ev[index] = \
-                    nbrhood_prob_distances_nonan.mean()
-        self.prob_distances_ev = prob_set_distance_ev
-        data_store = np.hstack((data_store, prob_set_distance_ev))
-        return data_store
+                    np.logical_not(np.isnan(nbrhood_prob_distances))
+                ]
+                prob_set_distance_ev[index] = nbrhood_prob_distances_nonan.mean()
 
-    def _prob_local_outlier_factors(self,
-                                    data_store: np.ndarray) -> np.ndarray:
+        self.prob_distances_ev = prob_set_distance_ev
+        return np.hstack((data_store, prob_set_distance_ev))
+
+    def _prob_local_outlier_factors(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the probabilistic local outlier factor for each
         observation in the input data.
@@ -670,13 +696,22 @@ class LocalOutlierProbability(object):
         each observation.
         """
         return np.hstack(
-            (data_store,
-             np.array([np.apply_along_axis(self._prob_outlier_factor, 0,
-                                           data_store[:, 5],
-                                           data_store[:, 6])]).T))
+            (
+                data_store,
+                np.array(
+                    [
+                        np.apply_along_axis(
+                            self._prob_outlier_factor,
+                            0,
+                            data_store[:, 5],
+                            data_store[:, 6],
+                        )
+                    ]
+                ).T,
+            )
+        )
 
-    def _prob_local_outlier_factors_ev(self,
-                                       data_store: np.ndarray) -> np.ndarray:
+    def _prob_local_outlier_factors_ev(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the expected value of the probabilistic local outlier factor
         for each observation in the input data with respect to the cluster the
@@ -689,21 +724,31 @@ class LocalOutlierProbability(object):
         prob_local_outlier_factor_ev_dict = {}
         for cluster_id in self.cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
-            prob_local_outlier_factors = np.take(data_store[:, 7],
-                                                 indices).astype(float)
-            prob_local_outlier_factors_nonan = prob_local_outlier_factors[
-                np.logical_not(np.isnan(prob_local_outlier_factors))]
-            prob_local_outlier_factor_ev_dict[cluster_id] = (
-                    np.power(prob_local_outlier_factors_nonan, 2).sum() /
-                    float(prob_local_outlier_factors_nonan.size)
+            prob_local_outlier_factors = np.take(data_store[:, 7], indices).astype(
+                float
             )
+            prob_local_outlier_factors_nonan = prob_local_outlier_factors[
+                np.logical_not(np.isnan(prob_local_outlier_factors))
+            ]
+            prob_local_outlier_factor_ev_dict[cluster_id] = np.power(
+                prob_local_outlier_factors_nonan, 2
+            ).sum() / float(prob_local_outlier_factors_nonan.size)
         data_store = np.hstack(
-            (data_store, np.array([[prob_local_outlier_factor_ev_dict[x] for x
-                                    in data_store[:, 0].tolist()]]).T))
+            (
+                data_store,
+                np.array(
+                    [
+                        [
+                            prob_local_outlier_factor_ev_dict[x]
+                            for x in data_store[:, 0].tolist()
+                        ]
+                    ]
+                ).T,
+            )
+        )
         return data_store
 
-    def _norm_prob_local_outlier_factors(self, data_store: np.ndarray) \
-            -> np.ndarray:
+    def _norm_prob_local_outlier_factors(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the normalized probabilistic local outlier factor for each
         observation in the input data.
@@ -712,11 +757,20 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        return np.hstack((data_store, np.array([self._norm_prob_outlier_factor(
-            self.extent, data_store[:, 8].tolist())]).T))
+        return np.hstack(
+            (
+                data_store,
+                np.array(
+                    [
+                        self._norm_prob_outlier_factor(
+                            self.extent, data_store[:, 8].tolist()
+                        )
+                    ]
+                ).T,
+            )
+        )
 
-    def _local_outlier_probabilities(self,
-                                     data_store: np.ndarray) -> np.ndarray:
+    def _local_outlier_probabilities(self, data_store: np.ndarray) -> np.ndarray:
         """
         Calculates the local outlier probability for each observation in the
         input data.
@@ -726,17 +780,26 @@ class LocalOutlierProbability(object):
         each observation.
         """
         return np.hstack(
-            (data_store,
-             np.array([np.apply_along_axis(self._local_outlier_probability, 0,
-                                           data_store[:, 7],
-                                           data_store[:, 9])]).T))
+            (
+                data_store,
+                np.array(
+                    [
+                        np.apply_along_axis(
+                            self._local_outlier_probability,
+                            0,
+                            data_store[:, 7],
+                            data_store[:, 9],
+                        )
+                    ]
+                ).T,
+            )
+        )
 
     """
     Public methods
     """
 
-    def fit(self) -> 'LocalOutlierProbability':
-
+    def fit(self) -> "LocalOutlierProbability":
         """
         Calculates the local outlier probability for each observation in the
         input data according to the input parameters extent, n_neighbors, and
@@ -748,8 +811,7 @@ class LocalOutlierProbability(object):
         self.Validate._n_neighbors(self)
         if self.Validate._cluster_size(self) is False:
             sys.exit()
-        if self.data is not None and self.Validate._missing_values(
-                self) is False:
+        if self.data is not None and self.Validate._missing_values(self) is False:
             sys.exit()
 
         store = self._store()
@@ -773,7 +835,6 @@ class LocalOutlierProbability(object):
         return self
 
     def stream(self, x: np.ndarray) -> np.ndarray:
-
         """
         Calculates the local outlier probability for an individual sample
         according to the input parameters extent, n_neighbors, and
@@ -812,12 +873,12 @@ class LocalOutlierProbability(object):
         ssd = np.power(distances, 2).sum()
         std_dist = np.sqrt(np.divide(ssd, self.n_neighbors))
         prob_dist = self._prob_distance(self.extent, std_dist)
-        plof = self._prob_outlier_factor(np.array(prob_dist),
-                                         np.array(
-                                             self.prob_distances_ev.mean())
-                                         )
+        plof = self._prob_outlier_factor(
+            np.array(prob_dist), np.array(self.prob_distances_ev.mean())
+        )
         loop = self._local_outlier_probability(
-            plof, self.norm_prob_local_outlier_factor)
+            plof, self.norm_prob_local_outlier_factor
+        )
 
         if orig_cluster_labels is not None:
             self.cluster_labels = orig_cluster_labels
