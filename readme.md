@@ -7,8 +7,8 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepchecks) and [pysad](https://github.com/selimfirat/pysad). 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.3-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.3)
-![](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)
+[![PyPi](https://img.shields.io/badge/pypi-0.3.4-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.4)
+[![Downloads](https://img.shields.io/pypi/dm/PyNomaly.svg?logoColor=blue)](https://pypistats.org/packages/pynomaly)
 ![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=main)](https://coveralls.io/github/vc1492a/PyNomaly?branch=main)
 [![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
@@ -393,10 +393,15 @@ any changes to a branch which corresponds to an open issue. Hot fixes
 and bug fixes can be represented by branches with the prefix `fix/` versus 
 `feature/` for new capabilities or code improvements. Pull requests will 
 then be made from these branches into the repository's `dev` branch 
-prior to being pulled into `main`. Pull requests which are works in 
-progress or ready for merging should be indicated by their respective 
-prefixes ([WIP] and [MRG]). Pull requests with the [MRG] prefix will be 
-reviewed prior to being pulled into the `main` branch. 
+prior to being pulled into `main`. 
+
+### Commit Messages and Releases
+
+**Your commit messages are important** - here's why. 
+
+PyNomaly leverages [release-please](https://github.com/googleapis/release-please-action) to help automate the release process using the [Conventional Commits](https://www.conventionalcommits.org/) specification. When pull requests are opened to the `main` branch, release-please will collate the git commit messages and prepare an organized changelog and release notes. This process can be completed because of the Conventional Commits specification. 
+
+Conventional Commits provides an easy set of rules for creating an explicit commit history; which makes it easier to write automated tools on top of. This convention dovetails with SemVer, by describing the features, fixes, and breaking changes made in commit messages. You can check out examples [here](https://www.conventionalcommits.org/en/v1.0.0/#examples). Make a best effort to use the specification when contributing to Infactory code as it dramatically eases the documentation around releases and their features, breaking changes, bug fixes and documentation updates. 
 
 ### Tests
 When contributing, please ensure to run unit tests and add additional tests as 
