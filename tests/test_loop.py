@@ -21,13 +21,16 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 NUMBA = False
 
 if NUMBA is False:
-    logging.info("Numba is disabled. Coverage statistics are reflective of "
-                 "testing native Python code. Consider also testing with numba"
-                 " enabled.")
+    logging.info(
+        "Numba is disabled. Coverage statistics are reflective of "
+        "testing native Python code. Consider also testing with numba"
+        " enabled."
+    )
 else:
     logging.warning(
         "Numba is enabled. Coverage statistics will be impacted (reduced) to"
-        " due the just-in-time compilation of native Python code.")
+        " due the just-in-time compilation of native Python code."
+    )
 
 # load the iris dataset
 # and randomly permute it
@@ -47,8 +50,9 @@ def X_n8() -> np.ndarray:
     :return: a Numpy array.
     """
     # Toy sample (the last two samples are outliers):
-    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 2], [1, 2], [2, 1], [5, 3],
-                  [-4, 2]])
+    X = np.array(
+        [[-2, -1], [-1, -1], [-1, -2], [1, 2], [1, 2], [2, 1], [5, 3], [-4, 2]]
+    )
     return X
 
 
@@ -59,18 +63,55 @@ def X_n20_scores() -> Tuple[np.ndarray, np.ndarray]:
     and the precalculated loOP scores based on that array.
     :return: tuple(input_data,exptected_scores)
     """
-    input_data = np.array([0.02059752, 0.32629926, 0.63036653, 0.94409321,
-                           0.63251097, 0.47598494, 0.80204026, 0.34845067,
-                           0.81556468, 0.89183, 0.25210317, 0.11460502,
-                           0.19953434, 0.36955067, 0.06038041, 0.34527368,
-                           0.56621582, 0.90533649, 0.33773613, 0.71573306])
+    input_data = np.array(
+        [
+            0.02059752,
+            0.32629926,
+            0.63036653,
+            0.94409321,
+            0.63251097,
+            0.47598494,
+            0.80204026,
+            0.34845067,
+            0.81556468,
+            0.89183,
+            0.25210317,
+            0.11460502,
+            0.19953434,
+            0.36955067,
+            0.06038041,
+            0.34527368,
+            0.56621582,
+            0.90533649,
+            0.33773613,
+            0.71573306,
+        ]
+    )
 
-    expected_scores = np.array([0.6356276742921594, 0.0, 0.0,
-                                0.48490790006974044, 0.0, 0.0, 0.0, 0.0,
-                                0.021728288376168012, 0.28285086151683225,
-                                0.0, 0.18881886507113213, 0.0, 0.0,
-                                0.45350246469681843, 0.0, 0.07886635748113013,
-                                0.3349068501560546, 0.0, 0.0])
+    expected_scores = np.array(
+        [
+            0.6356276742921594,
+            0.0,
+            0.0,
+            0.48490790006974044,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.021728288376168012,
+            0.28285086151683225,
+            0.0,
+            0.18881886507113213,
+            0.0,
+            0.0,
+            0.45350246469681843,
+            0.0,
+            0.07886635748113013,
+            0.3349068501560546,
+            0.0,
+            0.0,
+        ]
+    )
     return (input_data, expected_scores)
 
 
@@ -124,7 +165,7 @@ def test_loop(X_n8) -> None:
     # Test LocalOutlierProbability:
     clf = loop.LocalOutlierProbability(X_n8, n_neighbors=5, use_numba=NUMBA)
     score = clf.fit().local_outlier_probabilities
-    share_outlier = 2. / 8.
+    share_outlier = 2.0 / 8.0
     predictions = [-1 if s > share_outlier else 1 for s in score]
     assert_array_equal(predictions, 6 * [1] + 2 * [-1])
 
@@ -137,7 +178,7 @@ def test_loop(X_n8) -> None:
     # Test LocalOutlierProbability:
     clf = loop.LocalOutlierProbability(X_df, n_neighbors=5, use_numba=NUMBA)
     score = clf.fit().local_outlier_probabilities
-    share_outlier = 2. / 8.
+    share_outlier = 2.0 / 8.0
     predictions = [-1 if s > share_outlier else 1 for s in score]
     assert_array_equal(predictions, 6 * [1] + 2 * [-1])
 
@@ -168,8 +209,7 @@ def test_loop_performance(X_n120) -> None:
     # Generate some abnormal novel observations
     X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
     X_test = np.r_[X_n120, X_outliers]
-    X_labels = np.r_[
-        np.repeat(1, X_n120.shape[0]), np.repeat(-1, X_outliers.shape[0])]
+    X_labels = np.r_[np.repeat(1, X_n120.shape[0]), np.repeat(-1, X_outliers.shape[0])]
 
     # fit the model
     clf = loop.LocalOutlierProbability(
@@ -177,7 +217,7 @@ def test_loop_performance(X_n120) -> None:
         n_neighbors=X_test.shape[0] - 1,
         # test the progress bar
         progress_bar=True,
-        use_numba=NUMBA
+        use_numba=NUMBA,
     )
 
     # predict scores (the lower, the more normal)
@@ -186,7 +226,7 @@ def test_loop_performance(X_n120) -> None:
     X_pred = [-1 if s > share_outlier else 1 for s in score]
 
     # check that roc_auc is good
-    assert roc_auc_score(X_pred, X_labels) >= .98
+    assert roc_auc_score(X_pred, X_labels) >= 0.98
 
 
 def test_input_nodata(X_n140_outliers) -> None:
@@ -198,14 +238,14 @@ def test_input_nodata(X_n140_outliers) -> None:
     """
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop without data or a distance matrix
-        loop.LocalOutlierProbability(n_neighbors=X_n140_outliers.shape[0] - 1,
-                                     use_numba=NUMBA)
+        loop.LocalOutlierProbability(
+            n_neighbors=X_n140_outliers.shape[0] - 1, use_numba=NUMBA
+        )
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "Data or a distance matrix must be provided."
+    assert record[0].message.args[0] == "Data or a distance matrix must be provided."
 
 
 def test_input_incorrect_type(X_n140_outliers) -> None:
@@ -217,18 +257,20 @@ def test_input_incorrect_type(X_n140_outliers) -> None:
     """
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop with a string input for n_neighbors
-        loop.LocalOutlierProbability(X_n140_outliers,
-                                     n_neighbors=str(
-                                         X_n140_outliers.shape[0] - 1),
-                                     use_numba=NUMBA
-                                     )
+        loop.LocalOutlierProbability(
+            X_n140_outliers,
+            n_neighbors=str(X_n140_outliers.shape[0] - 1),
+            use_numba=NUMBA,
+        )
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "Argument 'n_neighbors' is not of type (<class 'int'>, " \
+    assert (
+        record[0].message.args[0]
+        == "Argument 'n_neighbors' is not of type (<class 'int'>, "
         "<class 'numpy.integer'>)."
+    )
 
 
 def test_input_neighbor_zero(X_n120) -> None:
@@ -247,8 +289,10 @@ def test_input_neighbor_zero(X_n120) -> None:
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "n_neighbors must be greater than 0. Fit with 10 instead."
+    assert (
+        record[0].message.args[0]
+        == "n_neighbors must be greater than 0. Fit with 10 instead."
+    )
 
 
 def test_input_distonly(X_n120) -> None:
@@ -259,7 +303,7 @@ def test_input_distonly(X_n120) -> None:
     :return: None
     """
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_n120)
     d, idx = neigh.kneighbors(X_n120, n_neighbors=10, return_distance=True)
 
@@ -270,9 +314,11 @@ def test_input_distonly(X_n120) -> None:
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "A neighbor index matrix and distance matrix must both " \
+    assert (
+        record[0].message.args[0]
+        == "A neighbor index matrix and distance matrix must both "
         "be provided when not using raw input data."
+    )
 
 
 def test_input_neighboronly(X_n120) -> None:
@@ -283,7 +329,7 @@ def test_input_neighboronly(X_n120) -> None:
     :return: None
     """
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_n120)
     d, idx = neigh.kneighbors(X_n120, n_neighbors=10, return_distance=True)
 
@@ -294,8 +340,7 @@ def test_input_neighboronly(X_n120) -> None:
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "Data or a distance matrix must be provided."
+    assert record[0].message.args[0] == "Data or a distance matrix must be provided."
 
 
 def test_input_too_many(X_n120) -> None:
@@ -306,21 +351,24 @@ def test_input_too_many(X_n120) -> None:
     :return: None
     """
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_n120)
     d, idx = neigh.kneighbors(X_n120, n_neighbors=10, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop with data and a distance matrix
-        loop.LocalOutlierProbability(X_n120, distance_matrix=d,
-                                     neighbor_matrix=idx, use_numba=NUMBA)
+        loop.LocalOutlierProbability(
+            X_n120, distance_matrix=d, neighbor_matrix=idx, use_numba=NUMBA
+        )
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "Only one of the following may be provided: data or a " \
+    assert (
+        record[0].message.args[0]
+        == "Only one of the following may be provided: data or a "
         "distance matrix (not both)."
+    )
 
 
 def test_distance_neighbor_shape_mismatch(X_n120) -> None:
@@ -331,30 +379,28 @@ def test_distance_neighbor_shape_mismatch(X_n120) -> None:
     :return: None
     """
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_n120)
     d, idx = neigh.kneighbors(X_n120, n_neighbors=10, return_distance=True)
 
     # generate distance and neighbor indices of a different shape
-    neigh_2 = NearestNeighbors(metric='euclidean')
+    neigh_2 = NearestNeighbors(metric="euclidean")
     neigh_2.fit(X_n120)
     d_2, idx_2 = neigh.kneighbors(X_n120, n_neighbors=5, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop with a mismatch in shapes
         loop.LocalOutlierProbability(
-            distance_matrix=d,
-            neighbor_matrix=idx_2,
-            n_neighbors=5,
-            use_numba=NUMBA
+            distance_matrix=d, neighbor_matrix=idx_2, n_neighbors=5, use_numba=NUMBA
         )
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "The shape of the distance and neighbor " \
+    assert (
+        record[0].message.args[0] == "The shape of the distance and neighbor "
         "index matrices must match."
+    )
 
 
 def test_input_neighbor_mismatch(X_n120) -> None:
@@ -365,25 +411,25 @@ def test_input_neighbor_mismatch(X_n120) -> None:
     :return: None
     """
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_n120)
     d, idx = neigh.kneighbors(X_n120, n_neighbors=5, return_distance=True)
 
     with pytest.warns(UserWarning) as record:
         # attempt to fit loop with a neighbor size mismatch
-        loop.LocalOutlierProbability(distance_matrix=d,
-                                     neighbor_matrix=idx,
-                                     n_neighbors=10,
-                                     use_numba=NUMBA)
+        loop.LocalOutlierProbability(
+            distance_matrix=d, neighbor_matrix=idx, n_neighbors=10, use_numba=NUMBA
+        )
 
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "The shape of the distance or " \
-        "neighbor index matrix does not " \
-        "match the number of neighbors " \
+    assert (
+        record[0].message.args[0] == "The shape of the distance or "
+        "neighbor index matrix does not "
+        "match the number of neighbors "
         "specified."
+    )
 
 
 def test_loop_dist_matrix(X_n120) -> None:
@@ -394,14 +440,15 @@ def test_loop_dist_matrix(X_n120) -> None:
     :return: None
     """
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_n120)
     d, idx = neigh.kneighbors(X_n120, n_neighbors=10, return_distance=True)
 
     # fit loop using data and distance matrix
     clf1 = loop.LocalOutlierProbability(X_n120, use_numba=NUMBA)
-    clf2 = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx,
-                                        use_numba=NUMBA)
+    clf2 = loop.LocalOutlierProbability(
+        distance_matrix=d, neighbor_matrix=idx, use_numba=NUMBA
+    )
     scores1 = clf1.fit().local_outlier_probabilities
     scores2 = clf2.fit().local_outlier_probabilities
 
@@ -418,12 +465,9 @@ def test_lambda_values(X_n140_outliers) -> None:
     :return: None
     """
     # Fit the model with different extent (lambda) values
-    clf1 = loop.LocalOutlierProbability(X_n140_outliers, extent=1,
-                                        use_numba=NUMBA)
-    clf2 = loop.LocalOutlierProbability(X_n140_outliers, extent=2,
-                                        use_numba=NUMBA)
-    clf3 = loop.LocalOutlierProbability(X_n140_outliers, extent=3,
-                                        use_numba=NUMBA)
+    clf1 = loop.LocalOutlierProbability(X_n140_outliers, extent=1, use_numba=NUMBA)
+    clf2 = loop.LocalOutlierProbability(X_n140_outliers, extent=2, use_numba=NUMBA)
+    clf3 = loop.LocalOutlierProbability(X_n140_outliers, extent=3, use_numba=NUMBA)
 
     # predict scores (the lower, the more normal)
     score1 = clf1.fit().local_outlier_probabilities
@@ -452,20 +496,19 @@ def test_parameters(X_n120) -> None:
     clf = loop.LocalOutlierProbability(X_n120, use_numba=NUMBA).fit()
 
     # check that the model has attributes post fit
-    assert (hasattr(clf, 'n_neighbors') and
-            clf.n_neighbors is not None)
-    assert (hasattr(clf, 'extent') and
-            clf.extent is not None)
-    assert (hasattr(clf, 'cluster_labels') and
-            clf._cluster_labels() is not None)
-    assert (hasattr(clf, 'prob_distances') and
-            clf.prob_distances is not None)
-    assert (hasattr(clf, 'prob_distances_ev') and
-            clf.prob_distances_ev is not None)
-    assert (hasattr(clf, 'norm_prob_local_outlier_factor') and
-            clf.norm_prob_local_outlier_factor is not None)
-    assert (hasattr(clf, 'local_outlier_probabilities') and
-            clf.local_outlier_probabilities is not None)
+    assert hasattr(clf, "n_neighbors") and clf.n_neighbors is not None
+    assert hasattr(clf, "extent") and clf.extent is not None
+    assert hasattr(clf, "cluster_labels") and clf._cluster_labels() is not None
+    assert hasattr(clf, "prob_distances") and clf.prob_distances is not None
+    assert hasattr(clf, "prob_distances_ev") and clf.prob_distances_ev is not None
+    assert (
+        hasattr(clf, "norm_prob_local_outlier_factor")
+        and clf.norm_prob_local_outlier_factor is not None
+    )
+    assert (
+        hasattr(clf, "local_outlier_probabilities")
+        and clf.local_outlier_probabilities is not None
+    )
 
 
 def test_n_neighbors() -> None:
@@ -476,8 +519,7 @@ def test_n_neighbors() -> None:
     :return: None
     """
     X = iris.data
-    clf = loop.LocalOutlierProbability(X, n_neighbors=500,
-                                       use_numba=NUMBA).fit()
+    clf = loop.LocalOutlierProbability(X, n_neighbors=500, use_numba=NUMBA).fit()
     assert clf.n_neighbors == X.shape[0] - 1
 
     clf = loop.LocalOutlierProbability(X, n_neighbors=500, use_numba=NUMBA)
@@ -498,8 +540,7 @@ def test_extent() -> None:
     :return: None
     """
     X = np.array([[1, 1], [1, 0]])
-    clf = loop.LocalOutlierProbability(X, n_neighbors=2, extent=4,
-                                       use_numba=NUMBA)
+    clf = loop.LocalOutlierProbability(X, n_neighbors=2, extent=4, use_numba=NUMBA)
 
     with pytest.warns(UserWarning) as record:
         clf.fit()
@@ -534,8 +575,7 @@ def test_missing_values() -> None:
     X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
     clf = loop.LocalOutlierProbability(X, n_neighbors=3, use_numba=NUMBA)
 
-    with pytest.raises(SystemExit) as record_a, pytest.warns(
-            UserWarning) as record_b:
+    with pytest.raises(SystemExit) as record_a, pytest.warns(UserWarning) as record_b:
         clf.fit()
 
     assert record_a.type == SystemExit
@@ -543,8 +583,10 @@ def test_missing_values() -> None:
     # check that only one warning was raised
     assert len(record_b) == 1
     # check that the message matches
-    assert record_b[0].message.args[
-        0] == "Method does not support missing values in input data."
+    assert (
+        record_b[0].message.args[0]
+        == "Method does not support missing values in input data."
+    )
 
 
 def test_small_cluster_size(X_n140_outliers) -> None:
@@ -560,14 +602,10 @@ def test_small_cluster_size(X_n140_outliers) -> None:
     cluster_labels = a + b
 
     clf = loop.LocalOutlierProbability(
-        X_n140_outliers,
-        n_neighbors=50,
-        cluster_labels=cluster_labels,
-        use_numba=NUMBA
+        X_n140_outliers, n_neighbors=50, cluster_labels=cluster_labels, use_numba=NUMBA
     )
 
-    with pytest.raises(SystemExit) as record_a, pytest.warns(
-            UserWarning) as record_b:
+    with pytest.raises(SystemExit) as record_a, pytest.warns(UserWarning) as record_b:
         clf.fit()
 
     assert record_a.type == SystemExit
@@ -575,11 +613,13 @@ def test_small_cluster_size(X_n140_outliers) -> None:
     # check that only one warning was raised
     assert len(record_b) == 1
     # check that the message matches
-    assert record_b[0].message.args[
-        0] == "Number of neighbors specified larger than smallest " \
-        "cluster. Specify a number of neighbors smaller than " \
-        "the smallest cluster size (observations in smallest " \
+    assert (
+        record_b[0].message.args[0]
+        == "Number of neighbors specified larger than smallest "
+        "cluster. Specify a number of neighbors smaller than "
+        "the smallest cluster size (observations in smallest "
         "cluster minus one)."
+    )
 
 
 def test_stream_fit(X_n140_outliers) -> None:
@@ -599,8 +639,10 @@ def test_stream_fit(X_n140_outliers) -> None:
 
     # check that the message matches
     messages = [i.message.args[0] for i in record]
-    assert "Must fit on historical data by calling fit() prior to " \
-           "calling stream(x)." in messages
+    assert (
+        "Must fit on historical data by calling fit() prior to "
+        "calling stream(x)." in messages
+    )
 
 
 def test_stream_distance(X_n140_outliers) -> None:
@@ -615,15 +657,15 @@ def test_stream_distance(X_n140_outliers) -> None:
     X_test = X_n140_outliers[100:140]
 
     # generate distance and neighbor indices
-    neigh = NearestNeighbors(metric='euclidean')
+    neigh = NearestNeighbors(metric="euclidean")
     neigh.fit(X_train)
     d, idx = neigh.kneighbors(X_train, n_neighbors=10, return_distance=True)
 
     # Fit the models in standard and distance matrix form
     m = loop.LocalOutlierProbability(X_train, use_numba=NUMBA).fit()
-    m_dist = loop.LocalOutlierProbability(distance_matrix=d,
-                                          neighbor_matrix=idx,
-                                          use_numba=NUMBA).fit()
+    m_dist = loop.LocalOutlierProbability(
+        distance_matrix=d, neighbor_matrix=idx, use_numba=NUMBA
+    ).fit()
 
     # Collect the scores
     X_test_scores = []
@@ -658,9 +700,9 @@ def test_stream_cluster(X_n140_outliers) -> None:
     # Fit the model
     X_train = X_n140_outliers[0:138]
     X_test = X_n140_outliers[139]
-    clf = loop.LocalOutlierProbability(X_train,
-                                       cluster_labels=cluster_labels,
-                                       use_numba=NUMBA).fit()
+    clf = loop.LocalOutlierProbability(
+        X_train, cluster_labels=cluster_labels, use_numba=NUMBA
+    ).fit()
 
     with pytest.warns(UserWarning) as record:
         clf.stream(X_test)
@@ -668,9 +710,10 @@ def test_stream_cluster(X_n140_outliers) -> None:
     # check that only one warning was raised
     assert len(record) == 1
     # check that the message matches
-    assert record[0].message.args[
-        0] == "Stream approach does not support clustered data. " \
+    assert (
+        record[0].message.args[0] == "Stream approach does not support clustered data. "
         "Automatically refit using single cluster of points."
+    )
 
 
 def test_stream_performance(X_n140_outliers) -> None:
@@ -715,5 +758,35 @@ def test_progress_bar(X_n8) -> None:
     """
 
     # attempt to use the progress bar on a small number of observations
-    loop.LocalOutlierProbability(X_n8, use_numba=NUMBA,
-                                 progress_bar=True).fit()
+    loop.LocalOutlierProbability(X_n8, use_numba=NUMBA, progress_bar=True).fit()
+
+
+def test_data_flipping() -> None:
+    """
+    Tests the flipping of data and cluster labels and ensures that the
+    :return: None
+    """
+    np.random.seed(1)
+    n = 9
+    data = np.append(
+        np.random.normal(2, 1, [n, 2]), np.random.normal(8, 1, [n, 2]), axis=0
+    )
+    clus = np.append(np.ones(n), 2 * np.ones(n)).tolist()
+    model = loop.LocalOutlierProbability(data, n_neighbors=5, cluster_labels=clus)
+    fit = model.fit()
+    res = fit.local_outlier_probabilities
+
+    data_flipped = np.flipud(data)
+    clus_flipped = np.flipud(clus).tolist()
+    model2 = loop.LocalOutlierProbability(
+        data_flipped, n_neighbors=5, cluster_labels=clus_flipped
+    )
+    fit2 = model2.fit()
+    res2 = np.flipud(fit2.local_outlier_probabilities)
+
+    assert_array_almost_equal(res, res2, decimal=6)
+    assert_array_almost_equal(
+        fit.norm_prob_local_outlier_factor,
+        fit2.norm_prob_local_outlier_factor,
+        decimal=6,
+    )
