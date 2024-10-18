@@ -1,8 +1,12 @@
 # Changelog
-All notable changes to PyNomaly will be documented in this Changelog.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
-and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [0.3.4](https://github.com/vc1492a/PyNomaly/compare/v0.3.3...v0.3.4) (2024-10-18)
+
+### Bug Fixes
+
+* 49-passing-cluster_labels-broken ([3e35404](https://github.com/vc1492a/PyNomaly/commit/3e35404f8a43e955fd28306073679b33fa6a08b5))
+* remove unecessary stray files ([e50e0bf](https://github.com/vc1492a/PyNomaly/commit/e50e0bf0445bb82aac5ee13f0e5e5276a2237cba))
+
 
 ## 0.3.3
 ### Changed
