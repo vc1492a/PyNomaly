@@ -4,6 +4,10 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.3.4 
+### Changed 
+- Changed source code as necessary to address a [user-reported issue](https://github.com/vc1492a/PyNomaly/issues/49), corrected in [this commit](https://github.com/vc1492a/PyNomaly/commit/bbdd12a318316ca9c7e0272a5b06909f3fc4f9b0)
+
 ## 0.3.3
 ### Changed
 - The implementation of the progress bar to support use when the number of 
