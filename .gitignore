@@ -9,6 +9,7 @@ PyNomaly/loop_dev.py
 *.pyc
 *.coverage.*
 .coveragerc
+.pypirc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
