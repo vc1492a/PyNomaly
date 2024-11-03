@@ -38,7 +38,7 @@ This Python 3 implementation uses Numpy and the formulas outlined in
 to calculate the Local Outlier Probability of each sample.
 
 ## Dependencies
-- Python 3.6 - 3.12
+- Python 3.6 - 3.13
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
@@ -281,7 +281,12 @@ PyNomaly provides the ability to specify a distance matrix so that any
 distance metric can be used (a neighbor index matrix must also be provided).
 This can be useful when wanting to use a distance other than the euclidean.
 
+Note that in order to maintain alignment with the LoOP definition of closest neighbors, 
+an additional neighbor is added when using [scikit-learn's NearestNeighbors](https://scikit-learn.org/1.5/modules/neighbors.html) since `NearestNeighbors` 
+includes the point itself when calculating the cloest neighbors (whereas the LoOP method does not include distances to point itself). 
+
 ```python
+import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
 data = np.array([
@@ -293,11 +298,18 @@ data = np.array([
     [421.5, 90.3, 50.0]
 ])
 
-neigh = NearestNeighbors(n_neighbors=3, metric='hamming')
+# Generate distance and neighbor matrices
+n_neighbors = 3 # the number of neighbors according to the LoOP definition 
+neigh = NearestNeighbors(n_neighbors=n_neighbors+1, metric='hamming')
 neigh.fit(data)
 d, idx = neigh.kneighbors(data, return_distance=True)
 
-m = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx, n_neighbors=3).fit()
+# Remove self-distances - you MUST do this to preserve the same results as intended by the definition of LoOP
+indices = np.delete(indices, 0, 1)
+distances = np.delete(distances, 0, 1)
+
+# Fit and return scores
+m = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx, n_neighbors=n_neighbors+1).fit()
 scores = m.local_outlier_probabilities
 ```
 

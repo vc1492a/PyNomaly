@@ -790,3 +790,47 @@ def test_data_flipping() -> None:
         fit2.norm_prob_local_outlier_factor,
         decimal=6,
     )
+
+
+def test_distance_matrix_consistency(X_n120) -> None:
+    """
+    Test to ensure that the distance matrix is consistent with the neighbor
+    matrix and that the software is able to handle self-distances.
+    :return: None
+    """
+
+    neigh = NearestNeighbors(metric='euclidean')
+    neigh.fit(X_n120)
+    distances, indices = neigh.kneighbors(X_n120, n_neighbors=11, return_distance=True)
+
+    # remove the closest neighbor (its the point itself) from each row in the indices matrix and distances matrix
+    indices = np.delete(indices, 0, 1)
+    distances = np.delete(distances, 0, 1)
+
+    # Fit LoOP with and without distance matrix
+    clf_data = loop.LocalOutlierProbability(X_n120, n_neighbors=10)
+    clf_dist = loop.LocalOutlierProbability(distance_matrix=distances, neighbor_matrix=indices, n_neighbors=11)
+
+    # Attempt to retrieve scores and check types
+    scores_data = clf_data.fit().local_outlier_probabilities
+    scores_dist = clf_dist.fit().local_outlier_probabilities
+
+    # Debugging prints to investigate types and contents
+    print("Type of scores_data:", type(scores_data))
+    print("Type of scores_dist:", type(scores_dist))
+    print("Value of scores_data:", scores_data)
+    print("Value of scores_dist:", scores_dist)
+    print("Shape of scores_data:", scores_data.shape)
+    print("Shape of scores_dist:", scores_dist.shape)
+
+    # Convert to arrays if they aren't already
+    scores_data = np.array(scores_data) if not isinstance(scores_data, np.ndarray) else scores_data
+    scores_dist = np.array(scores_dist) if not isinstance(scores_dist, np.ndarray) else scores_dist
+
+    # Check shapes and types before assertion
+    assert scores_data.shape == scores_dist.shape, "Score shapes mismatch"
+    assert isinstance(scores_data, np.ndarray), "Expected scores_data to be a numpy array"
+    assert isinstance(scores_dist, np.ndarray), "Expected scores_dist to be a numpy array"
+
+    # Compare scores allowing for minor floating-point differences
+    assert_array_almost_equal(scores_data, scores_dist, decimal=10, err_msg="Inconsistent LoOP scores due to self-distances")
