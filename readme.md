@@ -159,8 +159,7 @@ Now let's create two sets of Iris data for scoring; one with clustering and the 
 
 ```python
 # import the data and remove any non-numeric columns
-iris = pd.DataFrame(data('iris'))
-iris = pd.DataFrame(iris.drop('Species', 1))
+iris = pd.DataFrame(data('iris').drop(columns=['Species']))
 ```
 
 Next, let's cluster the data using DBSCAN and generate two sets of scores. On both cases, we will use the default
