@@ -57,6 +57,12 @@ First install the package from the Python Package Index:
 ```shell
 pip install PyNomaly # or pip3 install ... if you're using both Python 3 and 2.
 ```
+
+Alternatively, you can use conda to install the package from conda-forge:
+
+```shell
+conda install conda-forge::pynomaly
+```
 Then you can do something like this:
 
 ```python
