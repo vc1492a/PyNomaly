@@ -8,7 +8,6 @@ PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepche
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPi](https://img.shields.io/badge/pypi-0.3.4-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.4)
-[![PyPI Downloads](https://static.pepy.tech/badge/pynomaly)](https://pepy.tech/projects/pynomaly)
 [![Total Downloads](https://static.pepy.tech/badge/pynomaly)](https://pepy.tech/projects/pynomaly)
 [![Monthly Downloads](https://static.pepy.tech/badge/pynomaly/month)](https://pepy.tech/projects/pynomaly)
 ![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
