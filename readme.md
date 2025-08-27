@@ -230,22 +230,24 @@ plt.close()
 ```
 
 Your results should look like the following:
+In these plots score is conveyed by the color of the point.
 
 **LoOP Scores without Clustering**
 ![LoOP Scores without Clustering](https://github.com/vc1492a/PyNomaly/blob/main/images/scores.png)
 
 **LoOP Scores with Clustering**
 ![LoOP Scores with Clustering](https://github.com/vc1492a/PyNomaly/blob/main/images/scores_clust.png)
-
+-
 **DBSCAN Cluster Assignments**
 ![DBSCAN Cluster Assignments](https://github.com/vc1492a/PyNomaly/blob/main/images/cluster_assignments.png)
-
+-
 
 Note the differences between using LocalOutlierProbability with and without clustering. In the example without clustering, samples are
 scored according to the distribution of the entire data set. In the example with clustering, each sample is scored
 according to the distribution of each cluster. Which approach is suitable depends on the use case.
 
 **NOTE**: Data was not normalized in this example, but it's probably a good idea to do so in practice.
+- Why?
 
 ## Using Numpy
 
@@ -265,6 +267,7 @@ scores = loop.LocalOutlierProbability(data, n_neighbors=3).fit().local_outlier_p
 print(scores)
 
 ```
+-- I'll insert a table here
 
 The shape of the input array shape corresponds to the rows (observations) and columns (features) in the data:
 
@@ -280,7 +283,7 @@ data = np.random.rand(100, 5)
 scores = loop.LocalOutlierProbability(data).fit().local_outlier_probabilities
 print(scores)
 ```
-
+-- I'll insert a table of the scores here
 ## Specifying a Distance Matrix
 
 PyNomaly provides the ability to specify a distance matrix so that any
@@ -318,6 +321,8 @@ distances = np.delete(distances, 0, 1)
 m = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx, n_neighbors=n_neighbors+1).fit()
 scores = m.local_outlier_probabilities
 ```
+-- insert a table of the results
+What are the results telling us
 
 The below visualization shows the results by a few known distance metrics:
 
@@ -376,7 +381,7 @@ print(rmse)
 ```
 
 The root mean squared error (RMSE) between the two approaches is approximately 0.199 (your scores will vary depending on the data and specification).
-The plot below shows the scores from the stream approach.
+The plot below shows the scores from the stream approach as a colormap on the figures.
 
 ```python
 fig = plt.figure(figsize=(7, 7))
