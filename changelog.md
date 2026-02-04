@@ -20,6 +20,10 @@ terminates the Python process on validation errors.
 - Custom exception classes for better error handling: `PyNomalyError` (base), 
 `ValidationError`, `ClusterSizeError`, and `MissingValuesError`. These are now 
 exported from the package and can be caught by users.
+### Fixed
+- Fixed a compatibility issue with NumPy in Python 3.11+ where assigning an array 
+to a scalar position in `stream()` would raise a `ValueError` when using distance 
+matrix mode.
 
 ## 0.3.4 
 ### Changed 

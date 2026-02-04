@@ -856,6 +856,10 @@ class LocalOutlierProbability(object):
             matrix = self.points_vector
         else:
             matrix = self.distance_matrix
+            # When using distance matrix mode, x is a scalar distance value.
+            # Extract scalar from array to avoid NumPy assignment errors.
+            if point_vector.size == 1:
+                point_vector = float(point_vector.flat[0])
         for p in range(0, matrix.shape[0]):
             if self.data is not None:
                 d = self._euclidean(matrix[p, :], point_vector)
