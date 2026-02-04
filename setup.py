@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='PyNomaly',
     packages=['PyNomaly'],
-    version='0.3.4',
+    version='0.3.5',
     description='A Python 3 implementation of LoOP: Local Outlier '
                 'Probabilities, a local density based outlier detection '
                 'method providing an outlier score in the range of [0,1].',
@@ -16,7 +16,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/vc1492a/PyNomaly',
-    download_url='https://github.com/vc1492a/PyNomaly/archive/0.3.4.tar.gz',
+    download_url='https://github.com/vc1492a/PyNomaly/archive/0.3.5.tar.gz',
     keywords=['outlier', 'anomaly', 'detection', 'machine', 'learning',
               'probability'],
     classifiers=[],

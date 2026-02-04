@@ -11,8 +11,29 @@ except ImportError:
     pass
 
 __author__ = "Valentino Constantinou"
-__version__ = "0.3.4"
+__version__ = "0.3.5"
 __license__ = "Apache License, Version 2.0"
+
+
+# Custom Exceptions
+class PyNomalyError(Exception):
+    """Base exception for PyNomaly."""
+    pass
+
+
+class ValidationError(PyNomalyError):
+    """Raised when input validation fails."""
+    pass
+
+
+class ClusterSizeError(ValidationError):
+    """Raised when cluster size is smaller than n_neighbors."""
+    pass
+
+
+class MissingValuesError(ValidationError):
+    """Raised when data contains missing values."""
+    pass
 
 
 class Utils:
@@ -77,217 +98,190 @@ class LocalOutlierProbability(object):
            (2016). 
     """
 
-    class Validate:
+    """
+    Validation methods.
+    These methods validate inputs and raise exceptions or warnings as appropriate.
+    """
 
+    @staticmethod
+    def _convert_to_array(obj: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
         """
-        The Validate class aids in ensuring PyNomaly receives the right set
-        of user inputs for proper execution of the Local Outlier Probability
-        (LoOP) approach. Depending on the desired behavior, either an
-        exception is raised to the user or PyNomaly continues executing
-        albeit with some form of user warning.
+        Converts the input data to a numpy array if it is a Pandas DataFrame
+        or validates it is already a numpy array.
+        :param obj: user-provided input data.
+        :return: a vector of values to be used in calculating the local
+        outlier probability.
         """
-
-        """
-        Private methods.
-        """
-
-        @staticmethod
-        def _data(obj: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
-            """
-            Validates the input data to ensure it is either a Pandas DataFrame
-            or Numpy array.
-            :param obj: user-provided input data.
-            :return: a vector of values to be used in calculating the local
-            outlier probability.
-            """
-            if obj.__class__.__name__ == "DataFrame":
-                points_vector = obj.values
+        if obj.__class__.__name__ == "DataFrame":
+            points_vector = obj.values
+            return points_vector
+        elif obj.__class__.__name__ == "ndarray":
+            points_vector = obj
+            return points_vector
+        else:
+            warnings.warn(
+                "Provided data or distance matrix must be in ndarray "
+                "or DataFrame.",
+                UserWarning,
+            )
+            if isinstance(obj, list):
+                points_vector = np.array(obj)
                 return points_vector
-            elif obj.__class__.__name__ == "ndarray":
-                points_vector = obj
-                return points_vector
-            else:
-                warnings.warn(
-                    "Provided data or distance matrix must be in ndarray "
-                    "or DataFrame.",
-                    UserWarning,
-                )
-                if isinstance(obj, list):
-                    points_vector = np.array(obj)
-                    return points_vector
-                points_vector = np.array([obj])
-                return points_vector
+            points_vector = np.array([obj])
+            return points_vector
 
-        def _inputs(self, obj: "LocalOutlierProbability"):
-            """
-            Validates the inputs provided during initialization to ensure
-            that the needed objects are provided.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has failed or
-            the data, distance matrix, and neighbor matrix.
-            """
-            if all(v is None for v in [obj.data, obj.distance_matrix]):
-                warnings.warn(
-                    "Data or a distance matrix must be provided.", UserWarning
-                )
-                return False
-            elif all(v is not None for v in [obj.data, obj.distance_matrix]):
-                warnings.warn(
-                    "Only one of the following may be provided: data or a "
-                    "distance matrix (not both).",
-                    UserWarning,
-                )
-                return False
-            if obj.data is not None:
-                points_vector = self._data(obj.data)
-                return points_vector, obj.distance_matrix, obj.neighbor_matrix
-            if all(
-                matrix is not None
-                for matrix in [obj.neighbor_matrix, obj.distance_matrix]
-            ):
-                dist_vector = self._data(obj.distance_matrix)
-                neigh_vector = self._data(obj.neighbor_matrix)
-            else:
-                warnings.warn(
-                    "A neighbor index matrix and distance matrix must both be "
-                    "provided when not using raw input data.",
-                    UserWarning,
-                )
-                return False
-            if obj.distance_matrix.shape != obj.neighbor_matrix.shape:
-                warnings.warn(
-                    "The shape of the distance and neighbor "
-                    "index matrices must match.",
-                    UserWarning,
-                )
-                return False
-            elif (obj.distance_matrix.shape[1] != obj.n_neighbors) or (
-                obj.neighbor_matrix.shape[1] != obj.n_neighbors
-            ):
-                warnings.warn(
-                    "The shape of the distance or "
-                    "neighbor index matrix does not "
-                    "match the number of neighbors "
-                    "specified.",
-                    UserWarning,
-                )
-                return False
-            return obj.data, dist_vector, neigh_vector
+    def _validate_inputs(self):
+        """
+        Validates the inputs provided during initialization to ensure
+        that the needed objects are provided.
+        :return: a tuple of (data, distance_matrix, neighbor_matrix) or
+        raises a warning for invalid inputs.
+        """
+        if all(v is None for v in [self.data, self.distance_matrix]):
+            warnings.warn(
+                "Data or a distance matrix must be provided.", UserWarning
+            )
+            return False
+        elif all(v is not None for v in [self.data, self.distance_matrix]):
+            warnings.warn(
+                "Only one of the following may be provided: data or a "
+                "distance matrix (not both).",
+                UserWarning,
+            )
+            return False
+        if self.data is not None:
+            points_vector = self._convert_to_array(self.data)
+            return points_vector, self.distance_matrix, self.neighbor_matrix
+        if all(
+            matrix is not None
+            for matrix in [self.neighbor_matrix, self.distance_matrix]
+        ):
+            dist_vector = self._convert_to_array(self.distance_matrix)
+            neigh_vector = self._convert_to_array(self.neighbor_matrix)
+        else:
+            warnings.warn(
+                "A neighbor index matrix and distance matrix must both be "
+                "provided when not using raw input data.",
+                UserWarning,
+            )
+            return False
+        if self.distance_matrix.shape != self.neighbor_matrix.shape:
+            warnings.warn(
+                "The shape of the distance and neighbor "
+                "index matrices must match.",
+                UserWarning,
+            )
+            return False
+        elif (self.distance_matrix.shape[1] != self.n_neighbors) or (
+            self.neighbor_matrix.shape[1] != self.n_neighbors
+        ):
+            warnings.warn(
+                "The shape of the distance or "
+                "neighbor index matrix does not "
+                "match the number of neighbors "
+                "specified.",
+                UserWarning,
+            )
+            return False
+        return self.data, dist_vector, neigh_vector
 
-        @staticmethod
-        def _cluster_size(obj) -> bool:
-            """
-            Validates the cluster labels to ensure that the smallest cluster
-            size (number of observations in the cluster) is larger than the
-            specified number of neighbors.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has passed.
-            """
-            c_labels = obj._cluster_labels()
-            for cluster_id in set(c_labels):
-                c_size = np.where(c_labels == cluster_id)[0].shape[0]
-                if c_size <= obj.n_neighbors:
-                    warnings.warn(
-                        "Number of neighbors specified larger than smallest "
-                        "cluster. Specify a number of neighbors smaller than "
-                        "the smallest cluster size (observations in smallest "
-                        "cluster minus one).",
-                        UserWarning,
-                    )
-                    return False
-            return True
+    def _check_cluster_size(self) -> None:
+        """
+        Validates the cluster labels to ensure that the smallest cluster
+        size (number of observations in the cluster) is larger than the
+        specified number of neighbors.
+        :raises ClusterSizeError: if any cluster is too small.
+        """
+        c_labels = self._cluster_labels()
+        for cluster_id in set(c_labels):
+            c_size = np.where(c_labels == cluster_id)[0].shape[0]
+            if c_size <= self.n_neighbors:
+                raise ClusterSizeError(
+                    "Number of neighbors specified larger than smallest "
+                    "cluster. Specify a number of neighbors smaller than "
+                    "the smallest cluster size (observations in smallest "
+                    "cluster minus one)."
+                )
 
-        @staticmethod
-        def _n_neighbors(obj) -> bool:
-            """
-            Validates the specified number of neighbors to ensure that it is
-            greater than 0 and that the specified value is less than the total
-            number of observations.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has passed.
-            """
-            if not obj.n_neighbors > 0:
-                obj.n_neighbors = 10
-                warnings.warn(
-                    "n_neighbors must be greater than 0."
-                    " Fit with " + str(obj.n_neighbors) + " instead.",
-                    UserWarning,
-                )
-                return False
-            elif obj.n_neighbors >= obj._n_observations():
-                obj.n_neighbors = obj._n_observations() - 1
-                warnings.warn(
-                    "n_neighbors must be less than the number of observations."
-                    " Fit with " + str(obj.n_neighbors) + " instead.",
-                    UserWarning,
-                )
-            return True
+    def _check_n_neighbors(self) -> bool:
+        """
+        Validates the specified number of neighbors to ensure that it is
+        greater than 0 and that the specified value is less than the total
+        number of observations.
+        :return: a boolean indicating whether validation has passed without
+        adjustment.
+        """
+        if not self.n_neighbors > 0:
+            self.n_neighbors = 10
+            warnings.warn(
+                "n_neighbors must be greater than 0."
+                " Fit with " + str(self.n_neighbors) + " instead.",
+                UserWarning,
+            )
+            return False
+        elif self.n_neighbors >= self._n_observations():
+            self.n_neighbors = self._n_observations() - 1
+            warnings.warn(
+                "n_neighbors must be less than the number of observations."
+                " Fit with " + str(self.n_neighbors) + " instead.",
+                UserWarning,
+            )
+        return True
 
-        @staticmethod
-        def _extent(obj) -> bool:
-            """
-            Validates the specified extent parameter to ensure it is either 1,
-            2, or 3.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has passed.
-            """
-            if obj.extent not in [1, 2, 3]:
-                warnings.warn(
-                    "extent parameter (lambda) must be 1, 2, or 3.", UserWarning
-                )
-                return False
-            return True
+    def _check_extent(self) -> bool:
+        """
+        Validates the specified extent parameter to ensure it is either 1,
+        2, or 3.
+        :return: a boolean indicating whether validation has passed.
+        """
+        if self.extent not in [1, 2, 3]:
+            warnings.warn(
+                "extent parameter (lambda) must be 1, 2, or 3.", UserWarning
+            )
+            return False
+        return True
 
-        @staticmethod
-        def _missing_values(obj) -> bool:
-            """
-            Validates the provided data to ensure that it contains no
-            missing values.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has passed.
-            """
-            if np.any(np.isnan(obj.data)):
-                warnings.warn(
-                    "Method does not support missing values in input data.", UserWarning
-                )
-                return False
-            return True
+    def _check_missing_values(self) -> None:
+        """
+        Validates the provided data to ensure that it contains no
+        missing values.
+        :raises MissingValuesError: if data contains NaN values.
+        """
+        if np.any(np.isnan(self.data)):
+            raise MissingValuesError(
+                "Method does not support missing values in input data."
+            )
 
-        @staticmethod
-        def _fit(obj) -> bool:
-            """
-            Validates that the model was fit prior to calling the stream()
-            method.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has passed.
-            """
-            if obj.is_fit is False:
-                warnings.warn(
-                    "Must fit on historical data by calling fit() prior to "
-                    "calling stream(x).",
-                    UserWarning,
-                )
-                return False
-            return True
+    def _check_is_fit(self) -> bool:
+        """
+        Checks that the model was fit prior to calling the stream() method.
+        :return: a boolean indicating whether the model has been fit.
+        """
+        if self.is_fit is False:
+            warnings.warn(
+                "Must fit on historical data by calling fit() prior to "
+                "calling stream(x).",
+                UserWarning,
+            )
+            return False
+        return True
 
-        @staticmethod
-        def _no_cluster_labels(obj) -> bool:
-            """
-            Checks to see if cluster labels are attempting to be used in
-            stream() and, if so, calls fit() once again but without cluster
-            labels. As PyNomaly does not accept clustering algorithms as input,
-            the stream approach does not support clustering.
-            :param obj: a PyNomaly object.
-            :return: a boolean indicating whether validation has passed.
-            """
-            if len(set(obj._cluster_labels())) > 1:
-                warnings.warn(
-                    "Stream approach does not support clustered data. "
-                    "Automatically refit using single cluster of points.",
-                    UserWarning,
-                )
-                return False
-            return True
+    def _check_no_cluster_labels(self) -> bool:
+        """
+        Checks to see if cluster labels are attempting to be used in
+        stream() and, if so, returns False. As PyNomaly does not accept
+        clustering algorithms as input, the stream approach does not
+        support clustering.
+        :return: a boolean indicating whether single cluster (no labels).
+        """
+        if len(set(self._cluster_labels())) > 1:
+            warnings.warn(
+                "Stream approach does not support clustered data. "
+                "Automatically refit using single cluster of points.",
+                UserWarning,
+            )
+            return False
+        return True
 
     """
     Decorators.
@@ -389,8 +383,8 @@ class LocalOutlierProbability(object):
                 "Numba is not available, falling back to pure python mode.", UserWarning
             )
 
-        self.Validate()._inputs(self)
-        self.Validate._extent(self)
+        self._validate_inputs()
+        self._check_extent()
 
     """
     Private methods.
@@ -583,7 +577,7 @@ class LocalOutlierProbability(object):
             [self._n_observations(), self.n_neighbors], 9e10, dtype=float
         )
         indexes = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
-        self.points_vector = self.Validate._data(self.data)
+        self.points_vector = self._convert_to_array(self.data)
         compute = (
             numba.jit(self._compute_distance_and_neighbor_matrix, cache=True)
             if self.use_numba
@@ -806,13 +800,14 @@ class LocalOutlierProbability(object):
         cluster_labels.
         :return: self, which contains the local outlier probabilities as
         self.local_outlier_probabilities.
+        :raises ClusterSizeError: if any cluster is smaller than n_neighbors.
+        :raises MissingValuesError: if data contains missing values.
         """
 
-        self.Validate._n_neighbors(self)
-        if self.Validate._cluster_size(self) is False:
-            sys.exit()
-        if self.data is not None and self.Validate._missing_values(self) is False:
-            sys.exit()
+        self._check_n_neighbors()
+        self._check_cluster_size()
+        if self.data is not None:
+            self._check_missing_values()
 
         store = self._store()
         if self.data is not None:
@@ -848,14 +843,14 @@ class LocalOutlierProbability(object):
         """
 
         orig_cluster_labels = None
-        if self.Validate._no_cluster_labels(self) is False:
+        if self._check_no_cluster_labels() is False:
             orig_cluster_labels = self.cluster_labels
             self.cluster_labels = np.array([0] * len(self.data))
 
-        if self.Validate._fit(self) is False:
+        if self._check_is_fit() is False:
             self.fit()
 
-        point_vector = self.Validate._data(x)
+        point_vector = self._convert_to_array(x)
         distances = np.full([1, self.n_neighbors], 9e10, dtype=float)
         if self.data is not None:
             matrix = self.points_vector

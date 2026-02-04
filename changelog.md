@@ -4,6 +4,23 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.3.5
+### Changed
+- Refactored the `Validate` class by dissolving it and moving validation methods 
+directly into `LocalOutlierProbability` as instance methods 
+([Issue #69](https://github.com/vc1492a/PyNomaly/issues/69)).
+- Renamed validation methods for clarity: `_fit()` → `_check_is_fit()`, 
+`_data()` → `_convert_to_array()`, `_inputs()` → `_validate_inputs()`, 
+`_cluster_size()` → `_check_cluster_size()`, `_n_neighbors()` → `_check_n_neighbors()`, 
+`_extent()` → `_check_extent()`, `_missing_values()` → `_check_missing_values()`, 
+`_no_cluster_labels()` → `_check_no_cluster_labels()`.
+- Replaced `sys.exit()` calls with proper exception handling. The library no longer 
+terminates the Python process on validation errors.
+### Added
+- Custom exception classes for better error handling: `PyNomalyError` (base), 
+`ValidationError`, `ClusterSizeError`, and `MissingValuesError`. These are now 
+exported from the package and can be caught by users.
+
 ## 0.3.4 
 ### Changed 
 - Changed source code as necessary to address a [user-reported issue](https://github.com/vc1492a/PyNomaly/issues/49), corrected in [this commit](https://github.com/vc1492a/PyNomaly/commit/bbdd12a318316ca9c7e0272a5b06909f3fc4f9b0)
