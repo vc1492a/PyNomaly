@@ -2,6 +2,7 @@
 # License: Apache 2.0
 
 from PyNomaly import loop
+from PyNomaly.loop import ClusterSizeError, MissingValuesError
 
 import logging
 from typing import Tuple
@@ -568,30 +569,26 @@ def test_data_format() -> None:
 
 def test_missing_values() -> None:
     """
-    Test to ensure that the program exits of a missing value is encountered
-    in the input data, as this is not allowable.
+    Test to ensure that MissingValuesError is raised if a missing value is
+    encountered in the input data, as this is not allowable.
     :return: None
     """
     X = np.array([1.3, 1.1, 0.9, 1.4, 1.5, np.nan, 3.2])
     clf = loop.LocalOutlierProbability(X, n_neighbors=3, use_numba=NUMBA)
 
-    with pytest.raises(SystemExit) as record_a, pytest.warns(UserWarning) as record_b:
+    with pytest.raises(MissingValuesError) as record:
         clf.fit()
 
-    assert record_a.type == SystemExit
-
-    # check that only one warning was raised
-    assert len(record_b) == 1
     # check that the message matches
     assert (
-        record_b[0].message.args[0]
+        str(record.value)
         == "Method does not support missing values in input data."
     )
 
 
 def test_small_cluster_size(X_n140_outliers) -> None:
     """
-    Test to ensure that the program exits when the specified number of
+    Test to ensure that ClusterSizeError is raised when the specified number of
     neighbors is larger than the smallest cluster size in the input data.
     :param X_n140_outliers: A pytest Fixture that generates 140 observations.
     :return: None
@@ -605,16 +602,12 @@ def test_small_cluster_size(X_n140_outliers) -> None:
         X_n140_outliers, n_neighbors=50, cluster_labels=cluster_labels, use_numba=NUMBA
     )
 
-    with pytest.raises(SystemExit) as record_a, pytest.warns(UserWarning) as record_b:
+    with pytest.raises(ClusterSizeError) as record:
         clf.fit()
 
-    assert record_a.type == SystemExit
-
-    # check that only one warning was raised
-    assert len(record_b) == 1
     # check that the message matches
     assert (
-        record_b[0].message.args[0]
+        str(record.value)
         == "Number of neighbors specified larger than smallest "
         "cluster. Specify a number of neighbors smaller than "
         "the smallest cluster size (observations in smallest "
