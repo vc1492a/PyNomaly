@@ -4,6 +4,27 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.4.0
+### Added
+- Parallel distance computation via the new `n_jobs` parameter. Set `n_jobs=-1` 
+to use all available CPU cores for cross-cluster multiprocessing, or specify a 
+positive integer for a fixed number of workers 
+([Issue #36](https://github.com/vc1492a/PyNomaly/issues/36)).
+- Numba `prange`-based parallel kernels for thread-level parallelism when 
+`use_numba=True` and `n_jobs > 1`.
+- Optional `scipy` acceleration: uses `scipy.spatial.distance.cdist` for 
+distance computation and `scipy.special.erf` for the error function when 
+scipy is available, with graceful fallback to pure NumPy.
+### Changed
+- Replaced the O(n^2) Python nested loop for distance computation with a 
+vectorized NumPy implementation using chunked broadcasting. Progress bar 
+support is preserved via chunk-level updates.
+- Restructured the Numba JIT path from a generator-based approach (incompatible 
+with Numba's parallel mode) to non-generator kernels that support `numba.prange`.
+- Vectorized `_standard_distances`, `_prob_distances`, and 
+`_norm_prob_outlier_factor` pipeline methods, replacing Python `for` loops 
+with NumPy array operations.
+
 ## 0.3.5
 ### Changed
 - Refactored the `Validate` class by dissolving it and moving validation methods 
