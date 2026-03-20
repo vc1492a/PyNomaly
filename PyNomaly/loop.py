@@ -1,18 +1,119 @@
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from math import erf, sqrt
 import numpy as np
+import os
 from python_utils.terminal import get_terminal_size
 import sys
 from typing import Tuple, Union
 import warnings
 
 try:
+    from scipy.spatial.distance import cdist as _scipy_cdist
+except ImportError:
+    _scipy_cdist = None
+
+try:
+    from scipy.special import erf as _scipy_erf
+except ImportError:
+    _scipy_erf = None
+
+try:
     import numba
+
+    def _numba_distance_kernel_parallel(clust_points_vector, n_neighbors):
+        n = clust_points_vector.shape[0]
+        d_features = clust_points_vector.shape[1]
+        local_distances = np.full((n, n_neighbors), 9e10, dtype=np.float64)
+        local_indexes = np.full((n, n_neighbors), 0, dtype=np.int64)
+        for i in numba.prange(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                d = 0.0
+                for f in range(d_features):
+                    diff_val = clust_points_vector[i, f] - clust_points_vector[j, f]
+                    d += diff_val * diff_val
+                d = d ** 0.5
+                idx_max = 0
+                for k in range(1, n_neighbors):
+                    if local_distances[i, k] > local_distances[i, idx_max]:
+                        idx_max = k
+                if d < local_distances[i, idx_max]:
+                    local_distances[i, idx_max] = d
+                    local_indexes[i, idx_max] = j
+        return local_distances, local_indexes
+
+    _numba_kernel_parallel = numba.jit(
+        _numba_distance_kernel_parallel, nopython=True, parallel=True, cache=True
+    )
+
+    def _numba_distance_kernel_sequential(clust_points_vector, n_neighbors):
+        n = clust_points_vector.shape[0]
+        d_features = clust_points_vector.shape[1]
+        local_distances = np.full((n, n_neighbors), 9e10, dtype=np.float64)
+        local_indexes = np.full((n, n_neighbors), 0, dtype=np.int64)
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                d = 0.0
+                for f in range(d_features):
+                    diff_val = clust_points_vector[i, f] - clust_points_vector[j, f]
+                    d += diff_val * diff_val
+                d = d ** 0.5
+                idx_max = 0
+                for k in range(1, n_neighbors):
+                    if local_distances[i, k] > local_distances[i, idx_max]:
+                        idx_max = k
+                if d < local_distances[i, idx_max]:
+                    local_distances[i, idx_max] = d
+                    local_indexes[i, idx_max] = j
+        return local_distances, local_indexes
+
+    _numba_kernel_sequential = numba.jit(
+        _numba_distance_kernel_sequential, nopython=True, cache=True
+    )
+
 except ImportError:
     pass
 
 __author__ = "Valentino Constantinou"
 __version__ = "0.3.5"
 __license__ = "Apache License, Version 2.0"
+
+
+def _cluster_distances_worker(args):
+    """Top-level worker for ProcessPoolExecutor (must be picklable)."""
+    clust_points_vector, global_indices, n_neighbors = args
+    n = clust_points_vector.shape[0]
+
+    if clust_points_vector.ndim == 1:
+        clust_points_vector = clust_points_vector.reshape(-1, 1)
+
+    local_distances = np.full((n, n_neighbors), 9e10, dtype=float)
+    local_indexes = np.full((n, n_neighbors), 9e10, dtype=float)
+
+    chunk_size = min(256, n)
+    for chunk_start in range(0, n, chunk_size):
+        chunk_end = min(chunk_start + chunk_size, n)
+        chunk = clust_points_vector[chunk_start:chunk_end]
+
+        if _scipy_cdist is not None:
+            dist = _scipy_cdist(chunk, clust_points_vector, metric="euclidean")
+        else:
+            diff = chunk[:, np.newaxis, :] - clust_points_vector[np.newaxis, :, :]
+            dist = np.sqrt((diff ** 2).sum(axis=2))
+
+        row_idx = np.arange(chunk_end - chunk_start)
+        dist[row_idx, row_idx + chunk_start] = np.inf
+
+        knn_idx = np.argpartition(dist, n_neighbors, axis=1)[:, :n_neighbors]
+        knn_dists = np.take_along_axis(dist, knn_idx, axis=1)
+
+        local_distances[chunk_start:chunk_end] = knn_dists
+        local_indexes[chunk_start:chunk_end] = global_indices[knn_idx]
+
+    return local_distances, local_indexes, global_indices
 
 
 # Custom Exceptions
@@ -74,6 +175,9 @@ class LocalOutlierProbability(object):
     sample (optional, default 10)
     :param cluster_labels: a numpy array of cluster assignments w.r.t. each 
     sample (optional, default None)
+    :param n_jobs: the number of parallel workers for distance computation.
+    Use -1 to use all available CPU cores, or 1 for sequential processing
+    (optional, default 1)
     :return:
     """ """
 
@@ -315,7 +419,8 @@ class LocalOutlierProbability(object):
                     "n_neighbors": {"type": types[5]},
                     "cluster_labels": {"type": types[6]},
                     "use_numba": {"type": types[7]},
-                    "progress_bar": {"type": types[8]},
+                    "n_jobs": {"type": types[8]},
+                    "progress_bar": {"type": types[9]},
                 }
                 for x in kwds:
                     opt_types[x]["value"] = kwds[x]
@@ -348,6 +453,7 @@ class LocalOutlierProbability(object):
         (int, np.integer),
         list,
         bool,
+        (int, np.integer),
         bool,
     )
     def __init__(
@@ -359,6 +465,7 @@ class LocalOutlierProbability(object):
         n_neighbors=10,
         cluster_labels=None,
         use_numba=False,
+        n_jobs=1,
         progress_bar=False,
     ) -> None:
         self.data = data
@@ -368,6 +475,7 @@ class LocalOutlierProbability(object):
         self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
         self.use_numba = use_numba
+        self.n_jobs = n_jobs
         self.points_vector = None
         self.prob_distances = None
         self.prob_distances_ev = None
@@ -382,6 +490,13 @@ class LocalOutlierProbability(object):
             warnings.warn(
                 "Numba is not available, falling back to pure python mode.", UserWarning
             )
+
+        if self.n_jobs < -1 or self.n_jobs == 0:
+            warnings.warn(
+                "n_jobs must be -1 or a positive integer. Defaulting to 1.",
+                UserWarning,
+            )
+            self.n_jobs = 1
 
         self._validate_inputs()
         self._check_extent()
@@ -444,10 +559,8 @@ class LocalOutlierProbability(object):
         outlier factor of the input observation.
         :return: the normalized probabilistic outlier factor.
         """
-        npofs = []
-        for i in ev_probabilistic_outlier_factor:
-            npofs.append(extent * sqrt(i))
-        return npofs
+        ev_arr = np.array(ev_probabilistic_outlier_factor, dtype=float)
+        return (extent * np.sqrt(ev_arr)).tolist()
 
     @staticmethod
     def _local_outlier_probability(
@@ -461,11 +574,14 @@ class LocalOutlierProbability(object):
         input observation.
         :return: the local outlier probability.
         """
-        erf_vec = np.vectorize(erf)
         if np.all(plof_val == nplof_val):
             return np.zeros(plof_val.shape)
-        else:
-            return np.maximum(0, erf_vec(plof_val / (nplof_val * np.sqrt(2.0))))
+        plof_f = np.asarray(plof_val, dtype=float)
+        nplof_f = np.asarray(nplof_val, dtype=float)
+        if _scipy_erf is not None:
+            return np.maximum(0, _scipy_erf(plof_f / (nplof_f * np.sqrt(2.0))))
+        erf_vec = np.vectorize(erf)
+        return np.maximum(0, erf_vec(plof_f / (nplof_f * np.sqrt(2.0))))
 
     def _n_observations(self) -> int:
         """
@@ -564,6 +680,102 @@ class LocalOutlierProbability(object):
 
             yield distances, indexes, i
 
+    def _distances_vectorized(
+        self, clusters, distances, indexes, progress_bar
+    ) -> None:
+        """Vectorized kNN distance computation with chunked progress."""
+        progress = "="
+        total_points = sum(cv.shape[0] for cv, _ in clusters)
+        completed = 0
+
+        for clust_points_vector, global_indices in clusters:
+            n = clust_points_vector.shape[0]
+
+            if clust_points_vector.ndim == 1:
+                clust_points_vector = clust_points_vector.reshape(-1, 1)
+
+            chunk_size = min(256, n)
+            for chunk_start in range(0, n, chunk_size):
+                chunk_end = min(chunk_start + chunk_size, n)
+                chunk = clust_points_vector[chunk_start:chunk_end]
+
+                if _scipy_cdist is not None:
+                    dist = _scipy_cdist(
+                        chunk, clust_points_vector, metric="euclidean"
+                    )
+                else:
+                    diff = (
+                        chunk[:, np.newaxis, :]
+                        - clust_points_vector[np.newaxis, :, :]
+                    )
+                    dist = np.sqrt((diff ** 2).sum(axis=2))
+
+                row_idx = np.arange(chunk_end - chunk_start)
+                dist[row_idx, row_idx + chunk_start] = np.inf
+
+                knn_idx = np.argpartition(dist, self.n_neighbors, axis=1)[
+                    :, : self.n_neighbors
+                ]
+                knn_dists = np.take_along_axis(dist, knn_idx, axis=1)
+
+                chunk_global = global_indices[chunk_start:chunk_end]
+                distances[chunk_global] = knn_dists
+                indexes[chunk_global] = global_indices[knn_idx]
+
+                completed += chunk_end - chunk_start
+                if progress_bar:
+                    progress = Utils.emit_progress_bar(
+                        progress, completed, total_points
+                    )
+
+    def _distances_numba(
+        self, clusters, distances, indexes, progress_bar, parallel=False
+    ) -> None:
+        """Numba-accelerated distance computation."""
+        progress = "="
+        kernel = _numba_kernel_parallel if parallel else _numba_kernel_sequential
+
+        for idx, (clust_points_vector, global_indices) in enumerate(clusters):
+            if clust_points_vector.ndim == 1:
+                clust_points_vector = clust_points_vector.reshape(-1, 1)
+
+            local_dists, local_idxs = kernel(
+                clust_points_vector.astype(np.float64), self.n_neighbors
+            )
+
+            distances[global_indices] = local_dists
+            indexes[global_indices] = global_indices[local_idxs]
+
+            if progress_bar:
+                progress = Utils.emit_progress_bar(
+                    progress, idx + 1, len(clusters)
+                )
+
+    def _distances_parallel(
+        self, clusters, distances, indexes, n_jobs, progress_bar
+    ) -> None:
+        """Parallel distance computation across clusters via multiprocessing."""
+        progress = "="
+        worker_args = [
+            (cv, gi, self.n_neighbors) for cv, gi in clusters
+        ]
+
+        with ProcessPoolExecutor(max_workers=n_jobs) as executor:
+            futures = {
+                executor.submit(_cluster_distances_worker, args): idx
+                for idx, args in enumerate(worker_args)
+            }
+            completed_clusters = 0
+            for future in as_completed(futures):
+                local_dists, local_idxs, global_indices = future.result()
+                distances[global_indices] = local_dists
+                indexes[global_indices] = local_idxs
+                completed_clusters += 1
+                if progress_bar:
+                    progress = Utils.emit_progress_bar(
+                        progress, completed_clusters, len(clusters)
+                    )
+
     def _distances(self, progress_bar: bool = False) -> None:
         """
         Provides the distances between each observation and it's closest
@@ -576,27 +788,40 @@ class LocalOutlierProbability(object):
         distances = np.full(
             [self._n_observations(), self.n_neighbors], 9e10, dtype=float
         )
-        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
-        self.points_vector = self._convert_to_array(self.data)
-        compute = (
-            numba.jit(self._compute_distance_and_neighbor_matrix, cache=True)
-            if self.use_numba
-            else self._compute_distance_and_neighbor_matrix
+        indexes = np.full(
+            [self._n_observations(), self.n_neighbors], 9e10, dtype=float
         )
-        progress = "="
-        for cluster_id in set(self._cluster_labels()):
-            indices = np.where(self._cluster_labels() == cluster_id)
+        self.points_vector = self._convert_to_array(self.data)
+
+        cluster_labels = self._cluster_labels()
+        cluster_ids = sorted(set(cluster_labels))
+
+        clusters = []
+        for cluster_id in cluster_ids:
+            indices = np.where(cluster_labels == cluster_id)
             clust_points_vector = np.array(
                 self.points_vector.take(indices, axis=0)[0], dtype=np.float64
             )
-            # a generator that yields an updated distance matrix on each loop
-            for c in compute(clust_points_vector, indices, distances, indexes):
-                distances, indexes, i = c
-                # update the progress bar
-                if progress_bar is True:
-                    progress = Utils.emit_progress_bar(
-                        progress, i + 1, clust_points_vector.shape[0]
-                    )
+            clusters.append((clust_points_vector, indices[0]))
+
+        n_jobs = self.n_jobs
+        if n_jobs == -1:
+            n_jobs = os.cpu_count() or 1
+        n_jobs = min(n_jobs, len(clusters))
+
+        if self.use_numba:
+            self._distances_numba(
+                clusters, distances, indexes, progress_bar,
+                parallel=(n_jobs > 1)
+            )
+        elif n_jobs > 1 and len(clusters) > 1:
+            self._distances_parallel(
+                clusters, distances, indexes, n_jobs, progress_bar
+            )
+        else:
+            self._distances_vectorized(
+                clusters, distances, indexes, progress_bar
+            )
 
         self.distance_matrix = distances
         self.neighbor_matrix = indexes
@@ -626,18 +851,14 @@ class LocalOutlierProbability(object):
         Calculated the standard distance for each observation in the input
         data. First calculates the cardinality and then calculates the standard
         distance with respect to each observation.
-        :param data_store:
         :param data_store: the storage matrix that collects information on
         each observation.
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        cardinality = [self.n_neighbors] * self._n_observations()
-        vals = data_store[:, 3].tolist()
-        std_distances = []
-        for c, v in zip(cardinality, vals):
-            std_distances.append(self._standard_distance(c, v))
-        return np.hstack((data_store, np.array([std_distances]).T))
+        ssd_vals = data_store[:, 3].astype(float)
+        std_distances = np.sqrt(ssd_vals / self.n_neighbors)
+        return np.hstack((data_store, std_distances.reshape(-1, 1)))
 
     def _prob_distances(self, data_store: np.ndarray) -> np.ndarray:
         """
@@ -648,10 +869,8 @@ class LocalOutlierProbability(object):
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        prob_distances = []
-        for i in range(data_store[:, 4].shape[0]):
-            prob_distances.append(self._prob_distance(self.extent, data_store[:, 4][i]))
-        return np.hstack((data_store, np.array([prob_distances]).T))
+        prob_distances = self.extent * data_store[:, 4].astype(float)
+        return np.hstack((data_store, prob_distances.reshape(-1, 1)))
 
     def _prob_distances_ev(self, data_store) -> np.ndarray:
         """

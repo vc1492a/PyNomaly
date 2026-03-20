@@ -827,3 +827,53 @@ def test_distance_matrix_consistency(X_n120) -> None:
 
     # Compare scores allowing for minor floating-point differences
     assert_array_almost_equal(scores_data, scores_dist, decimal=10, err_msg="Inconsistent LoOP scores due to self-distances")
+
+
+def test_n_jobs_equivalence(X_n140_outliers) -> None:
+    """
+    Tests that n_jobs > 1 produces equivalent results to n_jobs=1 when
+    using cluster labels (multiple clusters processed in parallel).
+    """
+    a = [0] * 120
+    b = [1] * 20
+    cluster_labels = a + b
+
+    clf_seq = loop.LocalOutlierProbability(
+        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels, n_jobs=1
+    )
+    scores_seq = clf_seq.fit().local_outlier_probabilities
+
+    clf_par = loop.LocalOutlierProbability(
+        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels, n_jobs=2
+    )
+    scores_par = clf_par.fit().local_outlier_probabilities
+
+    assert_array_almost_equal(scores_seq, scores_par, decimal=10)
+
+
+def test_n_jobs_single_cluster(X_n120) -> None:
+    """
+    Tests that n_jobs=-1 works correctly with a single cluster (falls back
+    to sequential since there is only one cluster to process).
+    """
+    clf1 = loop.LocalOutlierProbability(X_n120, n_neighbors=10, n_jobs=1)
+    scores1 = clf1.fit().local_outlier_probabilities
+
+    clf2 = loop.LocalOutlierProbability(X_n120, n_neighbors=10, n_jobs=-1)
+    scores2 = clf2.fit().local_outlier_probabilities
+
+    assert_array_almost_equal(scores1, scores2, decimal=10)
+
+
+def test_n_jobs_invalid() -> None:
+    """
+    Tests that invalid n_jobs values produce a warning and default to 1.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+
+    with pytest.warns(UserWarning) as record:
+        clf = loop.LocalOutlierProbability(X, n_neighbors=2, n_jobs=0)
+
+    messages = [r.message.args[0] for r in record]
+    assert any("n_jobs must be -1 or a positive integer" in m for m in messages)
+    assert clf.n_jobs == 1

@@ -43,12 +43,14 @@ to calculate the Local Outlier Probability of each sample.
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
+- (optional) scipy >= 1.3.0
 
-Numba just-in-time (JIT) compiles the function with calculates the Euclidean 
+Numba just-in-time (JIT) compiles the function which calculates the Euclidean 
 distance between observations, providing a reduction in computation time 
 (significantly when a large number of observations are scored). Numba is not a 
 requirement and PyNomaly may still be used solely with numpy if desired
-(details below). 
+(details below). When scipy is available, PyNomaly uses its optimized distance 
+computation and error function implementations for additional performance gains.
 
 ## Quick Start
 
@@ -101,6 +103,36 @@ normalization scheme prior to using LoOP, especially when working with multiple 
 Users must also appropriately handle missing values prior to using LoOP, as LoOP does not support Pandas
 DataFrames or Numpy arrays with missing values.
 
+### Parallel Processing
+
+PyNomaly supports parallel distance computation via the `n_jobs` parameter.
+When data includes multiple clusters (via `cluster_labels`), each cluster's 
+distance computation is independent and can be processed across multiple CPU cores:
+
+```python
+from PyNomaly import loop
+from sklearn.cluster import DBSCAN
+db = DBSCAN(eps=0.6, min_samples=50).fit(data)
+m = loop.LocalOutlierProbability(
+    data, extent=2, n_neighbors=20,
+    cluster_labels=list(db.labels_), n_jobs=-1
+).fit()
+scores = m.local_outlier_probabilities
+print(scores)
+```
+
+Set `n_jobs=-1` to use all available CPU cores, or specify a positive integer 
+for a fixed number of workers. The default value of `n_jobs=1` runs sequentially. 
+Parallelism is most beneficial when the data contains multiple clusters. For 
+single-cluster data, `n_jobs` has no effect as there is only one unit of work.
+
+When using Numba (`use_numba=True`) with `n_jobs > 1`, PyNomaly uses Numba's 
+thread-level parallelism (`prange`) instead of multiprocessing.
+
+Note that parallel processing is only applicable when raw input data is provided. 
+If a pre-existing distance matrix is provided, the distance computation step is 
+skipped entirely and `n_jobs` has no effect.
+
 ### Utilizing Numba and Progress Bars
 
 It may be helpful to use just-in-time (JIT) compilation in the cases where a lot of 
@@ -117,10 +149,12 @@ print(scores)
 Numba must be installed if the above to use JIT compilation and improve the 
 speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
 tested with Numba version 0.45.1. An example of the speed difference that can 
-be realized with using Numba is avaialble in `examples/numba_speed_diff.py`. 
+be realized with using Numba is available in `examples/numba_speed_diff.py`. 
 
-You may also choose to print progress bars _with our without_ the use of numba 
+You may also choose to print progress bars _with or without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
+Progress bars are supported across all execution modes (sequential, parallel, 
+and Numba).
 
 ### Choosing Parameters
 
