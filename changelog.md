@@ -4,6 +4,34 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.4.0
+### Added
+- Parallel distance computation via Numba `prange` and the new `n_jobs` 
+parameter. Set `use_numba=True` with `n_jobs=-1` to use all available CPU 
+cores, providing 2-3x speedups on multi-core machines 
+([Issue #36](https://github.com/vc1492a/PyNomaly/issues/36)).
+- Optional `scipy` acceleration: uses `scipy.spatial.distance.cdist` for 
+distance computation and `scipy.special.erf` for the error function when 
+scipy is available, with graceful fallback to pure NumPy.
+- Dedicated Numba-specific tests (`test_numba_*`) that automatically run when 
+Numba is installed and are skipped otherwise, covering sequential equivalence, 
+parallel equivalence, single-cluster prange, and progress bar integration.
+### Changed
+- Replaced the O(n^2) Python nested loop for distance computation with a 
+vectorized NumPy implementation using chunked broadcasting. Progress bar 
+support is preserved via chunk-level updates.
+- Restructured the Numba JIT path from a generator-based approach (incompatible 
+with Numba's parallel mode) to non-generator kernels that support `numba.prange`.
+- Vectorized `_standard_distances`, `_prob_distances`, and 
+`_norm_prob_outlier_factor` pipeline methods, replacing Python `for` loops 
+with NumPy array operations.
+- The `n_jobs` parameter controls Numba thread-level parallelism via `prange`, 
+following the scikit-learn convention (`-1` for all cores, positive integer 
+for a fixed number of threads). Replaces the previous `num_threads` parameter 
+from the unreleased `feature/numba_parallel` branch. `n_jobs` only takes 
+effect when `use_numba=True`; without Numba a warning is issued and processing 
+falls back to the sequential vectorized path.
+
 ## 0.3.5
 ### Changed
 - Refactored the `Validate` class by dissolving it and moving validation methods 
