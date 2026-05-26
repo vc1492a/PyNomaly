@@ -842,22 +842,19 @@ def test_vectorized_1d_data() -> None:
     assert scores[-1] > 0
 
 
-def test_parallel_with_progress_bar(X_n140_outliers) -> None:
+def test_n_jobs_without_numba_warns(X_n120) -> None:
     """
-    Tests that parallel processing works with the progress bar enabled,
-    covering the progress_bar branch inside _distances_parallel.
+    Tests that n_jobs > 1 without use_numba=True warns the user and
+    falls back to sequential vectorized processing.
     """
-    a = [0] * 120
-    b = [1] * 20
-    cluster_labels = a + b
+    with pytest.warns(UserWarning, match="n_jobs > 1 requires use_numba=True"):
+        clf = loop.LocalOutlierProbability(
+            X_n120, n_neighbors=10, n_jobs=2
+        )
+        scores = clf.fit().local_outlier_probabilities
 
-    clf = loop.LocalOutlierProbability(
-        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels,
-        n_jobs=2, progress_bar=True
-    )
-    scores = clf.fit().local_outlier_probabilities
     assert scores is not None
-    assert len(scores) == len(X_n140_outliers)
+    assert len(scores) == len(X_n120)
 
 
 def test_n_jobs_negative_two() -> None:
@@ -885,42 +882,6 @@ def test_vectorized_progress_bar_single_cluster(X_n120) -> None:
     scores = clf.fit().local_outlier_probabilities
     assert scores is not None
     assert len(scores) == len(X_n120)
-
-
-def test_n_jobs_equivalence(X_n140_outliers) -> None:
-    """
-    Tests that n_jobs > 1 produces equivalent results to n_jobs=1 when
-    using cluster labels (multiple clusters processed in parallel).
-    """
-    a = [0] * 120
-    b = [1] * 20
-    cluster_labels = a + b
-
-    clf_seq = loop.LocalOutlierProbability(
-        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels, n_jobs=1
-    )
-    scores_seq = clf_seq.fit().local_outlier_probabilities
-
-    clf_par = loop.LocalOutlierProbability(
-        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels, n_jobs=2
-    )
-    scores_par = clf_par.fit().local_outlier_probabilities
-
-    assert_array_almost_equal(scores_seq, scores_par, decimal=10)
-
-
-def test_n_jobs_single_cluster(X_n120) -> None:
-    """
-    Tests that n_jobs=-1 works correctly with a single cluster (falls back
-    to sequential since there is only one cluster to process).
-    """
-    clf1 = loop.LocalOutlierProbability(X_n120, n_neighbors=10, n_jobs=1)
-    scores1 = clf1.fit().local_outlier_probabilities
-
-    clf2 = loop.LocalOutlierProbability(X_n120, n_neighbors=10, n_jobs=-1)
-    scores2 = clf2.fit().local_outlier_probabilities
-
-    assert_array_almost_equal(scores1, scores2, decimal=10)
 
 
 def test_n_jobs_invalid() -> None:

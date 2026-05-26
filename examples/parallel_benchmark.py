@@ -1,11 +1,11 @@
 """
-Thorough benchmark of PyNomaly's parallel processing capabilities.
+Benchmark of PyNomaly's Numba parallel processing (prange).
 
 Tests across multiple dimensions:
   - Data sizes (total observations)
-  - Number of clusters (parallelism granularity)
-  - Execution modes: vectorized, multiprocessing (n_jobs), Numba sequential, Numba parallel
-  - Number of workers (1, 2, 4, all cores)
+  - Number of clusters
+  - Sequential vs parallel Numba (n_jobs=1 vs n_jobs=-1)
+  - Comparison against the default vectorized NumPy path
 
 Run:
     python examples/parallel_benchmark.py
@@ -40,8 +40,7 @@ def generate_clustered_data(n_per_cluster, n_clusters, n_features=N_FEATURES, se
     return data, labels
 
 
-def time_fit(data, cluster_labels, n_neighbors, use_numba, n_jobs, warmup=False):
-    """Time a single fit call. Returns elapsed seconds."""
+def time_fit(data, cluster_labels, n_neighbors, use_numba, n_jobs):
     clf = loop.LocalOutlierProbability(
         data, n_neighbors=n_neighbors,
         cluster_labels=cluster_labels,
@@ -50,12 +49,10 @@ def time_fit(data, cluster_labels, n_neighbors, use_numba, n_jobs, warmup=False)
     )
     t0 = time.perf_counter()
     clf.fit()
-    elapsed = time.perf_counter() - t0
-    return elapsed
+    return time.perf_counter() - t0
 
 
 def run_benchmark(data, labels, n_neighbors, label, configs):
-    """Run a set of configurations and print results."""
     n_total = len(data)
     n_clusters = len(set(labels))
 
@@ -68,16 +65,14 @@ def run_benchmark(data, labels, n_neighbors, label, configs):
     print(f"  {'-'*35} {'-'*8} {'-'*8} {'-'*8}")
 
     baseline_best = None
-    results = []
 
     for mode_name, use_numba, n_jobs in configs:
         if use_numba and not HAS_NUMBA:
             continue
 
-        # Warmup for Numba JIT compilation
         if use_numba:
             small_data, small_labels = generate_clustered_data(50, n_clusters, seed=99)
-            time_fit(small_data, small_labels, min(n_neighbors, 10), use_numba, n_jobs, warmup=True)
+            time_fit(small_data, small_labels, min(n_neighbors, 10), use_numba, n_jobs)
 
         times = []
         for _ in range(N_REPEATS):
@@ -91,96 +86,63 @@ def run_benchmark(data, labels, n_neighbors, label, configs):
             baseline_best = best
 
         speedup = baseline_best / best if best > 0 else float('inf')
-        results.append((mode_name, best, mean, speedup))
         print(f"  {mode_name:<35} {best:>7.3f}s {mean:>7.3f}s {speedup:>7.2f}x")
-
-    return results
 
 
 def main():
     cpu_count = os.cpu_count() or 1
-    print(f"PyNomaly Parallel Processing Benchmark")
+    print(f"PyNomaly Parallel Benchmark (Numba prange)")
     print(f"CPU cores: {cpu_count}")
     print(f"Numba available: {HAS_NUMBA}")
     print(f"Repeats per config: {N_REPEATS}")
 
-    # Scenario 1: Small data, many clusters — tests multiprocessing dispatch overhead
+    if not HAS_NUMBA:
+        print("\nNumba is not installed. Install it with: pip install numba")
+        print("Only vectorized (baseline) results will be shown.\n")
+
+    configs = [
+        ("Vectorized NumPy (baseline)",     False, 1),
+        ("Numba sequential (n_jobs=1)",      True,  1),
+        ("Numba parallel (n_jobs=-1)",       True,  -1),
+    ]
+
     data, labels = generate_clustered_data(500, 8)
     run_benchmark(data, labels, N_NEIGHBORS,
         "Scenario 1: Small clusters (500 pts x 8 clusters = 4,000 total)",
-        [
-            ("Vectorized (baseline)",       False, 1),
-            ("Multiprocessing n_jobs=2",     False, 2),
-            ("Multiprocessing n_jobs=4",     False, 4),
-            ("Multiprocessing n_jobs=-1",    False, -1),
-            ("Numba sequential",             True,  1),
-            ("Numba parallel (prange)",      True,  -1),
-        ]
-    )
+        configs)
 
-    # Scenario 2: Medium data, moderate clusters — practical use case
     data, labels = generate_clustered_data(2000, 4)
     run_benchmark(data, labels, N_NEIGHBORS,
         "Scenario 2: Medium clusters (2,000 pts x 4 clusters = 8,000 total)",
-        [
-            ("Vectorized (baseline)",       False, 1),
-            ("Multiprocessing n_jobs=2",     False, 2),
-            ("Multiprocessing n_jobs=4",     False, 4),
-            ("Multiprocessing n_jobs=-1",    False, -1),
-            ("Numba sequential",             True,  1),
-            ("Numba parallel (prange)",      True,  -1),
-        ]
-    )
+        configs)
 
-    # Scenario 3: Large data, many clusters — where parallelism should help most
     data, labels = generate_clustered_data(2000, 8)
     run_benchmark(data, labels, N_NEIGHBORS,
-        "Scenario 3: Large + many clusters (2,000 pts x 8 clusters = 16,000 total)",
-        [
-            ("Vectorized (baseline)",       False, 1),
-            ("Multiprocessing n_jobs=2",     False, 2),
-            ("Multiprocessing n_jobs=4",     False, 4),
-            ("Multiprocessing n_jobs=8",     False, 8),
-            ("Multiprocessing n_jobs=-1",    False, -1),
-            ("Numba sequential",             True,  1),
-            ("Numba parallel (prange)",      True,  -1),
-        ]
-    )
+        "Scenario 3: Large (2,000 pts x 8 clusters = 16,000 total)",
+        configs)
 
-    # Scenario 4: Scaling test — fixed cluster size, increasing cluster count
+    # Single cluster scaling — shows prange benefit within a cluster
     print(f"\n{'='*70}")
-    print(f"  Scenario 4: Scaling test — 1,000 pts/cluster, increasing clusters")
+    print(f"  Scenario 4: Single cluster scaling (Numba prange within one cluster)")
     print(f"{'='*70}")
-    print(f"  {'Clusters':>8} {'Total':>8} {'Seq':>8} {'Par':>8} {'Speedup':>8}")
-    print(f"  {'-'*8} {'-'*8} {'-'*8} {'-'*8} {'-'*8}")
+    print(f"  {'Points':>8} {'Vectorized':>10} {'Numba Seq':>10} {'Numba Par':>10} {'Speedup':>8}")
+    print(f"  {'-'*8} {'-'*10} {'-'*10} {'-'*10} {'-'*8}")
 
-    for n_clusters in [2, 4, 8, 16]:
-        data, labels = generate_clustered_data(1000, n_clusters)
+    for n in [5000, 10000, 20000]:
+        data, labels = generate_clustered_data(n, 1)
+        vec_t = min(time_fit(data, labels, N_NEIGHBORS, False, 1) for _ in range(N_REPEATS))
 
-        seq_times = []
-        par_times = []
-        for _ in range(N_REPEATS):
-            seq_times.append(time_fit(data, labels, N_NEIGHBORS, False, 1))
-            par_times.append(time_fit(data, labels, N_NEIGHBORS, False, -1))
+        if HAS_NUMBA:
+            small_data, small_labels = generate_clustered_data(50, 1, seed=99)
+            time_fit(small_data, small_labels, 10, True, 1)
+            time_fit(small_data, small_labels, 10, True, -1)
 
-        seq_best = min(seq_times)
-        par_best = min(par_times)
-        speedup = seq_best / par_best if par_best > 0 else float('inf')
-        total = n_clusters * 1000
-
-        print(f"  {n_clusters:>8} {total:>7,} {seq_best:>7.3f}s {par_best:>7.3f}s {speedup:>7.2f}x")
-
-    # Scenario 5: Single large cluster — no parallelism benefit expected
-    data, labels = generate_clustered_data(10000, 1)
-    run_benchmark(data, labels, N_NEIGHBORS,
-        "Scenario 5: Single cluster (10,000 pts) — no multi-cluster parallelism",
-        [
-            ("Vectorized (baseline)",       False, 1),
-            ("Multiprocessing n_jobs=-1",    False, -1),
-            ("Numba sequential",             True,  1),
-            ("Numba parallel (prange)",      True,  -1),
-        ]
-    )
+            nb_s = min(time_fit(data, labels, N_NEIGHBORS, True, 1) for _ in range(N_REPEATS))
+            nb_p = min(time_fit(data, labels, N_NEIGHBORS, True, -1) for _ in range(N_REPEATS))
+            speedup = vec_t / nb_p
+            print(f"  {n:>7,} {vec_t:>9.2f}s {nb_s:>9.2f}s {nb_p:>9.2f}s {speedup:>7.2f}x")
+        else:
+            print(f"  {n:>7,} {vec_t:>9.2f}s {'N/A':>10} {'N/A':>10} {'N/A':>8}")
 
     print(f"\n{'='*70}")
     print("  Benchmark complete.")

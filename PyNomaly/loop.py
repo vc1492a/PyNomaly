@@ -1,4 +1,3 @@
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from math import erf, sqrt
 import numpy as np
 import os
@@ -82,40 +81,6 @@ __version__ = "0.4.0"
 __license__ = "Apache License, Version 2.0"
 
 
-def _cluster_distances_worker(args):
-    """Top-level worker for ProcessPoolExecutor (must be picklable)."""
-    clust_points_vector, global_indices, n_neighbors = args
-    n = clust_points_vector.shape[0]
-
-    if clust_points_vector.ndim == 1:
-        clust_points_vector = clust_points_vector.reshape(-1, 1)
-
-    local_distances = np.full((n, n_neighbors), 9e10, dtype=float)
-    local_indexes = np.full((n, n_neighbors), 9e10, dtype=float)
-
-    chunk_size = min(256, n)
-    for chunk_start in range(0, n, chunk_size):
-        chunk_end = min(chunk_start + chunk_size, n)
-        chunk = clust_points_vector[chunk_start:chunk_end]
-
-        if _scipy_cdist is not None:
-            dist = _scipy_cdist(chunk, clust_points_vector, metric="euclidean")
-        else:
-            diff = chunk[:, np.newaxis, :] - clust_points_vector[np.newaxis, :, :]
-            dist = np.sqrt((diff ** 2).sum(axis=2))
-
-        row_idx = np.arange(chunk_end - chunk_start)
-        dist[row_idx, row_idx + chunk_start] = np.inf
-
-        knn_idx = np.argpartition(dist, n_neighbors, axis=1)[:, :n_neighbors]
-        knn_dists = np.take_along_axis(dist, knn_idx, axis=1)
-
-        local_distances[chunk_start:chunk_end] = knn_dists
-        local_indexes[chunk_start:chunk_end] = global_indices[knn_idx]
-
-    return local_distances, local_indexes, global_indices
-
-
 # Custom Exceptions
 class PyNomalyError(Exception):
     """Base exception for PyNomaly."""
@@ -175,9 +140,9 @@ class LocalOutlierProbability(object):
     sample (optional, default 10)
     :param cluster_labels: a numpy array of cluster assignments w.r.t. each 
     sample (optional, default None)
-    :param n_jobs: the number of parallel workers for distance computation.
-    Use -1 to use all available CPU cores, or 1 for sequential processing
-    (optional, default 1)
+    :param n_jobs: controls Numba thread-level parallelism via prange.
+    Use -1 to use all available CPU cores, or 1 for sequential processing.
+    Only effective when use_numba=True (optional, default 1)
     :return:
     """ """
 
@@ -751,31 +716,6 @@ class LocalOutlierProbability(object):
                     progress, idx + 1, len(clusters)
                 )
 
-    def _distances_parallel(
-        self, clusters, distances, indexes, n_jobs, progress_bar
-    ) -> None:
-        """Parallel distance computation across clusters via multiprocessing."""
-        progress = "="
-        worker_args = [
-            (cv, gi, self.n_neighbors) for cv, gi in clusters
-        ]
-
-        with ProcessPoolExecutor(max_workers=n_jobs) as executor:
-            futures = {
-                executor.submit(_cluster_distances_worker, args): idx
-                for idx, args in enumerate(worker_args)
-            }
-            completed_clusters = 0
-            for future in as_completed(futures):
-                local_dists, local_idxs, global_indices = future.result()
-                distances[global_indices] = local_dists
-                indexes[global_indices] = local_idxs
-                completed_clusters += 1
-                if progress_bar:
-                    progress = Utils.emit_progress_bar(
-                        progress, completed_clusters, len(clusters)
-                    )
-
     def _distances(self, progress_bar: bool = False) -> None:
         """
         Provides the distances between each observation and it's closest
@@ -807,21 +747,20 @@ class LocalOutlierProbability(object):
         n_jobs = self.n_jobs
         if n_jobs == -1:
             n_jobs = os.cpu_count() or 1
-        user_requested_parallel = n_jobs > 1
-        n_jobs = min(n_jobs, len(clusters))
 
         if self.use_numba:
-            # Numba prange parallelizes within each cluster (over observations),
-            # so it benefits even with a single cluster.
             self._distances_numba(
                 clusters, distances, indexes, progress_bar,
-                parallel=user_requested_parallel
-            )
-        elif n_jobs > 1 and len(clusters) > 1:
-            self._distances_parallel(
-                clusters, distances, indexes, n_jobs, progress_bar
+                parallel=(n_jobs > 1)
             )
         else:
+            if n_jobs > 1:
+                warnings.warn(
+                    "n_jobs > 1 requires use_numba=True for parallel "
+                    "processing. Install Numba and set use_numba=True "
+                    "to enable parallelism. Falling back to sequential.",
+                    UserWarning,
+                )
             self._distances_vectorized(
                 clusters, distances, indexes, progress_bar
             )

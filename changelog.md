@@ -6,22 +6,16 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## 0.4.0
 ### Added
-- Parallel distance computation via the new `n_jobs` parameter. Set `n_jobs=-1` 
-to use all available CPU cores for cross-cluster multiprocessing, or specify a 
-positive integer for a fixed number of workers 
+- Parallel distance computation via Numba `prange` and the new `n_jobs` 
+parameter. Set `use_numba=True` with `n_jobs=-1` to use all available CPU 
+cores, providing 2-3x speedups on multi-core machines 
 ([Issue #36](https://github.com/vc1492a/PyNomaly/issues/36)).
-- Numba `prange`-based parallel kernels for thread-level parallelism when 
-`use_numba=True` and `n_jobs > 1`.
 - Optional `scipy` acceleration: uses `scipy.spatial.distance.cdist` for 
 distance computation and `scipy.special.erf` for the error function when 
 scipy is available, with graceful fallback to pure NumPy.
 - Dedicated Numba-specific tests (`test_numba_*`) that automatically run when 
 Numba is installed and are skipped otherwise, covering sequential equivalence, 
-parallel equivalence, and progress bar integration with Numba.
-### Fixed
-- Numba `prange` dispatch now correctly activates for single-cluster data 
-when `n_jobs > 1`, providing 2-3x speedups that were previously blocked by 
-incorrect capping of the parallelism flag to the number of clusters.
+parallel equivalence, single-cluster prange, and progress bar integration.
 ### Changed
 - Replaced the O(n^2) Python nested loop for distance computation with a 
 vectorized NumPy implementation using chunked broadcasting. Progress bar 
@@ -31,12 +25,12 @@ with Numba's parallel mode) to non-generator kernels that support `numba.prange`
 - Vectorized `_standard_distances`, `_prob_distances`, and 
 `_norm_prob_outlier_factor` pipeline methods, replacing Python `for` loops 
 with NumPy array operations.
-- Replaced the previous `num_threads` parameter (from the unreleased 
-`feature/numba_parallel` branch) with `n_jobs`, which provides a unified 
-interface for both process-level parallelism (via `concurrent.futures`) and 
-Numba thread-level parallelism (via `prange`). The `n_jobs` parameter follows 
-the scikit-learn convention (`-1` for all cores, positive integer for a fixed 
-number of workers).
+- The `n_jobs` parameter controls Numba thread-level parallelism via `prange`, 
+following the scikit-learn convention (`-1` for all cores, positive integer 
+for a fixed number of threads). Replaces the previous `num_threads` parameter 
+from the unreleased `feature/numba_parallel` branch. `n_jobs` only takes 
+effect when `use_numba=True`; without Numba a warning is issued and processing 
+falls back to the sequential vectorized path.
 
 ## 0.3.5
 ### Changed

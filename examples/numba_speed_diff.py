@@ -29,40 +29,20 @@ def main():
     ).fit().local_outlier_probabilities
     t4 = time.time()
     seconds_numba = t4 - t3
-    print("\nComputation took " + str(seconds_numba) + " seconds with Numba JIT.")
+    print("\nComputation took " + str(seconds_numba) + " seconds with Numba JIT (sequential).")
 
-    # Multi-cluster parallel example
-    np.random.seed(42)
-    cluster_a = np.random.randn(5000, 4) + 0
-    cluster_b = np.random.randn(5000, 4) + 10
-    multi_data = np.vstack([cluster_a, cluster_b])
-    cluster_labels = [0] * 5000 + [1] * 5000
-
-    # Sequential (n_jobs=1) with clusters
+    # Numba JIT (parallel, n_jobs=-1)
     t5 = time.time()
-    scores_seq = loop.LocalOutlierProbability(
-        multi_data,
+    scores_numba_par = loop.LocalOutlierProbability(
+        data,
         n_neighbors=3,
-        cluster_labels=cluster_labels,
-        n_jobs=1,
-        progress_bar=True
-    ).fit().local_outlier_probabilities
-    t6 = time.time()
-    seconds_seq = t6 - t5
-    print("\nComputation took " + str(seconds_seq) + " seconds with n_jobs=1 (2 clusters).")
-
-    # Parallel (n_jobs=-1) with clusters
-    t7 = time.time()
-    scores_par = loop.LocalOutlierProbability(
-        multi_data,
-        n_neighbors=3,
-        cluster_labels=cluster_labels,
+        use_numba=True,
         n_jobs=-1,
         progress_bar=True
     ).fit().local_outlier_probabilities
-    t8 = time.time()
-    seconds_par = t8 - t7
-    print("\nComputation took " + str(seconds_par) + " seconds with n_jobs=-1 (2 clusters).")
+    t6 = time.time()
+    seconds_numba_par = t6 - t5
+    print("\nComputation took " + str(seconds_numba_par) + " seconds with Numba JIT (parallel, n_jobs=-1).")
 
 
 if __name__ == '__main__':
