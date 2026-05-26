@@ -24,6 +24,12 @@ with Numba's parallel mode) to non-generator kernels that support `numba.prange`
 - Vectorized `_standard_distances`, `_prob_distances`, and 
 `_norm_prob_outlier_factor` pipeline methods, replacing Python `for` loops 
 with NumPy array operations.
+- Replaced the previous `num_threads` parameter (from the unreleased 
+`feature/numba_parallel` branch) with `n_jobs`, which provides a unified 
+interface for both process-level parallelism (via `concurrent.futures`) and 
+Numba thread-level parallelism (via `prange`). The `n_jobs` parameter follows 
+the scikit-learn convention (`-1` for all cores, positive integer for a fixed 
+number of workers).
 
 ## 0.3.5
 ### Changed

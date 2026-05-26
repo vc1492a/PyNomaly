@@ -829,6 +829,64 @@ def test_distance_matrix_consistency(X_n120) -> None:
     assert_array_almost_equal(scores_data, scores_dist, decimal=10, err_msg="Inconsistent LoOP scores due to self-distances")
 
 
+def test_vectorized_1d_data() -> None:
+    """
+    Tests the vectorized distance path with 1-dimensional data, exercising
+    the ndim == 1 reshape branch in _distances_vectorized.
+    """
+    X = np.array([1.0, 2.0, 3.0, 10.0, 11.0, 12.0, 50.0])
+    clf = loop.LocalOutlierProbability(X, n_neighbors=3)
+    scores = clf.fit().local_outlier_probabilities
+    assert scores is not None
+    assert len(scores) == len(X)
+    assert scores[-1] > 0
+
+
+def test_parallel_with_progress_bar(X_n140_outliers) -> None:
+    """
+    Tests that parallel processing works with the progress bar enabled,
+    covering the progress_bar branch inside _distances_parallel.
+    """
+    a = [0] * 120
+    b = [1] * 20
+    cluster_labels = a + b
+
+    clf = loop.LocalOutlierProbability(
+        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels,
+        n_jobs=2, progress_bar=True
+    )
+    scores = clf.fit().local_outlier_probabilities
+    assert scores is not None
+    assert len(scores) == len(X_n140_outliers)
+
+
+def test_n_jobs_negative_two() -> None:
+    """
+    Tests that n_jobs=-2 (invalid) produces a warning and defaults to 1.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+
+    with pytest.warns(UserWarning) as record:
+        clf = loop.LocalOutlierProbability(X, n_neighbors=2, n_jobs=-2)
+
+    messages = [r.message.args[0] for r in record]
+    assert any("n_jobs must be -1 or a positive integer" in m for m in messages)
+    assert clf.n_jobs == 1
+
+
+def test_vectorized_progress_bar_single_cluster(X_n120) -> None:
+    """
+    Tests the progress bar within the vectorized (non-parallel) distance path
+    on single-cluster data.
+    """
+    clf = loop.LocalOutlierProbability(
+        X_n120, n_neighbors=10, n_jobs=1, progress_bar=True
+    )
+    scores = clf.fit().local_outlier_probabilities
+    assert scores is not None
+    assert len(scores) == len(X_n120)
+
+
 def test_n_jobs_equivalence(X_n140_outliers) -> None:
     """
     Tests that n_jobs > 1 produces equivalent results to n_jobs=1 when
