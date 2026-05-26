@@ -827,3 +827,155 @@ def test_distance_matrix_consistency(X_n120) -> None:
 
     # Compare scores allowing for minor floating-point differences
     assert_array_almost_equal(scores_data, scores_dist, decimal=10, err_msg="Inconsistent LoOP scores due to self-distances")
+
+
+def test_vectorized_1d_data() -> None:
+    """
+    Tests the vectorized distance path with 1-dimensional data, exercising
+    the ndim == 1 reshape branch in _distances_vectorized.
+    """
+    X = np.array([1.0, 2.0, 3.0, 10.0, 11.0, 12.0, 50.0])
+    clf = loop.LocalOutlierProbability(X, n_neighbors=3)
+    scores = clf.fit().local_outlier_probabilities
+    assert scores is not None
+    assert len(scores) == len(X)
+    assert scores[-1] > 0
+
+
+def test_n_jobs_without_numba_warns(X_n120) -> None:
+    """
+    Tests that n_jobs > 1 without use_numba=True warns the user and
+    falls back to sequential vectorized processing.
+    """
+    with pytest.warns(UserWarning, match="n_jobs > 1 requires use_numba=True"):
+        clf = loop.LocalOutlierProbability(
+            X_n120, n_neighbors=10, n_jobs=2
+        )
+        scores = clf.fit().local_outlier_probabilities
+
+    assert scores is not None
+    assert len(scores) == len(X_n120)
+
+
+def test_n_jobs_negative_two() -> None:
+    """
+    Tests that n_jobs=-2 (invalid) produces a warning and defaults to 1.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+
+    with pytest.warns(UserWarning) as record:
+        clf = loop.LocalOutlierProbability(X, n_neighbors=2, n_jobs=-2)
+
+    messages = [r.message.args[0] for r in record]
+    assert any("n_jobs must be -1 or a positive integer" in m for m in messages)
+    assert clf.n_jobs == 1
+
+
+def test_vectorized_progress_bar_single_cluster(X_n120) -> None:
+    """
+    Tests the progress bar within the vectorized (non-parallel) distance path
+    on single-cluster data.
+    """
+    clf = loop.LocalOutlierProbability(
+        X_n120, n_neighbors=10, n_jobs=1, progress_bar=True
+    )
+    scores = clf.fit().local_outlier_probabilities
+    assert scores is not None
+    assert len(scores) == len(X_n120)
+
+
+def test_n_jobs_invalid() -> None:
+    """
+    Tests that invalid n_jobs values produce a warning and default to 1.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+
+    with pytest.warns(UserWarning) as record:
+        clf = loop.LocalOutlierProbability(X, n_neighbors=2, n_jobs=0)
+
+    messages = [r.message.args[0] for r in record]
+    assert any("n_jobs must be -1 or a positive integer" in m for m in messages)
+    assert clf.n_jobs == 1
+
+
+# --- Numba-specific tests ---
+# These test the Numba code paths directly, skipped if Numba is not installed.
+
+_has_numba = False
+try:
+    import numba
+    _has_numba = True
+except ImportError:
+    pass
+
+
+@pytest.mark.skipif(not _has_numba, reason="Numba not installed")
+def test_numba_sequential_equivalence(X_n8) -> None:
+    """
+    Tests that use_numba=True with n_jobs=1 produces equivalent results to
+    the default vectorized path.
+    """
+    clf_vec = loop.LocalOutlierProbability(X_n8, n_neighbors=5, use_numba=False)
+    scores_vec = clf_vec.fit().local_outlier_probabilities
+
+    clf_numba = loop.LocalOutlierProbability(X_n8, n_neighbors=5, use_numba=True)
+    scores_numba = clf_numba.fit().local_outlier_probabilities
+
+    assert_array_almost_equal(scores_vec, scores_numba, decimal=6)
+
+
+@pytest.mark.skipif(not _has_numba, reason="Numba not installed")
+def test_numba_parallel_equivalence(X_n140_outliers) -> None:
+    """
+    Tests that Numba parallel mode (use_numba=True, n_jobs > 1) produces
+    equivalent results to Numba sequential mode on clustered data.
+    """
+    a = [0] * 120
+    b = [1] * 20
+    cluster_labels = a + b
+
+    clf_seq = loop.LocalOutlierProbability(
+        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels,
+        use_numba=True, n_jobs=1
+    )
+    scores_seq = clf_seq.fit().local_outlier_probabilities
+
+    clf_par = loop.LocalOutlierProbability(
+        X_n140_outliers, n_neighbors=10, cluster_labels=cluster_labels,
+        use_numba=True, n_jobs=2
+    )
+    scores_par = clf_par.fit().local_outlier_probabilities
+
+    assert_array_almost_equal(scores_seq, scores_par, decimal=10)
+
+
+@pytest.mark.skipif(not _has_numba, reason="Numba not installed")
+def test_numba_with_progress_bar(X_n120) -> None:
+    """
+    Tests that the Numba path works with the progress bar enabled.
+    """
+    clf = loop.LocalOutlierProbability(
+        X_n120, n_neighbors=10, use_numba=True, progress_bar=True
+    )
+    scores = clf.fit().local_outlier_probabilities
+    assert scores is not None
+    assert len(scores) == len(X_n120)
+
+
+@pytest.mark.skipif(not _has_numba, reason="Numba not installed")
+def test_numba_prange_single_cluster(X_n120) -> None:
+    """
+    Tests that Numba prange is used for single-cluster data when n_jobs > 1,
+    and produces equivalent results to the sequential path.
+    """
+    clf_seq = loop.LocalOutlierProbability(
+        X_n120, n_neighbors=10, use_numba=True, n_jobs=1
+    )
+    scores_seq = clf_seq.fit().local_outlier_probabilities
+
+    clf_par = loop.LocalOutlierProbability(
+        X_n120, n_neighbors=10, use_numba=True, n_jobs=-1
+    )
+    scores_par = clf_par.fit().local_outlier_probabilities
+
+    assert_array_almost_equal(scores_seq, scores_par, decimal=6)

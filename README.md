@@ -7,7 +7,7 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepchecks), [OmniDocBench](https://github.com/opendatalab/OmniDocBench) and [pysad](https://github.com/selimfirat/pysad). 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.3.5-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.3.5)
+[![PyPi](https://img.shields.io/badge/pypi-0.4.0-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.4.0)
 [![Total Downloads](https://static.pepy.tech/badge/pynomaly)](https://pepy.tech/projects/pynomaly)
 [![Monthly Downloads](https://static.pepy.tech/badge/pynomaly/month)](https://pepy.tech/projects/pynomaly)
 ![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
@@ -43,12 +43,14 @@ to calculate the Local Outlier Probability of each sample.
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
+- (optional) scipy >= 1.3.0
 
-Numba just-in-time (JIT) compiles the function with calculates the Euclidean 
+Numba just-in-time (JIT) compiles the function which calculates the Euclidean 
 distance between observations, providing a reduction in computation time 
 (significantly when a large number of observations are scored). Numba is not a 
 requirement and PyNomaly may still be used solely with numpy if desired
-(details below). 
+(details below). When scipy is available, PyNomaly uses its optimized distance 
+computation and error function implementations for additional performance gains.
 
 ## Quick Start
 
@@ -101,26 +103,59 @@ normalization scheme prior to using LoOP, especially when working with multiple 
 Users must also appropriately handle missing values prior to using LoOP, as LoOP does not support Pandas
 DataFrames or Numpy arrays with missing values.
 
-### Utilizing Numba and Progress Bars
+### Speeding Things Up with Numba
 
-It may be helpful to use just-in-time (JIT) compilation in the cases where a lot of 
-observations are scored. Numba, a JIT compiler for Python, may be used 
-with PyNomaly by setting `use_numba=True`:
+For large datasets, Numba's just-in-time (JIT) compilation can significantly 
+speed up distance computation. Enable it with `use_numba=True`:
 
 ```python
 from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, use_numba=True, progress_bar=True).fit()
+m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, use_numba=True).fit()
 scores = m.local_outlier_probabilities
 print(scores)
 ```
 
-Numba must be installed if the above to use JIT compilation and improve the 
-speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
-tested with Numba version 0.45.1. An example of the speed difference that can 
-be realized with using Numba is avaialble in `examples/numba_speed_diff.py`. 
+To go further, set `n_jobs=-1` to enable Numba's thread-level parallelism 
+(`prange`), which distributes work across all available CPU cores:
 
-You may also choose to print progress bars _with our without_ the use of numba 
-by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
+```python
+from PyNomaly import loop
+m = loop.LocalOutlierProbability(
+    data, extent=2, n_neighbors=20,
+    use_numba=True, n_jobs=-1
+).fit()
+scores = m.local_outlier_probabilities
+print(scores)
+```
+
+This provides **2-3x speedups** on multi-core machines (benchmarked on 8 cores). 
+The parallelism works within each cluster's distance computation, so it benefits 
+both single-cluster and multi-cluster data. Set `n_jobs=-1` to use all cores, 
+or specify a positive integer for a fixed number of threads. The default 
+`n_jobs=1` runs sequentially.
+
+Numba must be installed to use JIT compilation. PyNomaly has been tested with 
+Numba versions 0.45.1 through 0.65.1. An example of the speed difference is 
+available in `examples/numba_speed_diff.py`, and a comprehensive parallel 
+benchmark is in `examples/parallel_benchmark.py`.
+
+Note that `n_jobs` only takes effect when `use_numba=True`. If `n_jobs > 1` 
+is set without Numba, PyNomaly will warn and fall back to the sequential 
+vectorized path. Parallel processing is also only applicable when raw input 
+data is provided — if a pre-existing distance matrix is provided, the distance 
+computation step is skipped entirely.
+
+### Progress Bars
+
+You may choose to print progress bars _with or without_ the use of Numba 
+by passing `progress_bar=True` to `LocalOutlierProbability()`:
+
+```python
+from PyNomaly import loop
+m = loop.LocalOutlierProbability(data, use_numba=True, n_jobs=-1, progress_bar=True).fit()
+```
+
+Progress bars are supported in both sequential and Numba execution modes.
 
 ### Choosing Parameters
 
@@ -431,7 +466,9 @@ python3 -m pytest --cov=PyNomaly -s -v
 
 To run the tests with Numba enabled, simply set the flag `NUMBA` in `test_loop.py` 
 to `True`. Note that a drop in coverage is expected due to portions of the code 
-being compiled upon code execution. 
+being compiled upon code execution. Additionally, there are dedicated 
+Numba-specific tests (`test_numba_*`) that run automatically when Numba is 
+installed and are skipped otherwise.
 
 ## Versioning
 [Semantic versioning](http://semver.org/) is used for this project. If contributing, please conform to semantic
