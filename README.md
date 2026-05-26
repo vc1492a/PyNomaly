@@ -123,11 +123,18 @@ print(scores)
 
 Set `n_jobs=-1` to use all available CPU cores, or specify a positive integer 
 for a fixed number of workers. The default value of `n_jobs=1` runs sequentially. 
-Parallelism is most beneficial when the data contains multiple clusters. For 
-single-cluster data, `n_jobs` has no effect as there is only one unit of work.
+
+Without Numba, `n_jobs` controls multiprocessing across clusters via 
+`ProcessPoolExecutor`. This is most beneficial for data with many clusters, 
+though process startup overhead means the speedup is modest and mainly appears 
+at larger scales (e.g. 20,000+ observations across 4+ clusters).
 
 When using Numba (`use_numba=True`) with `n_jobs > 1`, PyNomaly uses Numba's 
-thread-level parallelism (`prange`) instead of multiprocessing.
+thread-level parallelism (`prange`) instead of multiprocessing. This 
+parallelizes the distance computation *within* each cluster, providing 
+significant speedups (2-3x on 8 cores) even with a single cluster.
+For best performance with large datasets, use `use_numba=True` with 
+`n_jobs=-1`.
 
 Note that parallel processing is only applicable when raw input data is provided. 
 If a pre-existing distance matrix is provided, the distance computation step is 
@@ -146,10 +153,11 @@ scores = m.local_outlier_probabilities
 print(scores)
 ```
 
-Numba must be installed if the above to use JIT compilation and improve the 
-speed of multiple calls to `LocalOutlierProbability()`, and PyNomaly has been 
-tested with Numba version 0.45.1. An example of the speed difference that can 
-be realized with using Numba is available in `examples/numba_speed_diff.py`. 
+Numba must be installed to use JIT compilation and improve the 
+speed of multiple calls to `LocalOutlierProbability()`. PyNomaly has been 
+tested with Numba versions 0.45.1 through 0.65.1. An example of the speed 
+difference that can be realized with using Numba is available in 
+`examples/numba_speed_diff.py`. 
 
 You may also choose to print progress bars _with or without_ the use of numba 
 by passing `progress_bar=True` to the `LocalOutlierProbability()` method as above.
@@ -465,7 +473,9 @@ python3 -m pytest --cov=PyNomaly -s -v
 
 To run the tests with Numba enabled, simply set the flag `NUMBA` in `test_loop.py` 
 to `True`. Note that a drop in coverage is expected due to portions of the code 
-being compiled upon code execution. 
+being compiled upon code execution. Additionally, there are dedicated 
+Numba-specific tests (`test_numba_*`) that run automatically when Numba is 
+installed and are skipped otherwise.
 
 ## Versioning
 [Semantic versioning](http://semver.org/) is used for this project. If contributing, please conform to semantic

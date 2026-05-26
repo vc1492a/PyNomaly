@@ -807,12 +807,15 @@ class LocalOutlierProbability(object):
         n_jobs = self.n_jobs
         if n_jobs == -1:
             n_jobs = os.cpu_count() or 1
+        user_requested_parallel = n_jobs > 1
         n_jobs = min(n_jobs, len(clusters))
 
         if self.use_numba:
+            # Numba prange parallelizes within each cluster (over observations),
+            # so it benefits even with a single cluster.
             self._distances_numba(
                 clusters, distances, indexes, progress_bar,
-                parallel=(n_jobs > 1)
+                parallel=user_requested_parallel
             )
         elif n_jobs > 1 and len(clusters) > 1:
             self._distances_parallel(

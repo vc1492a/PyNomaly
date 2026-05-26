@@ -15,6 +15,13 @@ positive integer for a fixed number of workers
 - Optional `scipy` acceleration: uses `scipy.spatial.distance.cdist` for 
 distance computation and `scipy.special.erf` for the error function when 
 scipy is available, with graceful fallback to pure NumPy.
+- Dedicated Numba-specific tests (`test_numba_*`) that automatically run when 
+Numba is installed and are skipped otherwise, covering sequential equivalence, 
+parallel equivalence, and progress bar integration with Numba.
+### Fixed
+- Numba `prange` dispatch now correctly activates for single-cluster data 
+when `n_jobs > 1`, providing 2-3x speedups that were previously blocked by 
+incorrect capping of the parallelism flag to the number of clusters.
 ### Changed
 - Replaced the O(n^2) Python nested loop for distance computation with a 
 vectorized NumPy implementation using chunked broadcasting. Progress bar 
