@@ -60,7 +60,7 @@ LoOP scores are computed through a pipeline of steps that transform raw distance
 For full mathematical detail, see the [original paper](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf) by Kriegel et al. (2009). For the full API and additional documentation, see the [PyNomaly documentation](https://vc1492a.github.io/PyNomaly/).
 
 ## Dependencies
-- Python 3.8 - 3.13
+- Python 3.8 - 3.14
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1

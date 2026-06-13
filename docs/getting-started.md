@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-- Python 3.8 - 3.13
+- Python 3.8 - 3.14
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
