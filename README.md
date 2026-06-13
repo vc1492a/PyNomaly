@@ -12,7 +12,10 @@ PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepche
 [![Monthly Downloads](https://static.pepy.tech/badge/pynomaly/month)](https://pepy.tech/projects/pynomaly)
 ![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/vc1492a/PyNomaly/badge.svg?branch=main)](https://coveralls.io/github/vc1492a/PyNomaly?branch=main)
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://vc1492a.github.io/PyNomaly/)
 [![JOSS](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266/status.svg)](http://joss.theoj.org/papers/f4d2cfe680768526da7c1f6a2c103266)
+
+**[Full Documentation](https://vc1492a.github.io/PyNomaly/)** | **[API Reference](https://vc1492a.github.io/PyNomaly/api/)** | **[Examples](https://vc1492a.github.io/PyNomaly/examples/)**
 
 The outlier score of each sample is called the Local Outlier Probability.
 It measures the local deviation of density of a given sample with
@@ -37,6 +40,24 @@ Ludwig-Maximilians University Munich - Institute for Informatics;
 This Python 3 implementation uses Numpy and the formulas outlined in
 [LoOP: Local Outlier Probabilities](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf)
 to calculate the Local Outlier Probability of each sample.
+
+### How It Works
+
+LoOP scores are computed through a pipeline of steps that transform raw distances into a probability:
+
+1. **Nearest neighbor distances**: For each observation, the distances to its *k* nearest neighbors are computed (within its cluster, if cluster labels are provided).
+
+2. **Standard distance**: The root mean square of the neighbor distances for each observation, capturing how far away its neighbors are on average.
+
+3. **Probabilistic distance**: The standard distance scaled by the *extent* parameter (lambda). A higher extent makes the scoring more conservative (fewer points flagged as outliers).
+
+4. **Probabilistic Local Outlier Factor (PLOF)**: The ratio of an observation's probabilistic distance to the expected (mean) probabilistic distance of its neighbors, minus one. A PLOF near zero means the observation's density is similar to its neighbors; a large positive PLOF means it is in a sparser region.
+
+5. **Normalized PLOF (nPLOF)**: A normalization constant derived from the expected squared PLOF values within a cluster, scaled by the extent. This acts as a reference spread so that the final score is comparable across clusters.
+
+6. **Local Outlier Probability (LoOP)**: The Gaussian error function applied to the ratio PLOF / (nPLOF * sqrt(2)), clamped to [0, 1]. The result is directly interpretable as the probability that the observation is an outlier.
+
+For full mathematical detail, see the [original paper](http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf) by Kriegel et al. (2009). For the full API and additional documentation, see the [PyNomaly documentation](https://vc1492a.github.io/PyNomaly/).
 
 ## Dependencies
 - Python 3.8 - 3.13
@@ -176,6 +197,37 @@ the results for reach observation. Those observations which rank highly with var
 more than likely outliers. This is one potential approach of selecting the neighborhood size. Another is to
 select a value proportional to the number of observations, such an odd-valued integer close to the square root
 of the number of observations in your data (*sqrt(n_observations*).
+
+### Exceptions and Error Handling
+
+PyNomaly provides custom exceptions that can be caught and handled in your application code. All exceptions inherit from `PyNomalyError`:
+
+| Exception | Raised when |
+|---|---|
+| `PyNomalyError` | Base exception for all PyNomaly errors. |
+| `ValidationError` | Base class for input validation errors. |
+| `ClusterSizeError` | A cluster contains fewer observations than `n_neighbors`. |
+| `MissingValuesError` | Input data contains `NaN` values. |
+
+These exceptions are exported from the package and can be imported directly:
+
+```python
+from PyNomaly import loop
+from PyNomaly.loop import ClusterSizeError, MissingValuesError
+
+try:
+    m = loop.LocalOutlierProbability(data, n_neighbors=50, cluster_labels=labels).fit()
+except ClusterSizeError:
+    print("Reduce n_neighbors or use larger clusters.")
+except MissingValuesError:
+    print("Clean NaN values from your data before fitting.")
+```
+
+PyNomaly also issues `UserWarning` in non-fatal situations such as:
+- `n_neighbors` being zero or exceeding the number of observations (automatically adjusted)
+- `extent` not being 1, 2, or 3
+- Numba not being available when `use_numba=True` is set
+- `n_jobs > 1` without `use_numba=True` (falls back to sequential processing)
 
 ## Iris Data Example
 
@@ -448,13 +500,9 @@ and bug fixes can be represented by branches with the prefix `fix/` versus
 then be made from these branches into the repository's `dev` branch 
 prior to being pulled into `main`. 
 
-### Commit Messages and Releases
+### Commit Messages
 
-**Your commit messages are important** - here's why. 
-
-PyNomaly leverages [release-please](https://github.com/googleapis/release-please-action) to help automate the release process using the [Conventional Commits](https://www.conventionalcommits.org/) specification. When pull requests are opened to the `main` branch, release-please will collate the git commit messages and prepare an organized changelog and release notes. This process can be completed because of the Conventional Commits specification. 
-
-Conventional Commits provides an easy set of rules for creating an explicit commit history; which makes it easier to write automated tools on top of. This convention dovetails with SemVer, by describing the features, fixes, and breaking changes made in commit messages. You can check out examples [here](https://www.conventionalcommits.org/en/v1.0.0/#examples). Make a best effort to use the specification when contributing to Infactory code as it dramatically eases the documentation around releases and their features, breaking changes, bug fixes and documentation updates. 
+**Your commit messages are important.** PyNomaly uses the [Conventional Commits](https://www.conventionalcommits.org/) specification. Conventional Commits provides an easy set of rules for creating an explicit commit history, which dovetails with [Semantic Versioning](http://semver.org/) by describing the features, fixes, and breaking changes made in commit messages. You can check out examples [here](https://www.conventionalcommits.org/en/v1.0.0/#examples). Make a best effort to use the specification when contributing, as it dramatically eases the documentation around releases and their features, breaking changes, bug fixes, and documentation updates. 
 
 ### Tests
 When contributing, please ensure to run unit tests and add additional tests as 

@@ -1,0 +1,47 @@
+site_name: PyNomaly
+site_url: https://vc1492a.github.io/PyNomaly/
+site_description: >-
+  PyNomaly - A Python 3 implementation of LoOP (Local Outlier Probabilities),
+  a local density based outlier detection method providing outlier scores in [0, 1].
+repo_url: https://github.com/vc1492a/PyNomaly
+repo_name: vc1492a/PyNomaly
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: white
+      accent: grey
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: grey
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - How It Works: how-it-works.md
+  - Getting Started: getting-started.md
+  - User Guide: user-guide.md
+  - Examples: examples.md
+  - API Reference: api.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
