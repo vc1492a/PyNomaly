@@ -222,11 +222,14 @@ def accepts(*types):
                 "data": {"type": np.ndarray},
                 "distance_matrix": {"type": np.ndarray},
                 "neighbor_matrix": {"type": np.ndarray},
-                "cluster_labels": {"type": list},
+                "cluster_labels": {"type": (list, np.ndarray)},
             }
             for x in kwds:
                 if x in opt_types:
-                    opt_types[x]["value"] = kwds[x]
+                    v = kwds[x]
+                    if type(v).__name__ == "DataFrame":
+                        v = np.array(v)
+                    opt_types[x]["value"] = v
             for k in opt_types:
                 try:
                     if (

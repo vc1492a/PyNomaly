@@ -170,13 +170,21 @@ class LocalOutlierProbability(ValidationMixin, DistanceMixin, PipelineMixin):
 
         self._reset_state()
 
-        if data is not None:
+        if data is not None and distance_matrix is not None:
+            self.data = data
+            self.distance_matrix = distance_matrix
+            if neighbor_matrix is not None:
+                self.neighbor_matrix = neighbor_matrix
+        elif data is not None:
             self.data = data
             self.distance_matrix = None
             self.neighbor_matrix = None
-        if distance_matrix is not None:
+        elif distance_matrix is not None:
             self.distance_matrix = distance_matrix
-        if neighbor_matrix is not None:
+            self.data = None
+            if neighbor_matrix is not None:
+                self.neighbor_matrix = neighbor_matrix
+        elif neighbor_matrix is not None:
             self.neighbor_matrix = neighbor_matrix
         if cluster_labels is not None:
             self.cluster_labels = cluster_labels
