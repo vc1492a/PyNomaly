@@ -4,11 +4,13 @@
 from PyNomaly.loop import (
     LocalOutlierProbability,
     LoOP,
+    __version__,
+)
+from PyNomaly.exceptions import (
     PyNomalyError,
     ValidationError,
     ClusterSizeError,
     MissingValuesError,
-    __version__,
 )
 
 __all__ = [
