@@ -77,7 +77,7 @@ except ImportError:
     pass
 
 __author__ = "Valentino Constantinou"
-__version__ = "0.4.0"
+__version__ = "1.0.0"
 __license__ = "Apache License, Version 2.0"
 
 
@@ -131,41 +131,44 @@ class Utils:
 
 
 class LocalOutlierProbability(object):
-    """
-    :param data: a Pandas DataFrame or Numpy array of float data
-    :param extent: an integer value [1, 2, 3] that controls the statistical 
-    extent, e.g. lambda times the standard deviation from the mean (optional, 
+    """Local Outlier Probability (LoOP) estimator.
+
+    :param extent: an integer value [1, 2, 3] that controls the statistical
+    extent, e.g. lambda times the standard deviation from the mean (optional,
     default 3)
-    :param n_neighbors: the total number of neighbors to consider w.r.t. each 
+    :param n_neighbors: the total number of neighbors to consider w.r.t. each
     sample (optional, default 10)
-    :param cluster_labels: a numpy array of cluster assignments w.r.t. each 
-    sample (optional, default None)
+    :param use_numba: whether to use Numba JIT acceleration for distance
+    computation (optional, default False)
     :param n_jobs: controls Numba thread-level parallelism via prange.
     Use -1 to use all available CPU cores, or 1 for sequential processing.
     Only effective when use_numba=True (optional, default 1)
-    :return:
-    """ """
+    :param progress_bar: whether to display a progress bar during distance
+    computation (optional, default False)
 
-    Based on the work of Kriegel, Kröger, Schubert, and Zimek (2009) in LoOP: 
+    Based on the work of Kriegel, Kröger, Schubert, and Zimek (2009) in LoOP:
     Local Outlier Probabilities.
     ----------
 
     References
     ----------
-    .. [1] Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying 
+    .. [1] Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying
            Density-based Local Outliers. ACM SIGMOD
            International Conference on Management of Data (2000).
-    .. [2] Kriegel H.-P., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier 
-           Probabilities. 18th ACM conference on 
+    .. [2] Kriegel H.-P., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier
+           Probabilities. 18th ACM conference on
            Information and knowledge management, CIKM (2009).
-    .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised 
+    .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised
            Anomaly Detection Algorithms for Multivariate Data. PLoS ONE 11(4):
            e0152173 (2016).
-    .. [4] Hamlet C., Straub J., Russell M., Kerlin S. An incremental and 
-           approximate local outlier probability algorithm for intrusion 
-           detection and its evaluation. Journal of Cyber Security Technology 
-           (2016). 
+    .. [4] Hamlet C., Straub J., Russell M., Kerlin S. An incremental and
+           approximate local outlier probability algorithm for intrusion
+           detection and its evaluation. Journal of Cyber Security Technology
+           (2016).
     """
+
+    _DATA_PARAMS = ("data", "distance_matrix", "neighbor_matrix",
+                    "cluster_labels")
 
     """
     Validation methods.
@@ -378,17 +381,19 @@ class LocalOutlierProbability(object):
                             "Argument %r is not of type %s" % (a, t), UserWarning
                         )
                 opt_types = {
-                    "distance_matrix": {"type": types[2]},
-                    "neighbor_matrix": {"type": types[3]},
-                    "extent": {"type": types[4]},
-                    "n_neighbors": {"type": types[5]},
-                    "cluster_labels": {"type": types[6]},
-                    "use_numba": {"type": types[7]},
-                    "n_jobs": {"type": types[8]},
-                    "progress_bar": {"type": types[9]},
+                    "extent": {"type": (int, np.integer)},
+                    "n_neighbors": {"type": (int, np.integer)},
+                    "use_numba": {"type": bool},
+                    "n_jobs": {"type": (int, np.integer)},
+                    "progress_bar": {"type": bool},
+                    "data": {"type": np.ndarray},
+                    "distance_matrix": {"type": np.ndarray},
+                    "neighbor_matrix": {"type": np.ndarray},
+                    "cluster_labels": {"type": list},
                 }
                 for x in kwds:
-                    opt_types[x]["value"] = kwds[x]
+                    if x in opt_types:
+                        opt_types[x]["value"] = kwds[x]
                 for k in opt_types:
                     try:
                         if (
@@ -411,43 +416,59 @@ class LocalOutlierProbability(object):
 
     @accepts(
         object,
-        np.ndarray,
-        np.ndarray,
-        np.ndarray,
         (int, np.integer),
         (int, np.integer),
+        bool,
+        (int, np.integer),
+        bool,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
         list,
-        bool,
-        (int, np.integer),
-        bool,
     )
     def __init__(
         self,
-        data=None,
-        distance_matrix=None,
-        neighbor_matrix=None,
         extent=3,
         n_neighbors=10,
-        cluster_labels=None,
         use_numba=False,
         n_jobs=1,
         progress_bar=False,
+        data=None,
+        distance_matrix=None,
+        neighbor_matrix=None,
+        cluster_labels=None,
     ) -> None:
+        self.extent = extent
+        self.n_neighbors = n_neighbors
+        self.use_numba = use_numba
+        self.n_jobs = n_jobs
+        self.progress_bar = progress_bar
+
+        # Emit deprecation warnings for data params passed to __init__
+        _locals = {"data": data, "distance_matrix": distance_matrix,
+                   "neighbor_matrix": neighbor_matrix,
+                   "cluster_labels": cluster_labels}
+        for param in self._DATA_PARAMS:
+            if _locals[param] is not None:
+                warnings.warn(
+                    "Passing '{}' to __init__ is deprecated. "
+                    "Pass it to fit() instead. This will raise an error "
+                    "in a future version.".format(param),
+                    FutureWarning,
+                    stacklevel=2,
+                )
+
         self.data = data
         self.distance_matrix = distance_matrix
         self.neighbor_matrix = neighbor_matrix
-        self.extent = extent
-        self.n_neighbors = n_neighbors
         self.cluster_labels = cluster_labels
-        self.use_numba = use_numba
-        self.n_jobs = n_jobs
+
         self.points_vector = None
         self.prob_distances = None
         self.prob_distances_ev = None
         self.norm_prob_local_outlier_factor = None
         self.local_outlier_probabilities = None
         self._objects = {}
-        self.progress_bar = progress_bar
         self.is_fit = False
 
         if self.use_numba is True and "numba" not in sys.modules:
@@ -463,7 +484,6 @@ class LocalOutlierProbability(object):
             )
             self.n_jobs = 1
 
-        self._validate_inputs()
         self._check_extent()
 
     """
@@ -954,17 +974,56 @@ class LocalOutlierProbability(object):
     Public methods
     """
 
-    def fit(self) -> "LocalOutlierProbability":
+    def _reset_state(self) -> None:
+        """Resets computed state to allow re-fitting with new data."""
+        self.points_vector = None
+        self.prob_distances = None
+        self.prob_distances_ev = None
+        self.norm_prob_local_outlier_factor = None
+        self.local_outlier_probabilities = None
+        self._objects = {}
+        self.is_fit = False
+
+    def fit(
+        self,
+        data=None,
+        distance_matrix=None,
+        neighbor_matrix=None,
+        cluster_labels=None,
+    ) -> "LocalOutlierProbability":
         """
         Calculates the local outlier probability for each observation in the
         input data according to the input parameters extent, n_neighbors, and
         cluster_labels.
+        :param data: a Pandas DataFrame or Numpy array of float data
+        (optional, default None)
+        :param distance_matrix: a precomputed distance matrix of shape
+        (n_observations, n_neighbors) (optional, default None)
+        :param neighbor_matrix: a precomputed neighbor index matrix of shape
+        (n_observations, n_neighbors) (optional, default None)
+        :param cluster_labels: a numpy array or list of cluster assignments
+        w.r.t. each sample (optional, default None)
         :return: self, which contains the local outlier probabilities as
         self.local_outlier_probabilities.
         :raises ClusterSizeError: if any cluster is smaller than n_neighbors.
         :raises MissingValuesError: if data contains missing values.
         """
 
+        self._reset_state()
+
+        if data is not None:
+            self.data = data
+            self.distance_matrix = None
+            self.neighbor_matrix = None
+        if distance_matrix is not None:
+            self.distance_matrix = distance_matrix
+        if neighbor_matrix is not None:
+            self.neighbor_matrix = neighbor_matrix
+        if cluster_labels is not None:
+            self.cluster_labels = cluster_labels
+
+        if self._validate_inputs() is False:
+            return self
         self._check_n_neighbors()
         self._check_cluster_size()
         if self.data is not None:
@@ -1044,3 +1103,6 @@ class LocalOutlierProbability(object):
             self.cluster_labels = orig_cluster_labels
 
         return loop
+
+
+LoOP = LocalOutlierProbability

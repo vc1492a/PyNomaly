@@ -5,6 +5,24 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 1.0.0
+### Changed
+- **Breaking (with backward compatibility):** Adopted scikit-learn API conventions.
+  Data parameters (`data`, `distance_matrix`, `neighbor_matrix`, `cluster_labels`)
+  are now passed to `fit()` instead of `__init__()`. Configuration parameters
+  (`extent`, `n_neighbors`, `use_numba`, `n_jobs`, `progress_bar`) remain in 
+  the constructor 
+  ([Issue #7](https://github.com/vc1492a/PyNomaly/issues/7)).
+- Passing data parameters to `__init__()` still works but emits a 
+  `FutureWarning` and will be removed in a future version.
+- Calling `fit()` multiple times with different data is now supported 
+  (re-fitting resets internal state).
+### Added
+- `LoOP` class alias for `LocalOutlierProbability`, enabling 
+  `from PyNomaly import LoOP` 
+  ([Issue #5](https://github.com/vc1492a/PyNomaly/issues/5)).
+- `__version__` is now exported from the package (`from PyNomaly import __version__`).
+
 ## 0.4.0
 ### Added
 - Parallel distance computation via Numba `prange` and the new `n_jobs` 

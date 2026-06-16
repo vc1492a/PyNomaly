@@ -29,7 +29,7 @@ For large datasets, Numba's just-in-time (JIT) compilation can significantly spe
 
 ```python
 from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, use_numba=True).fit()
+m = loop.LocalOutlierProbability(extent=2, n_neighbors=20, use_numba=True).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -39,9 +39,8 @@ To go further, set `n_jobs=-1` to enable Numba's thread-level parallelism (`pran
 ```python
 from PyNomaly import loop
 m = loop.LocalOutlierProbability(
-    data, extent=2, n_neighbors=20,
-    use_numba=True, n_jobs=-1
-).fit()
+    extent=2, n_neighbors=20, use_numba=True, n_jobs=-1
+).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -61,7 +60,7 @@ You may choose to print progress bars _with or without_ the use of Numba by pass
 
 ```python
 from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, use_numba=True, n_jobs=-1, progress_bar=True).fit()
+m = loop.LocalOutlierProbability(use_numba=True, n_jobs=-1, progress_bar=True).fit(data)
 ```
 
 Progress bars are supported in both sequential and Numba execution modes.
@@ -83,7 +82,7 @@ data = np.array([
     [421.5, 90.3, 50.0]
 ])
 
-scores = loop.LocalOutlierProbability(data, n_neighbors=3).fit().local_outlier_probabilities
+scores = loop.LocalOutlierProbability(n_neighbors=3).fit(data).local_outlier_probabilities
 print(scores)
 ```
 
@@ -123,9 +122,9 @@ d, idx = neigh.kneighbors(data, return_distance=True)
 indices = np.delete(indices, 0, 1)
 distances = np.delete(distances, 0, 1)
 
-m = loop.LocalOutlierProbability(
-    distance_matrix=d, neighbor_matrix=idx, n_neighbors=n_neighbors+1
-).fit()
+m = loop.LocalOutlierProbability(n_neighbors=n_neighbors+1).fit(
+    distance_matrix=d, neighbor_matrix=idx
+)
 scores = m.local_outlier_probabilities
 ```
 
@@ -150,8 +149,8 @@ iris_test = iris.iloc[:, 0:4].tail(30)
 Fit the model on training data:
 
 ```python
-m_train = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
-m_train.fit()
+m_train = loop.LocalOutlierProbability(n_neighbors=10)
+m_train.fit(iris_train)
 iris_train_scores = m_train.local_outlier_probabilities
 ```
 
@@ -189,13 +188,10 @@ PyNomaly provides custom exceptions that can be caught and handled in your appli
 These exceptions are exported from the package and can be imported directly:
 
 ```python
-from PyNomaly import loop
-from PyNomaly.loop import ClusterSizeError, MissingValuesError
+from PyNomaly import LoOP, ClusterSizeError, MissingValuesError
 
 try:
-    m = loop.LocalOutlierProbability(
-        data, n_neighbors=50, cluster_labels=labels
-    ).fit()
+    m = LoOP(n_neighbors=50).fit(data, cluster_labels=labels)
 except ClusterSizeError:
     print("Reduce n_neighbors or use larger clusters.")
 except MissingValuesError:

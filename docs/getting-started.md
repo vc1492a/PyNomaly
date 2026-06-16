@@ -34,19 +34,19 @@ conda install conda-forge::pynomaly
 ## Quick Start
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data).fit()
+from PyNomaly import LoOP
+m = LoOP().fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
 
 where `data` is a NxM (N rows, M columns; 2-dimensional) set of data as either a Pandas DataFrame or Numpy array.
 
-`LocalOutlierProbability` sets the `extent` (an integer value of 1, 2, or 3) and `n_neighbors` (must be greater than 0) parameters with the default values of 3 and 10, respectively:
+`LocalOutlierProbability` (also available as `LoOP`) sets the `extent` (an integer value of 1, 2, or 3) and `n_neighbors` (must be greater than 0) parameters with the default values of 3 and 10, respectively:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20).fit()
+from PyNomaly import LoOP
+m = LoOP(extent=2, n_neighbors=20).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -56,12 +56,10 @@ print(scores)
 This implementation of LoOP includes an optional `cluster_labels` parameter. This is useful in cases where regions of varying density occur within the same set of data. When using `cluster_labels`, the Local Outlier Probability of a sample is calculated with respect to its cluster assignment.
 
 ```python
-from PyNomaly import loop
+from PyNomaly import LoOP
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-m = loop.LocalOutlierProbability(
-    data, extent=2, n_neighbors=20, cluster_labels=list(db.labels_)
-).fit()
+m = LoOP(extent=2, n_neighbors=20).fit(data, cluster_labels=list(db.labels_))
 scores = m.local_outlier_probabilities
 print(scores)
 ```

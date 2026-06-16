@@ -7,7 +7,7 @@ scores in the range of [0,1] that are directly interpretable as the probability 
 PyNomaly is a core library of [deepchecks](https://github.com/deepchecks/deepchecks), [OmniDocBench](https://github.com/opendatalab/OmniDocBench) and [pysad](https://github.com/selimfirat/pysad). 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPi](https://img.shields.io/badge/pypi-0.4.0-blue.svg)](https://pypi.python.org/pypi/PyNomaly/0.4.0)
+[![PyPi](https://img.shields.io/badge/pypi-1.0.0-blue.svg)](https://pypi.python.org/pypi/PyNomaly/1.0.0)
 [![Total Downloads](https://static.pepy.tech/badge/pynomaly)](https://pepy.tech/projects/pynomaly)
 [![Monthly Downloads](https://static.pepy.tech/badge/pynomaly/month)](https://pepy.tech/projects/pynomaly)
 ![Tests](https://github.com/vc1492a/PyNomaly/actions/workflows/tests.yml/badge.svg)
@@ -89,19 +89,19 @@ conda install conda-forge::pynomaly
 Then you can do something like this:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data).fit()
+from PyNomaly import LoOP
+m = LoOP(n_neighbors=10).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
 where *data* is a NxM (N rows, M columns; 2-dimensional) set of data as either a Pandas DataFrame or Numpy array.
 
-LocalOutlierProbability sets the *extent* (in integer in value of 1, 2, or 3) and *n_neighbors* (must be greater than 0) parameters with the default
+`LocalOutlierProbability` (also available as `LoOP`) sets the *extent* (an integer value of 1, 2, or 3) and *n_neighbors* (must be greater than 0) parameters with the default
 values of 3 and 10, respectively. You're free to set these parameters on your own as below:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20).fit()
+from PyNomaly import LoOP
+m = LoOP(extent=2, n_neighbors=20).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -111,10 +111,10 @@ of varying density occur within the same set of data. When using *cluster_labels
 sample is calculated with respect to its cluster assignment.
 
 ```python
-from PyNomaly import loop
+from PyNomaly import LoOP
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, cluster_labels=list(db.labels_)).fit()
+m = LoOP(extent=2, n_neighbors=20).fit(data, cluster_labels=list(db.labels_))
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -130,8 +130,8 @@ For large datasets, Numba's just-in-time (JIT) compilation can significantly
 speed up distance computation. Enable it with `use_numba=True`:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, use_numba=True).fit()
+from PyNomaly import LoOP
+m = LoOP(extent=2, n_neighbors=20, use_numba=True).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -140,11 +140,8 @@ To go further, set `n_jobs=-1` to enable Numba's thread-level parallelism
 (`prange`), which distributes work across all available CPU cores:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(
-    data, extent=2, n_neighbors=20,
-    use_numba=True, n_jobs=-1
-).fit()
+from PyNomaly import LoOP
+m = LoOP(extent=2, n_neighbors=20, use_numba=True, n_jobs=-1).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -172,8 +169,8 @@ You may choose to print progress bars _with or without_ the use of Numba
 by passing `progress_bar=True` to `LocalOutlierProbability()`:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, use_numba=True, n_jobs=-1, progress_bar=True).fit()
+from PyNomaly import LoOP
+m = LoOP(use_numba=True, n_jobs=-1, progress_bar=True).fit(data)
 ```
 
 Progress bars are supported in both sequential and Numba execution modes.
@@ -212,11 +209,10 @@ PyNomaly provides custom exceptions that can be caught and handled in your appli
 These exceptions are exported from the package and can be imported directly:
 
 ```python
-from PyNomaly import loop
-from PyNomaly.loop import ClusterSizeError, MissingValuesError
+from PyNomaly import LoOP, ClusterSizeError, MissingValuesError
 
 try:
-    m = loop.LocalOutlierProbability(data, n_neighbors=50, cluster_labels=labels).fit()
+    m = LoOP(n_neighbors=50).fit(data, cluster_labels=labels)
 except ClusterSizeError:
     print("Reduce n_neighbors or use larger clusters.")
 except MissingValuesError:
@@ -261,9 +257,9 @@ values for both *extent* (0.997) and *n_neighbors* (10).
 
 ```python
 db = DBSCAN(eps=0.9, min_samples=10).fit(iris)
-m = loop.LocalOutlierProbability(iris).fit()
+m = loop.LocalOutlierProbability().fit(iris)
 scores_noclust = m.local_outlier_probabilities
-m_clust = loop.LocalOutlierProbability(iris, cluster_labels=list(db.labels_)).fit()
+m_clust = loop.LocalOutlierProbability().fit(iris, cluster_labels=list(db.labels_))
 scores_clust = m_clust.local_outlier_probabilities
 ```
 
@@ -348,7 +344,7 @@ data = np.array([
     [421.5, 90.3, 50.0]
 ])
 
-scores = loop.LocalOutlierProbability(data, n_neighbors=3).fit().local_outlier_probabilities
+scores = loop.LocalOutlierProbability(n_neighbors=3).fit(data).local_outlier_probabilities
 print(scores)
 
 ```
@@ -364,7 +360,7 @@ Similar to the above:
 
 ```python
 data = np.random.rand(100, 5)
-scores = loop.LocalOutlierProbability(data).fit().local_outlier_probabilities
+scores = loop.LocalOutlierProbability().fit(data).local_outlier_probabilities
 print(scores)
 ```
 
@@ -402,7 +398,7 @@ indices = np.delete(indices, 0, 1)
 distances = np.delete(distances, 0, 1)
 
 # Fit and return scores
-m = loop.LocalOutlierProbability(distance_matrix=d, neighbor_matrix=idx, n_neighbors=n_neighbors+1).fit()
+m = loop.LocalOutlierProbability(n_neighbors=n_neighbors+1).fit(distance_matrix=d, neighbor_matrix=idx)
 scores = m.local_outlier_probabilities
 ```
 
@@ -436,12 +432,12 @@ iris_test = iris.iloc[:, 0:4].tail(30)
 
 Fit to each set.
 ```python
-m = loop.LocalOutlierProbability(iris).fit()
+m = loop.LocalOutlierProbability().fit(iris)
 scores_noclust = m.local_outlier_probabilities
 iris['scores'] = scores_noclust
 
-m_train = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
-m_train.fit()
+m_train = loop.LocalOutlierProbability(n_neighbors=10)
+m_train.fit(iris_train)
 iris_train_scores = m_train.local_outlier_probabilities
 ```
 
