@@ -3,6 +3,10 @@
 
 from PyNomaly.loop import (
     LocalOutlierProbability,
+    LoOP,
+    __version__,
+)
+from PyNomaly.exceptions import (
     PyNomalyError,
     ValidationError,
     ClusterSizeError,
@@ -11,8 +15,10 @@ from PyNomaly.loop import (
 
 __all__ = [
     "LocalOutlierProbability",
+    "LoOP",
     "PyNomalyError",
     "ValidationError",
     "ClusterSizeError",
     "MissingValuesError",
+    "__version__",
 ]
