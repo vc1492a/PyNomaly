@@ -15,6 +15,8 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import roc_auc_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
+from sklearn.utils.estimator_checks import check_estimator
+
 import sys
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -155,6 +157,13 @@ def X_n1000() -> np.ndarray:
     X = 0.3 * rng.randn(1000, 2)
     return X
 
+
+def test_sklearn_api_compliance():
+    """
+    Check scikit-learn compatibility as referenced in the developer guide:
+    https://scikit-learn.org/stable/developers/develop.html#rolling-your-own-estimator
+    """
+    check_estimator(loop.LoOP())
 
 def test_loop(X_n8) -> None:
     """
