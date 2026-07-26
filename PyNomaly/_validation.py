@@ -1,9 +1,11 @@
 # Authors: Valentino Constantinou <vc@valentino.io>
 # License: Apache 2.0
 
-import numpy as np
-from typing import Union
 import warnings
+from functools import wraps
+from typing import Union
+
+import numpy as np
 
 from PyNomaly.exceptions import ClusterSizeError, MissingValuesError
 
@@ -20,23 +22,41 @@ class ValidationMixin:
         :return: a vector of values to be used in calculating the local
         outlier probability.
         """
-        if obj.__class__.__name__ == "DataFrame":
-            points_vector = obj.values
-            return points_vector
+        if obj.__class__.__name__ == "DataFrame" or obj.__class__.__name__ == "Series":
+            arr = obj.values
         elif obj.__class__.__name__ == "ndarray":
-            points_vector = obj
-            return points_vector
+            arr = obj
         else:
             warnings.warn(
-                "Provided data or distance matrix must be in ndarray "
-                "or DataFrame.",
+                "Provided data or distance matrix must be in ndarray or DataFrame.",
                 UserWarning,
             )
-            if isinstance(obj, list):
-                points_vector = np.array(obj)
-                return points_vector
-            points_vector = np.array([obj])
-            return points_vector
+            # Let native NumPy exceptions (ValueError/TypeError) bubble up
+            arr = np.asarray(obj, dtype=float)
+
+            if arr.ndim == 0:
+                arr = np.array([obj], dtype=float)
+
+        # For scikit-learn compliance
+        if arr.size == 0:
+            if arr.ndim >= 2 and arr.shape[1] == 0:
+                raise ValueError(
+                    f"Found array with 0 feature(s) (shape={arr.shape}) while a "
+                    f"minimum of 1 is required."
+                )
+            else:
+                raise ValueError(
+                    f"Found array with 0 sample(s) (shape={arr.shape}) while a "
+                    f"minimum of 1 is required."
+                )
+        # For scikit-learn compliance
+        if np.iscomplexobj(arr):
+            raise ValueError("Complex data not supported.")
+
+        # Let native NumPy exceptions (ValueError/TypeError) bubble up
+        arr = arr.astype(float)
+
+        return arr
 
     def _validate_inputs(self):
         """
@@ -45,27 +65,32 @@ class ValidationMixin:
         :return: a tuple of (data, distance_matrix, neighbor_matrix) or
         raises a warning for invalid inputs.
         """
-        if all(v is None for v in [self.data, self.distance_matrix]):
-            warnings.warn(
-                "Data or a distance matrix must be provided.", UserWarning
-            )
+        _data = getattr(self, "data_", getattr(self, "data", None))
+        _dist = getattr(
+            self, "distance_matrix_", getattr(self, "distance_matrix", None)
+        )
+        _neigh = getattr(
+            self, "neighbor_matrix_", getattr(self, "neighbor_matrix", None)
+        )
+
+        if all(v is None for v in [_data, _dist]):
+            warnings.warn("Data or a distance matrix must be provided.", UserWarning)
             return False
-        elif all(v is not None for v in [self.data, self.distance_matrix]):
+        elif all(v is not None for v in [_data, _dist]):
             warnings.warn(
                 "Only one of the following may be provided: data or a "
                 "distance matrix (not both).",
                 UserWarning,
             )
             return False
-        if self.data is not None:
-            points_vector = self._convert_to_array(self.data)
-            return points_vector, self.distance_matrix, self.neighbor_matrix
-        if all(
-            matrix is not None
-            for matrix in [self.neighbor_matrix, self.distance_matrix]
-        ):
-            dist_vector = self._convert_to_array(self.distance_matrix)
-            neigh_vector = self._convert_to_array(self.neighbor_matrix)
+
+        if _data is not None:
+            points_vector = self._convert_to_array(_data)
+            return points_vector, _dist, _neigh
+
+        if all(matrix is not None for matrix in [_neigh, _dist]):
+            dist_vector = self._convert_to_array(_dist)
+            neigh_vector = self._convert_to_array(_neigh)
         else:
             warnings.warn(
                 "A neighbor index matrix and distance matrix must both be "
@@ -73,25 +98,24 @@ class ValidationMixin:
                 UserWarning,
             )
             return False
-        if self.distance_matrix.shape != self.neighbor_matrix.shape:
+
+        if _dist.shape != _neigh.shape:
             warnings.warn(
-                "The shape of the distance and neighbor "
-                "index matrices must match.",
+                "The shape of the distance and neighbor index matrices must match.",
                 UserWarning,
             )
             return False
-        elif (self.distance_matrix.shape[1] != self.n_neighbors) or (
-            self.neighbor_matrix.shape[1] != self.n_neighbors
+        elif (_dist.shape[1] != self.n_neighbors) or (
+            _neigh.shape[1] != self.n_neighbors
         ):
             warnings.warn(
-                "The shape of the distance or "
-                "neighbor index matrix does not "
-                "match the number of neighbors "
-                "specified.",
+                "The shape of the distance or neighbor index matrix does not "
+                "match the number of neighbors specified.",
                 UserWarning,
             )
             return False
-        return self.data, dist_vector, neigh_vector
+
+        return _data, dist_vector, neigh_vector
 
     def _check_cluster_size(self) -> None:
         """
@@ -143,9 +167,7 @@ class ValidationMixin:
         :return: a boolean indicating whether validation has passed.
         """
         if self.extent not in [1, 2, 3]:
-            warnings.warn(
-                "extent parameter (lambda) must be 1, 2, or 3.", UserWarning
-            )
+            warnings.warn("extent parameter (lambda) must be 1, 2, or 3.", UserWarning)
             return False
         return True
 
@@ -155,17 +177,20 @@ class ValidationMixin:
         missing values.
         :raises MissingValuesError: if data contains NaN values.
         """
-        if np.any(np.isnan(self.data)):
-            raise MissingValuesError(
-                "Method does not support missing values in input data."
-            )
+        _data = getattr(self, "data_", getattr(self, "data", None))
+        if _data is not None:
+            arr = self._convert_to_array(_data)
+            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+                raise MissingValuesError(
+                    "Input contains NaN, infinity or a value too large for dtype('float64')."
+                )
 
     def _check_is_fit(self) -> bool:
         """
         Checks that the model was fit prior to calling the stream() method.
         :return: a boolean indicating whether the model has been fit.
         """
-        if self.is_fit is False:
+        if getattr(self, "is_fit_", False) is False:
             warnings.warn(
                 "Must fit on historical data by calling fit() prior to "
                 "calling stream(x).",
@@ -192,7 +217,7 @@ class ValidationMixin:
         return True
 
 
-def accepts(*types):
+def validate_init_types(*types):
     """
     A decorator that facilitates a form of type checking for the inputs
     which can be used in Python 3.4-3.7 in lieu of Python 3.5+'s type
@@ -203,49 +228,36 @@ def accepts(*types):
     """
 
     def decorator(f):
-        assert len(types) == f.__code__.co_argcount
+        @wraps(f)
+        def new_f(self, *args, **kwds):
+            # Map the expected types passed to @accepts to the class attributes
+            attr_names = [
+                "extent",
+                "n_neighbors",
+                "use_numba",
+                "n_jobs",
+                "progress_bar",
+                "data",
+                "distance_matrix",
+                "neighbor_matrix",
+                "cluster_labels",
+            ]
 
-        def new_f(*args, **kwds):
-            for a, t in zip(args, types):
-                if type(a).__name__ == "DataFrame":
-                    a = np.array(a)
-                if isinstance(a, t) is False:
-                    warnings.warn(
-                        "Argument %r is not of type %s" % (a, t), UserWarning
-                    )
-            opt_types = {
-                "extent": {"type": (int, np.integer)},
-                "n_neighbors": {"type": (int, np.integer)},
-                "use_numba": {"type": bool},
-                "n_jobs": {"type": (int, np.integer)},
-                "progress_bar": {"type": bool},
-                "data": {"type": np.ndarray},
-                "distance_matrix": {"type": np.ndarray},
-                "neighbor_matrix": {"type": np.ndarray},
-                "cluster_labels": {"type": (list, np.ndarray)},
-            }
-            for x in kwds:
-                if x in opt_types:
-                    v = kwds[x]
-                    if type(v).__name__ == "DataFrame":
-                        v = np.array(v)
-                    opt_types[x]["value"] = v
-            for k in opt_types:
-                try:
-                    if (
-                        isinstance(opt_types[k]["value"], opt_types[k]["type"])
-                        is False
-                    ):
+            # types[1:] skips the first 'object' type which was originally meant for 'self'
+            for attr, expected_type in zip(attr_names, types[1:]):
+                val = getattr(self, attr, None)
+
+                if val is not None:
+                    if type(val).__name__ == "DataFrame":
+                        val = np.array(val)
+                    if not isinstance(val, expected_type):
                         warnings.warn(
-                            "Argument %r is not of type %s."
-                            % (k, opt_types[k]["type"]),
+                            "Argument %r is not of type %s." % (attr, expected_type),
                             UserWarning,
                         )
-                except KeyError:
-                    pass
-            return f(*args, **kwds)
 
-        new_f.__name__ = f.__name__
+            return f(self, *args, **kwds)
+
         return new_f
 
     return decorator

@@ -1,11 +1,12 @@
 # Authors: Valentino Constantinou <vc@valentino.io>
 # License: Apache 2.0
 
-import numpy as np
 import os
 import sys
-from typing import Tuple
 import warnings
+from typing import Tuple
+
+import numpy as np
 
 from PyNomaly._utils import Utils
 
@@ -30,7 +31,7 @@ try:
                 for f in range(d_features):
                     diff_val = clust_points_vector[i, f] - clust_points_vector[j, f]
                     d += diff_val * diff_val
-                d = d ** 0.5
+                d = d**0.5
                 idx_max = 0
                 for k in range(1, n_neighbors):
                     if local_distances[i, k] > local_distances[i, idx_max]:
@@ -57,7 +58,7 @@ try:
                 for f in range(d_features):
                     diff_val = clust_points_vector[i, f] - clust_points_vector[j, f]
                     d += diff_val * diff_val
-                d = d ** 0.5
+                d = d**0.5
                 idx_max = 0
                 for k in range(1, n_neighbors):
                     if local_distances[i, k] > local_distances[i, idx_max]:
@@ -91,21 +92,22 @@ class DistanceMixin:
         return np.dot(diff, diff) ** 0.5
 
     def _assign_distances(self, data_store: np.ndarray) -> np.ndarray:
-        """
-        Takes a distance matrix, produced by _distances or provided through
-        user input, and assigns distances for each observation to the storage
-        matrix, data_store.
-        :param data_store: the storage matrix that collects information on
-        each observation.
-        :return: the updated storage matrix that collects information on
-        each observation.
-        """
-        for vec, cluster_id in zip(
-            range(self.distance_matrix.shape[0]), self._cluster_labels()
-        ):
+        _dist = getattr(
+            self, "distance_matrix_", getattr(self, "distance_matrix", None)
+        )
+        _neigh = getattr(
+            self, "neighbor_matrix_", getattr(self, "neighbor_matrix", None)
+        )
+
+        if _dist is None or _neigh is None:
+            raise ValueError(
+                "Distance or neighbor matrix is missing. Ensure inputs are valid."
+            )
+
+        for vec, cluster_id in zip(range(_dist.shape[0]), self._cluster_labels()):
             data_store[vec][0] = cluster_id
-            data_store[vec][1] = self.distance_matrix[vec]
-            data_store[vec][2] = self.neighbor_matrix[vec]
+            data_store[vec][1] = _dist[vec]
+            data_store[vec][2] = _neigh[vec]
         return data_store
 
     @staticmethod
@@ -141,9 +143,7 @@ class DistanceMixin:
 
             yield distances, indexes, i
 
-    def _distances_vectorized(
-        self, clusters, distances, indexes, progress_bar
-    ) -> None:
+    def _distances_vectorized(self, clusters, distances, indexes, progress_bar) -> None:
         """Vectorized kNN distance computation with chunked progress."""
         progress = "="
         total_points = sum(cv.shape[0] for cv, _ in clusters)
@@ -161,15 +161,12 @@ class DistanceMixin:
                 chunk = clust_points_vector[chunk_start:chunk_end]
 
                 if _scipy_cdist is not None:
-                    dist = _scipy_cdist(
-                        chunk, clust_points_vector, metric="euclidean"
-                    )
+                    dist = _scipy_cdist(chunk, clust_points_vector, metric="euclidean")
                 else:
                     diff = (
-                        chunk[:, np.newaxis, :]
-                        - clust_points_vector[np.newaxis, :, :]
+                        chunk[:, np.newaxis, :] - clust_points_vector[np.newaxis, :, :]
                     )
-                    dist = np.sqrt((diff ** 2).sum(axis=2))
+                    dist = np.sqrt((diff**2).sum(axis=2))
 
                 row_idx = np.arange(chunk_end - chunk_start)
                 dist[row_idx, row_idx + chunk_start] = np.inf
@@ -208,9 +205,7 @@ class DistanceMixin:
             indexes[global_indices] = global_indices[local_idxs]
 
             if progress_bar:
-                progress = Utils.emit_progress_bar(
-                    progress, idx + 1, len(clusters)
-                )
+                progress = Utils.emit_progress_bar(progress, idx + 1, len(clusters))
 
     def _distances(self, progress_bar: bool = False) -> None:
         """
@@ -224,21 +219,21 @@ class DistanceMixin:
         distances = np.full(
             [self._n_observations(), self.n_neighbors], 9e10, dtype=float
         )
-        indexes = np.full(
-            [self._n_observations(), self.n_neighbors], 9e10, dtype=float
-        )
-        self.points_vector = self._convert_to_array(self.data)
+        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
+
+        _data = getattr(self, "data_", getattr(self, "data", None))
+        self.points_vector_ = self._convert_to_array(_data)
 
         cluster_labels = self._cluster_labels()
         cluster_ids = sorted(set(cluster_labels))
 
         clusters = []
         for cluster_id in cluster_ids:
-            indices = np.where(cluster_labels == cluster_id)
+            indices = np.where(cluster_labels == cluster_id)[0]
             clust_points_vector = np.array(
-                self.points_vector.take(indices, axis=0)[0], dtype=np.float64
+                self.points_vector_[indices], dtype=np.float64
             )
-            clusters.append((clust_points_vector, indices[0]))
+            clusters.append((clust_points_vector, indices))
 
         n_jobs = self.n_jobs
         if n_jobs == -1:
@@ -246,8 +241,7 @@ class DistanceMixin:
 
         if self.use_numba:
             self._distances_numba(
-                clusters, distances, indexes, progress_bar,
-                parallel=(n_jobs > 1)
+                clusters, distances, indexes, progress_bar, parallel=(n_jobs > 1)
             )
         else:
             if n_jobs > 1:
@@ -257,9 +251,8 @@ class DistanceMixin:
                     "to enable parallelism. Falling back to sequential.",
                     UserWarning,
                 )
-            self._distances_vectorized(
-                clusters, distances, indexes, progress_bar
-            )
+            self._distances_vectorized(clusters, distances, indexes, progress_bar)
 
-        self.distance_matrix = distances
-        self.neighbor_matrix = indexes
+        # Assure that computed data is strictly stored in private fitted attributes
+        self.distance_matrix_ = distances
+        self.neighbor_matrix_ = indexes
