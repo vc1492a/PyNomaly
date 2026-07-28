@@ -23,8 +23,9 @@ setup(
     license='Apache License, Version 2.0',
     install_requires=['numpy', 'python-utils'],
     extras_require={
-        'sklearn': ['scikit-learn>=1.0'],
+        'sklearn': ['scikit-learn>=1.0', 'scipy>=1.3.0'],
+        'sparse': ['scipy>=1.3.0'],
         'numba': ['numba'],
-        'all': ['scikit-learn>=1.0', 'numba', 'scipy'],
+        'all': ['scikit-learn>=1.0', 'numba', 'scipy>=1.3.0'],
     },
 )

@@ -52,6 +52,12 @@ class LocalOutlierProbability(
     configuration attributes (e.g. ``distance_matrix``) are never aliased
     to fitted state — that would break ``get_params`` / ``check_estimator``.
 
+    Sparse matrices (``scipy.sparse``) are accepted for ``fit``, ``predict``,
+    ``decision_function``, and ``stream``. They are converted to dense arrays
+    internally before distance computation. **scipy** is a soft dependency for
+    sparse input — install it with ``pip install scipy`` (included in the
+    ``PyNomaly[all]`` extra).
+
     References
     ----------
     .. [1] Breunig M., Kriegel H.-P., Ng R., Sander, J. LOF: Identifying
@@ -307,7 +313,7 @@ class LocalOutlierProbability(
             if getattr(self, "points_vector_", None) is not None:
                 self.cluster_labels_ = np.array([0] * self.points_vector_.shape[0])
 
-        point_vector = self._convert_to_array(x)
+        point_vector = self._convert_observation(x)
         n_neighbors = self._effective_n_neighbors()
         distances = np.full([1, n_neighbors], 9e10, dtype=float)
 
@@ -363,6 +369,9 @@ class LocalOutlierProbability(
         check_is_fitted(self, ["is_fit_"])
 
         if _issparse_safe(X):
+            from PyNomaly._validation import _require_scipy_for_sparse
+
+            _require_scipy_for_sparse(X)
             X = X.toarray()
 
         X_probe = np.asarray(X)

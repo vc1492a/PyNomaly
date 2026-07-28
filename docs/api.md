@@ -22,7 +22,7 @@ clf = loop.LocalOutlierProbability(
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `data` | `np.ndarray` or `pd.DataFrame` | `None` | Input data as a 2D array with shape (n_observations, n_features). Mutually exclusive with `distance_matrix`. |
+| `data` | `np.ndarray`, `pd.DataFrame`, or `scipy.sparse` matrix | `None` | Input data as a 2D array with shape (n_observations, n_features). Sparse matrices are accepted and densified internally (requires scipy). Mutually exclusive with `distance_matrix`. |
 | `distance_matrix` | `np.ndarray` or `pd.DataFrame` | `None` | Pre-computed distance matrix with shape (n_observations, n_neighbors). Must be provided together with `neighbor_matrix`. Mutually exclusive with `data`. |
 | `neighbor_matrix` | `np.ndarray` or `pd.DataFrame` | `None` | Pre-computed neighbor index matrix with shape (n_observations, n_neighbors). Required when `distance_matrix` is provided. |
 | `extent` | `int` | `3` | Controls scoring sensitivity. Must be 1, 2, or 3. Corresponds to lambda times the standard deviation from the mean (1 = ~68%, 2 = ~95%, 3 = ~99.7%). |

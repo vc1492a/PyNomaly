@@ -72,6 +72,9 @@ distance between observations, providing a reduction in computation time
 requirement and PyNomaly may still be used solely with numpy if desired
 (details below). When scipy is available, PyNomaly uses its optimized distance 
 computation and error function implementations for additional performance gains.
+Sparse matrices (`scipy.sparse`) are also accepted as input and converted to
+dense arrays internally; **scipy is required for sparse input** (`pip install scipy`
+or `pip install PyNomaly[sparse]`).
 
 ## Quick Start
 

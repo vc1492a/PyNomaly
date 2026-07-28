@@ -16,10 +16,32 @@ from PyNomaly.exceptions import ClusterSizeError, MissingValuesError
 
 try:
     from scipy.sparse import issparse as _issparse
+
+    _SCIPY_AVAILABLE = True
 except ImportError:  # pragma: no cover
+
+    _SCIPY_AVAILABLE = False
 
     def _issparse(x):
         return False
+
+
+def _is_sparse_like(obj) -> bool:
+    """Return True for scipy sparse matrices (with or without scipy installed)."""
+    if _issparse(obj):
+        return True
+    obj_type = type(obj)
+    module = getattr(obj_type, "__module__", "") or ""
+    return module.startswith("scipy.sparse")
+
+
+def _require_scipy_for_sparse(obj) -> None:
+    """Raise a clear error when sparse input is passed without scipy."""
+    if _is_sparse_like(obj) and not _SCIPY_AVAILABLE:
+        raise ImportError(
+            "Sparse matrix input requires scipy. "
+            "Install it with: pip install scipy"
+        )
 
 
 class ValidationMixin:
@@ -50,7 +72,8 @@ class ValidationMixin:
             except Exception:
                 feature_names = None
 
-        if _issparse(X):
+        if _is_sparse_like(X):
+            _require_scipy_for_sparse(X)
             X = X.toarray()
 
         # Historical LoOP API accepts 1-d series and reshapes to a single feature.
@@ -103,7 +126,8 @@ class ValidationMixin:
         Converts the input data to a numpy array if it is a Pandas DataFrame
         or validates it is already a numpy array.
         """
-        if _issparse(obj):
+        if _is_sparse_like(obj):
+            _require_scipy_for_sparse(obj)
             obj = obj.toarray()
 
         if obj.__class__.__name__ in ("DataFrame", "Series"):
@@ -134,6 +158,19 @@ class ValidationMixin:
             raise ValueError("Complex data not supported.")
 
         return arr.astype(float, copy=False)
+
+    @staticmethod
+    def _convert_observation(obj: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
+        """
+        Convert a single observation to a 1-D float vector.
+
+        Accepts dense arrays, pandas objects, lists, and scipy sparse rows.
+        Sparse matrices are densified (requires scipy).
+        """
+        arr = ValidationMixin._convert_to_array(obj)
+        if arr.ndim == 2 and arr.shape[0] == 1:
+            return arr.ravel()
+        return arr
 
     def _validate_inputs(self):
         """

@@ -54,6 +54,39 @@ This provides **2-3x speedups** on multi-core machines (benchmarked on 8 cores).
 
 Numba must be installed to use JIT compilation. PyNomaly has been tested with Numba versions 0.45.1 through 0.65.1.
 
+## Sparse Matrix Input
+
+LoOP accepts `scipy.sparse` matrices (CSR, CSC, etc.) wherever raw feature data
+is expected — `fit(X)`, `predict(X)`, `decision_function(X)`, and `stream(x)`.
+Sparse inputs are **densified internally** before distance computation; there is
+no sparse-native distance kernel yet.
+
+**scipy is a soft dependency for sparse input.** If you pass a sparse matrix
+without scipy installed, PyNomaly raises a clear `ImportError` with install
+instructions. Install scipy with:
+
+```shell
+pip install scipy
+# or
+pip install PyNomaly[sparse]
+```
+
+Example:
+
+```python
+from scipy.sparse import csr_matrix
+from PyNomaly import LoOP
+
+X = csr_matrix([[1, 0, 2], [0, 3, 0], [4, 0, 5]], dtype=float)
+clf = LoOP(n_neighbors=2).fit(X)
+scores = clf.local_outlier_probabilities_
+```
+
+!!! note
+    Densifying very large sparse matrices can use significant memory. For
+    extremely high-dimensional sparse data, consider dimensionality reduction
+    or sampling before fitting LoOP.
+
 ## Progress Bars
 
 You may choose to print progress bars _with or without_ the use of Numba by passing `progress_bar=True` to `LocalOutlierProbability()`:

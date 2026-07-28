@@ -1067,3 +1067,63 @@ def test_predict(X_n20_scores) -> None:
     predictions = clf.predict(input_data)
     
     assert_array_equal(predictions, expected_predictions)
+
+
+# --- Sparse matrix tests ---
+# Require scipy for sparse input. Skipped when scipy is not installed.
+
+_scipy = pytest.importorskip("scipy", reason="scipy required for sparse matrix tests")
+from scipy.sparse import csr_matrix, csc_matrix
+
+
+def test_sparse_fit_csr(X_n8) -> None:
+    """CSR sparse matrices can be passed to fit()."""
+    X_sparse = csr_matrix(X_n8, dtype=float)
+    clf = loop.LocalOutlierProbability(n_neighbors=5)
+    scores = clf.fit(X_sparse).local_outlier_probabilities_
+    assert scores is not None
+    assert len(scores) == X_n8.shape[0]
+
+
+def test_sparse_fit_csc_predict(X_n8) -> None:
+    """CSC sparse matrices work for fit() and predict()."""
+    X_sparse = csc_matrix(X_n8, dtype=float)
+    clf = loop.LocalOutlierProbability(n_neighbors=5).fit(X_sparse)
+    labels = clf.predict(X_sparse)
+    assert labels.shape == (X_n8.shape[0],)
+    assert set(labels).issubset({-1, 1})
+
+
+def test_sparse_equivalent_to_dense(X_n8) -> None:
+    """Sparse and dense inputs produce identical LoOP scores."""
+    clf_dense = loop.LocalOutlierProbability(n_neighbors=5).fit(X_n8)
+    clf_sparse = loop.LocalOutlierProbability(n_neighbors=5).fit(
+        csr_matrix(X_n8, dtype=float)
+    )
+    assert_array_almost_equal(
+        clf_dense.local_outlier_probabilities_,
+        clf_sparse.local_outlier_probabilities_,
+        decimal=6,
+    )
+
+
+def test_sparse_stream_row(X_n8) -> None:
+    """stream() accepts a single sparse observation row."""
+    clf = loop.LocalOutlierProbability(n_neighbors=5).fit(
+        csr_matrix(X_n8, dtype=float)
+    )
+    row_sparse = csr_matrix(X_n8[0:1], dtype=float)
+    score = clf.stream(row_sparse)
+    assert isinstance(score, (float, np.floating))
+    assert 0.0 <= score <= 1.0
+
+
+def test_sparse_requires_scipy(X_n8) -> None:
+    """Sparse input without scipy installed raises a clear ImportError."""
+    from unittest.mock import patch
+
+    X_sparse = csr_matrix(X_n8, dtype=float)
+    clf = loop.LocalOutlierProbability(n_neighbors=5)
+    with patch("PyNomaly._validation._SCIPY_AVAILABLE", False):
+        with pytest.raises(ImportError, match="Sparse matrix input requires scipy"):
+            clf.fit(X_sparse)
