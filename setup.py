@@ -21,5 +21,10 @@ setup(
               'probability'],
     classifiers=[],
     license='Apache License, Version 2.0',
-    install_requires=['numpy', 'python-utils']
+    install_requires=['numpy', 'python-utils'],
+    extras_require={
+        'sklearn': ['scikit-learn>=1.0'],
+        'numba': ['numba'],
+        'all': ['scikit-learn>=1.0', 'numba', 'scipy'],
+    },
 )

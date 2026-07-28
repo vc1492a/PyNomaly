@@ -162,8 +162,24 @@ def test_sklearn_api_compliance():
     """
     Check scikit-learn compatibility as referenced in the developer guide:
     https://scikit-learn.org/stable/developers/develop.html#rolling-your-own-estimator
+
+    Requires the optional sklearn extra: ``pip install PyNomaly[sklearn]``.
+
+    ``check_fit1d`` is an expected failure: LoOP historically accepts 1-d
+    inputs (e.g. univariate series) by reshaping to ``(-1, 1)`` rather than
+    raising.
     """
-    check_estimator(loop.LoOP())
+    pytest.importorskip("sklearn")
+    check_estimator(
+        loop.LoOP(),
+        expected_failed_checks={
+            "check_fit1d": (
+                "LoOP accepts 1-d inputs and reshapes them to (-1, 1) for "
+                "univariate / time-series use cases."
+            ),
+        },
+    )
+
 
 def test_loop(X_n8) -> None:
     """
@@ -472,11 +488,15 @@ def test_n_neighbors() -> None:
     Tests the functionality of providing a large number of neighbors that
     is greater than the number of observations (software defaults to the
     data input size and provides a UserWarning).
+
+    The public ``n_neighbors`` parameter is left unchanged (sklearn
+    immutability); the effective value used during fit is ``n_neighbors_``.
     :return: None
     """
     X = iris.data
     clf = loop.LocalOutlierProbability(n_neighbors=500, use_numba=NUMBA).fit(X)
-    assert clf.n_neighbors == X.shape[0] - 1
+    assert clf.n_neighbors == 500
+    assert clf.n_neighbors_ == X.shape[0] - 1
 
     clf = loop.LocalOutlierProbability(n_neighbors=500, use_numba=NUMBA)
 
@@ -486,7 +506,8 @@ def test_n_neighbors() -> None:
     # check that only one warning was raised
     assert len(record) == 1
 
-    assert clf.n_neighbors == X.shape[0] - 1
+    assert clf.n_neighbors == 500
+    assert clf.n_neighbors_ == X.shape[0] - 1
 
 
 def test_extent() -> None:
@@ -795,13 +816,15 @@ def test_n_jobs_without_numba_warns(X_n120) -> None:
 
 def test_n_jobs_negative_two() -> None:
     """
-    Tests that n_jobs=-2 (invalid) produces a warning and defaults to 1.
+    Tests that n_jobs=-2 (invalid) produces a warning and uses an effective
+    value of 1 without mutating the public parameter (sklearn immutability).
     """
     clf = loop.LocalOutlierProbability(n_neighbors=2, n_jobs=-2)
     with pytest.warns(UserWarning, match="n_jobs must be -1 or a positive integer") as record:
         clf.fit()
 
-    assert clf.n_jobs == 1
+    assert clf.n_jobs == -2
+    assert clf._fit_n_jobs == 1
 
 
 def test_vectorized_progress_bar_single_cluster(X_n120) -> None:
@@ -819,12 +842,14 @@ def test_vectorized_progress_bar_single_cluster(X_n120) -> None:
 
 def test_n_jobs_invalid() -> None:
     """
-    Tests that invalid n_jobs values produce a warning and default to 1.
+    Tests that invalid n_jobs values produce a warning and use an effective
+    value of 1 without mutating the public parameter (sklearn immutability).
     """
     clf = loop.LocalOutlierProbability(n_neighbors=2, n_jobs=0)
     with pytest.warns(UserWarning, match="n_jobs must be -1 or a positive integer") as record:
         clf.fit()
-    assert clf.n_jobs == 1
+    assert clf.n_jobs == 0
+    assert clf._fit_n_jobs == 1
 
 
 # --- Numba-specific tests ---
@@ -1014,17 +1039,17 @@ def test_standard_y_argument_ignored(X_n120) -> None:
 
 def test_decision_function(X_n20_scores) -> None:
     """
-    Tests that decision_function returns the exact negative probabilities
-    based on the known historical fixture results.
+    Tests that decision_function follows the sklearn outlier convention:
+    ``score_samples(X) - offset_`` with ``offset_ = -0.5``, so inliers satisfy
+    ``decision_function(X) >= 0`` iff LoOP probability <= 0.5.
     """
     input_data, expected_scores = X_n20_scores
     clf = loop.LocalOutlierProbability().fit(input_data)
-    
-    # Scikit-learn decision_function expects negative probabilities
-    expected_decision_scores = -1.0 * expected_scores
-    
+
+    expected_decision_scores = -1.0 * expected_scores - clf.offset_
+
     decision_scores = clf.decision_function(input_data)
-    
+
     assert_array_almost_equal(decision_scores, expected_decision_scores, decimal=6)
 
 

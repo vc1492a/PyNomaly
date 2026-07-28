@@ -171,8 +171,9 @@ class DistanceMixin:
                 row_idx = np.arange(chunk_end - chunk_start)
                 dist[row_idx, row_idx + chunk_start] = np.inf
 
-                knn_idx = np.argpartition(dist, self.n_neighbors, axis=1)[
-                    :, : self.n_neighbors
+                n_neighbors = self._effective_n_neighbors()
+                knn_idx = np.argpartition(dist, n_neighbors, axis=1)[
+                    :, :n_neighbors
                 ]
                 knn_dists = np.take_along_axis(dist, knn_idx, axis=1)
 
@@ -198,7 +199,8 @@ class DistanceMixin:
                 clust_points_vector = clust_points_vector.reshape(-1, 1)
 
             local_dists, local_idxs = kernel(
-                clust_points_vector.astype(np.float64), self.n_neighbors
+                clust_points_vector.astype(np.float64),
+                self._effective_n_neighbors(),
             )
 
             distances[global_indices] = local_dists
@@ -216,13 +218,14 @@ class DistanceMixin:
         :return: the updated storage matrix that collects information on
         each observation.
         """
+        n_neighbors = self._effective_n_neighbors()
         distances = np.full(
-            [self._n_observations(), self.n_neighbors], 9e10, dtype=float
+            [self._n_observations(), n_neighbors], 9e10, dtype=float
         )
-        indexes = np.full([self._n_observations(), self.n_neighbors], 9e10, dtype=float)
+        indexes = np.full([self._n_observations(), n_neighbors], 9e10, dtype=float)
 
         _data = getattr(self, "data_", getattr(self, "data", None))
-        self.points_vector_ = self._convert_to_array(_data)
+        self.points_vector_ = np.asarray(_data, dtype=float)
 
         cluster_labels = self._cluster_labels()
         cluster_ids = sorted(set(cluster_labels))
@@ -235,11 +238,12 @@ class DistanceMixin:
             )
             clusters.append((clust_points_vector, indices))
 
-        n_jobs = self.n_jobs
+        n_jobs = getattr(self, "_fit_n_jobs", self.n_jobs)
         if n_jobs == -1:
             n_jobs = os.cpu_count() or 1
 
-        if self.use_numba:
+        use_numba = getattr(self, "_fit_use_numba", self.use_numba)
+        if use_numba:
             self._distances_numba(
                 clusters, distances, indexes, progress_bar, parallel=(n_jobs > 1)
             )

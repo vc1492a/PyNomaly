@@ -103,9 +103,9 @@ class PipelineMixin:
         )
 
         if _data is not None:
-            return len(_data)
+            return np.asarray(_data).shape[0]
         if _dist is not None:
-            return len(_dist)
+            return np.asarray(_dist).shape[0]
         return 0
 
     def _store(self) -> np.ndarray:
@@ -133,9 +133,9 @@ class PipelineMixin:
 
         if _labels is None:
             if _data is not None:
-                return np.array([0] * len(_data))
+                return np.array([0] * np.asarray(_data).shape[0])
             if _dist is not None:
-                return np.array([0] * len(_dist))
+                return np.array([0] * np.asarray(_dist).shape[0])
             return np.array([0])
         return np.array(_labels)
 
@@ -170,7 +170,7 @@ class PipelineMixin:
         each observation.
         """
         ssd_vals = data_store[:, 3].astype(float)
-        std_distances = np.sqrt(ssd_vals / self.n_neighbors)
+        std_distances = np.sqrt(ssd_vals / self._effective_n_neighbors())
         return np.hstack((data_store, std_distances.reshape(-1, 1)))
 
     def _prob_distances(self, data_store: np.ndarray) -> np.ndarray:
