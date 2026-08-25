@@ -207,17 +207,22 @@ class LocalOutlierProbability(
         X : array-like of shape (n_samples, n_features), optional
             Training data (scikit-learn style). Sparse matrices are densified.
         y : ignored
-            Present for API consistency. A 2-d ``y`` is treated as a deprecated
-            positional ``distance_matrix`` for backward compatibility.
+            Present for API consistency. For backward compatibility only,
+            a 2-d ``y`` with more than one column is treated as a deprecated
+            positional ``distance_matrix`` when no raw data (``X`` / ``data``)
+            is given.
         data, distance_matrix, neighbor_matrix, cluster_labels
             Explicit keyword alternatives to ``X`` / precomputed neighbors.
         """
         if X is not None:
             data = X
 
-        if y is not None and distance_matrix is None:
+        # Legacy positional fit(data, distance_matrix) support. Only applies
+        # when no raw data is given and y cannot be a label vector, so that
+        # sklearn-style fit(X, y) with (n, 1) labels is not hijacked.
+        if y is not None and distance_matrix is None and data is None:
             y_array = np.asarray(y)
-            if y_array.ndim == 2:
+            if y_array.ndim == 2 and y_array.shape[1] > 1:
                 distance_matrix = y
                 y = None
                 warnings.warn(

@@ -978,6 +978,19 @@ def test_fit_overrides_init(X_n8, X_n120) -> None:
     assert len(scores) == 120
 
 
+def test_fit_with_2d_label_y_is_ignored(X_n120) -> None:
+    """
+    Tests that a (n, 1) label array passed as y (sklearn-style fit(X, y))
+    is ignored rather than being hijacked as a legacy positional
+    distance_matrix, which previously left the model unfitted.
+    """
+    y = np.ones((X_n120.shape[0], 1))
+    clf = loop.LocalOutlierProbability(n_neighbors=10).fit(X_n120, y)
+    assert clf.is_fit_ is True
+    assert clf.local_outlier_probabilities_ is not None
+    assert len(clf.local_outlier_probabilities_) == len(X_n120)
+
+
 def test_refit(X_n8, X_n120) -> None:
     """
     Tests that calling fit() twice with different data produces correct
