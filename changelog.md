@@ -17,6 +17,11 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 - Calling `fit()` multiple times with different data is now supported 
   (re-fitting resets internal state).
 - `stream()` now returns a Python `float` instead of a NumPy array.
+- Passing data as a positional argument to the constructor
+  (e.g. `LocalOutlierProbability(data)`) no longer works: the first
+  positional parameter is now `extent`. Pass data to `fit()` instead
+  (e.g. `LocalOutlierProbability().fit(data)`). Keyword form
+  `LocalOutlierProbability(data=data)` still works with a `FutureWarning`.
 ### Added
 - `LoOP` class alias for `LocalOutlierProbability`, enabling 
   `from PyNomaly import LoOP` 
