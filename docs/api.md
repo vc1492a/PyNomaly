@@ -59,7 +59,7 @@ Calculates the Local Outlier Probability for each observation in the input data.
 #### `stream(x)`
 
 ```python
-clf.stream(x) -> np.ndarray
+clf.stream(x) -> float
 ```
 
 Calculates the Local Outlier Probability for an individual observation against the fitted model. Must be called after `fit()`.
@@ -70,7 +70,7 @@ Calculates the Local Outlier Probability for an individual observation against t
 |---|---|---|
 | `x` | `np.ndarray` | A single observation to score. When using raw data mode, this should be a 1D array with the same number of features as the training data. When using distance matrix mode, this should be a scalar distance value. |
 
-**Returns**: `np.ndarray` -- the Local Outlier Probability of the input observation (a value in [0, 1]).
+**Returns**: `float` -- the Local Outlier Probability of the input observation (a value in [0, 1]).
 
 !!! warning
     The stream approach does **not** support clustered data. If `cluster_labels` were provided during `fit()`, PyNomaly will automatically refit using a single cluster and issue a `UserWarning`.

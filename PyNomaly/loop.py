@@ -296,7 +296,7 @@ class LocalOutlierProbability(
         self.is_fit_ = True
         return self
 
-    def stream(self, x: np.ndarray) -> np.ndarray:
+    def stream(self, x: np.ndarray) -> float:
         """Score a single observation against the fitted model."""
         if self._check_is_fit() is False:
             self.fit()

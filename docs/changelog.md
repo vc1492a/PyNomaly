@@ -17,6 +17,7 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
   `FutureWarning` and will be removed in a future version.
 - Calling `fit()` multiple times with different data is now supported 
   (re-fitting resets internal state).
+- `stream()` now returns a Python `float` instead of a NumPy array.
 ### Added
 - `LoOP` class alias for `LocalOutlierProbability`, enabling 
   `from PyNomaly import LoOP` 
