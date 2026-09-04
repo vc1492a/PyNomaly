@@ -72,6 +72,9 @@ distance between observations, providing a reduction in computation time
 requirement and PyNomaly may still be used solely with numpy if desired
 (details below). When scipy is available, PyNomaly uses its optimized distance 
 computation and error function implementations for additional performance gains.
+Sparse matrices (`scipy.sparse`) are also accepted as input and converted to
+dense arrays internally; **scipy is required for sparse input** (`pip install scipy`
+or `pip install PyNomaly[sparse]`).
 
 ## Quick Start
 
@@ -394,11 +397,13 @@ neigh.fit(data)
 d, idx = neigh.kneighbors(data, return_distance=True)
 
 # Remove self-distances - you MUST do this to preserve the same results as intended by the definition of LoOP
-indices = np.delete(indices, 0, 1)
-distances = np.delete(distances, 0, 1)
+idx = np.delete(idx, 0, 1)
+d = np.delete(d, 0, 1)
 
 # Fit and return scores
-m = loop.LocalOutlierProbability(n_neighbors=n_neighbors+1).fit(distance_matrix=d, neighbor_matrix=idx)
+m = loop.LocalOutlierProbability(n_neighbors=n_neighbors).fit(
+    distance_matrix=d, neighbor_matrix=idx
+)
 scores = m.local_outlier_probabilities
 ```
 

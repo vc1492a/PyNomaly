@@ -4,19 +4,23 @@
 
 class PyNomalyError(Exception):
     """Base exception for PyNomaly."""
+
     pass
 
 
 class ValidationError(PyNomalyError):
     """Raised when input validation fails."""
+
     pass
 
 
 class ClusterSizeError(ValidationError):
     """Raised when cluster size is smaller than n_neighbors."""
+
     pass
 
 
-class MissingValuesError(ValidationError):
+class MissingValuesError(ValidationError, ValueError):
     """Raised when data contains missing values."""
+
     pass

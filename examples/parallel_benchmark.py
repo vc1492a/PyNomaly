@@ -42,13 +42,12 @@ def generate_clustered_data(n_per_cluster, n_clusters, n_features=N_FEATURES, se
 
 def time_fit(data, cluster_labels, n_neighbors, use_numba, n_jobs):
     clf = loop.LocalOutlierProbability(
-        data, n_neighbors=n_neighbors,
-        cluster_labels=cluster_labels,
+        n_neighbors=n_neighbors,
         use_numba=use_numba,
-        n_jobs=n_jobs
+        n_jobs=n_jobs,
     )
     t0 = time.perf_counter()
-    clf.fit()
+    clf.fit(data, cluster_labels=cluster_labels)
     return time.perf_counter() - t0
 
 

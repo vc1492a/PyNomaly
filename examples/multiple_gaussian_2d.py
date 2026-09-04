@@ -8,7 +8,7 @@ df = pd.read_csv('../data/multiple-gaussian-2d-data-only.csv')
 print(df)
 
 # fit LoOP according to the original settings outlined in the paper #
-m = loop.LocalOutlierProbability(df[['x', 'y']], n_neighbors=20, extent=3).fit()
+m = loop.LocalOutlierProbability(n_neighbors=20, extent=3).fit(df[['x', 'y']])
 scores = m.local_outlier_probabilities
 print(scores)
 
@@ -25,4 +25,3 @@ for i in range(len(scores)):
         plt.text(df['x'].loc[i] * (1 + 0.01), df['y'].loc[i] * (1 + 0.01), round(scores[i], 2), fontsize=8)
 
 plt.show()
-

@@ -29,8 +29,9 @@ for i in range(1, 10):
     neigh.fit(iris)
     d, idx = neigh.kneighbors(iris, return_distance=True)
 
-    m = loop.LocalOutlierProbability(distance_matrix=d,
-                                     neighbor_matrix=idx).fit()
+    m = loop.LocalOutlierProbability().fit(
+        distance_matrix=d, neighbor_matrix=idx
+    )
     iris['scores'] = m.local_outlier_probabilities
 
     ax = fig.add_subplot(3, 3, i, projection='3d')

@@ -6,7 +6,10 @@
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
-- (optional) scipy >= 1.3.0
+- (optional) scipy >= 1.3.0 — performance optimizations and **sparse matrix input**
+  (`scipy.sparse` CSR/CSC matrices are accepted and densified internally)
+- (optional) scikit-learn >= 1.0 — full estimator API / pipeline integration
+  (`pip install PyNomaly[sklearn]`)
 
 Numba just-in-time (JIT) compiles the function which calculates the Euclidean
 distance between observations, providing a reduction in computation time
@@ -16,6 +19,17 @@ requirement and PyNomaly may still be used solely with numpy if desired.
 When scipy is available, PyNomaly uses its optimized distance
 computation (`scipy.spatial.distance.cdist`) and error function (`scipy.special.erf`)
 implementations for additional performance gains.
+
+Sparse matrices from `scipy.sparse` (e.g. CSR, CSC) can be passed to `fit()`,
+`predict()`, `decision_function()`, and `stream()`. They are converted to dense
+NumPy arrays before distance computation. **scipy must be installed** to use
+sparse input:
+
+```shell
+pip install scipy
+# or
+pip install PyNomaly[sparse]
+```
 
 ## Installation
 
