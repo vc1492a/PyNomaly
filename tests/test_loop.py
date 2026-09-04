@@ -512,6 +512,104 @@ def test_parameters(X_n120) -> None:
     )
 
 
+def test_public_api_contract(X_n120) -> None:
+    """
+    Guards against unintentional breaking changes to the public API of
+    LocalOutlierProbability. Exercises every non-underscored constructor
+    keyword argument, public method, and public attribute so that a rename
+    or removal of any of them causes this test to fail. Additions to the
+    API are unaffected.
+    :param X_n120: A pytest Fixture that generates 120 observations.
+    :return: None
+    """
+    # exercise every public constructor keyword argument by name; a rename
+    # or removal raises a TypeError here. `data` is passed positionally to
+    # match the rest of the test suite (the `accepts` decorator does not
+    # support passing it as a keyword argument).
+    clf = loop.LocalOutlierProbability(
+        X_n120,
+        distance_matrix=None,
+        neighbor_matrix=None,
+        extent=3,
+        n_neighbors=10,
+        cluster_labels=None,
+        use_numba=NUMBA,
+        n_jobs=1,
+        progress_bar=False,
+    )
+
+    # exercise every public method by name
+    assert hasattr(clf, "fit") and callable(clf.fit)
+    fitted = clf.fit()
+    assert hasattr(fitted, "stream") and callable(fitted.stream)
+    fitted.stream(X_n120[0])
+
+    # every public (non-underscored) attribute expected to exist post-fit
+    expected_public_attributes = [
+        "data",
+        "distance_matrix",
+        "neighbor_matrix",
+        "extent",
+        "n_neighbors",
+        "cluster_labels",
+        "use_numba",
+        "n_jobs",
+        "points_vector",
+        "prob_distances",
+        "prob_distances_ev",
+        "norm_prob_local_outlier_factor",
+        "local_outlier_probabilities",
+        "progress_bar",
+        "is_fit",
+        "cluster_labels_u",
+    ]
+    for attr_name in expected_public_attributes:
+        assert hasattr(fitted, attr_name), f"missing public attribute: {attr_name}"
+
+    # exercise every public constructor argument positionally, in the
+    # documented order, using a distinct value per slot. Swapping two
+    # parameters of the same type (e.g. extent/n_neighbors/n_jobs, or
+    # use_numba/progress_bar) doesn't raise an error -- it silently
+    # assigns the wrong value -- so each assigned attribute is checked
+    # against the value passed at its expected position.
+    positional_clf = loop.LocalOutlierProbability(
+        X_n120,
+        np.array([[9.9]]),
+        np.array([[7]]),
+        2,
+        15,
+        [0, 1, 2],
+        False,
+        1,
+        True,
+    )
+    assert positional_clf.data is X_n120
+    assert_array_equal(positional_clf.distance_matrix, np.array([[9.9]]))
+    assert_array_equal(positional_clf.neighbor_matrix, np.array([[7]]))
+    assert positional_clf.extent == 2
+    assert positional_clf.n_neighbors == 15
+    assert positional_clf.cluster_labels == [0, 1, 2]
+    assert positional_clf.use_numba is False
+    assert positional_clf.n_jobs == 1
+    assert positional_clf.progress_bar is True
+
+    # the exception hierarchy is part of the public API: customers import
+    # these names directly (as this test file does at the top) and may
+    # catch on the base classes, so both the import paths and the
+    # hierarchy itself must remain stable
+    from PyNomaly.loop import (
+        PyNomalyError,
+        ValidationError,
+        ClusterSizeError as ImportedClusterSizeError,
+        MissingValuesError as ImportedMissingValuesError,
+    )
+
+    assert issubclass(ImportedClusterSizeError, ValidationError)
+    assert issubclass(ImportedMissingValuesError, ValidationError)
+    assert issubclass(ValidationError, PyNomalyError)
+    assert issubclass(PyNomalyError, Exception)
+
+
 def test_n_neighbors() -> None:
     """
     Tests the functionality of providing a large number of neighbors that
