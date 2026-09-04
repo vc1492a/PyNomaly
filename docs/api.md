@@ -47,7 +47,7 @@ clf.fit() -> LocalOutlierProbability
 
 Calculates the Local Outlier Probability for each observation in the input data.
 
-**Returns**: `self` -- the fitted model instance. Access scores via `clf.local_outlier_probabilities`.
+**Returns**: `self` -- the fitted model instance. Access scores via `clf.local_outlier_probabilities_`.
 
 **Raises**:
 
@@ -83,11 +83,11 @@ Attributes available after calling `fit()`:
 
 | Attribute | Type | Description |
 |---|---|---|
-| `local_outlier_probabilities` | `np.ndarray` | Array of LoOP scores for each observation, with values in [0, 1]. |
-| `prob_distances` | `np.ndarray` | Probabilistic distances for each observation. |
-| `prob_distances_ev` | `np.ndarray` | Expected values of probabilistic distances for each observation's neighborhood. |
-| `norm_prob_local_outlier_factor` | `float` | Maximum normalized probabilistic local outlier factor across all observations. Used internally by `stream()`. |
-| `is_fit` | `bool` | Whether the model has been fit. |
+| `local_outlier_probabilities_` | `np.ndarray` | Array of LoOP scores for each observation, with values in [0, 1]. |
+| `prob_distances_` | `np.ndarray` | Probabilistic distances for each observation. |
+| `prob_distances_ev_` | `np.ndarray` | Expected values of probabilistic distances for each observation's neighborhood. |
+| `norm_prob_local_outlier_factor_` | `float` | Maximum normalized probabilistic local outlier factor across all observations. Used internally by `stream()`. |
+| `is_fit_` | `bool` | Whether the model has been fit. |
 | `n_neighbors` | `int` | The number of neighbors used (may differ from the value passed to the constructor if it was adjusted). |
 
 ---
