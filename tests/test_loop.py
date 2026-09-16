@@ -940,6 +940,33 @@ def test_numba_prange_single_cluster(X_n120) -> None:
 # --- scikit-learn API convention tests (1.0.0) ---
 
 
+def test_exceptions_importable_from_loop() -> None:
+    """
+    Tests that the exception classes, which moved to ``PyNomaly.exceptions``
+    in 1.0.0, remain importable from ``PyNomaly.loop`` for backward
+    compatibility and are the same objects as the canonical ones.
+    """
+    from PyNomaly import exceptions
+    from PyNomaly.loop import (
+        ClusterSizeError as LoopClusterSizeError,
+        MissingValuesError as LoopMissingValuesError,
+        PyNomalyError as LoopPyNomalyError,
+        ValidationError as LoopValidationError,
+    )
+
+    assert LoopPyNomalyError is exceptions.PyNomalyError
+    assert LoopValidationError is exceptions.ValidationError
+    assert LoopClusterSizeError is exceptions.ClusterSizeError
+    assert LoopMissingValuesError is exceptions.MissingValuesError
+    for name in (
+        "PyNomalyError",
+        "ValidationError",
+        "ClusterSizeError",
+        "MissingValuesError",
+    ):
+        assert name in loop.__all__
+
+
 def test_numerical_equivalence_old_style(X_n8) -> None:
     """
     Tests that old-style (deprecated) and new-style API produce identical

@@ -94,11 +94,14 @@ Attributes available after calling `fit()`:
 
 ## Exceptions
 
-All exceptions are importable from `PyNomaly.loop` or directly from `PyNomaly`:
+All exceptions are defined in `PyNomaly.exceptions`. They are also importable
+directly from `PyNomaly`, and from `PyNomaly.loop` for backward compatibility:
 
 ```python
-from PyNomaly import ClusterSizeError, MissingValuesError
+from PyNomaly.exceptions import PyNomalyError, ValidationError, ClusterSizeError, MissingValuesError
 # or
+from PyNomaly import ClusterSizeError, MissingValuesError
+# or (backward compatible)
 from PyNomaly.loop import PyNomalyError, ValidationError, ClusterSizeError, MissingValuesError
 ```
 

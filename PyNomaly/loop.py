@@ -19,6 +19,12 @@ from PyNomaly._compat import (
 from PyNomaly._distance import DistanceMixin
 from PyNomaly._pipeline import PipelineMixin
 from PyNomaly._validation import ValidationMixin, validate_init_types
+from PyNomaly.exceptions import (  # noqa: F401 (re-exported for backward compatibility)
+    ClusterSizeError,
+    MissingValuesError,
+    PyNomalyError,
+    ValidationError,
+)
 
 __author__ = "Valentino Constantinou"
 __version__ = "1.0.0"
@@ -457,3 +463,14 @@ def _issparse_safe(x) -> bool:
 
 
 LoOP = LocalOutlierProbability
+
+__all__ = [
+    "LocalOutlierProbability",
+    "LoOP",
+    # Exceptions live in PyNomaly.exceptions; re-exported here so that
+    # ``from PyNomaly.loop import ClusterSizeError`` keeps working.
+    "PyNomalyError",
+    "ValidationError",
+    "ClusterSizeError",
+    "MissingValuesError",
+]

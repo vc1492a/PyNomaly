@@ -17,6 +17,10 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 - Calling `fit()` multiple times with different data is now supported 
   (re-fitting resets internal state).
 - `stream()` now returns a Python `float` instead of a NumPy array.
+- Exception classes (`PyNomalyError`, `ValidationError`, `ClusterSizeError`,
+  `MissingValuesError`) now live in the new `PyNomaly.exceptions` module.
+  They remain importable from `PyNomaly.loop` and from `PyNomaly` for
+  backward compatibility.
 - Passing data as a positional argument to the constructor
   (e.g. `LocalOutlierProbability(data)`) no longer works: the first
   positional parameter is now `extent`. Pass data to `fit()` instead
