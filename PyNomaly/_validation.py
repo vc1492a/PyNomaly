@@ -7,12 +7,15 @@ from __future__ import annotations
 
 import warnings
 from functools import wraps
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
 from PyNomaly._compat import check_array
 from PyNomaly.exceptions import ClusterSizeError, MissingValuesError
+
+if TYPE_CHECKING:  # pragma: no cover
+    import pandas as pd  # noqa: F401 (type hints only; pandas is optional)
 
 try:
     from scipy.sparse import issparse as _issparse
