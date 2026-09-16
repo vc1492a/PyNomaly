@@ -1,6 +1,7 @@
 # Authors: Valentino Constantinou <vc@valentino.io>
 # License: Apache 2.0
 
+import inspect
 import logging
 import re
 import sys
@@ -170,6 +171,11 @@ def test_sklearn_api_compliance():
     raising.
     """
     pytest.importorskip("sklearn")
+    if "expected_failed_checks" not in inspect.signature(check_estimator).parameters:
+        pytest.skip(
+            "check_estimator(expected_failed_checks=...) requires "
+            "scikit-learn >= 1.6 (not available on Python 3.8)"
+        )
     check_estimator(
         loop.LoOP(),
         expected_failed_checks={
