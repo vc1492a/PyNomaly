@@ -2,6 +2,7 @@
 # License: Apache 2.0
 
 from math import erf, sqrt
+
 import numpy as np
 
 try:
@@ -94,11 +95,18 @@ class PipelineMixin:
     def _n_observations(self) -> int:
         """
         Calculates the number of observations in the data.
-        :return: the number of observations in the input data.
+        :return: the number of observations in the input data if data.
         """
-        if self.data is not None:
-            return len(self.data)
-        return len(self.distance_matrix)
+        _data = getattr(self, "data_", getattr(self, "data", None))
+        _dist = getattr(
+            self, "distance_matrix_", getattr(self, "distance_matrix", None)
+        )
+
+        if _data is not None:
+            return np.asarray(_data).shape[0]
+        if _dist is not None:
+            return np.asarray(_dist).shape[0]
+        return 0
 
     def _store(self) -> np.ndarray:
         """
@@ -115,11 +123,21 @@ class PipelineMixin:
         points belong to the same cluster.
         :return: a numpy array of cluster labels.
         """
-        if self.cluster_labels is None:
-            if self.data is not None:
-                return np.array([0] * len(self.data))
-            return np.array([0] * len(self.distance_matrix))
-        return np.array(self.cluster_labels)
+        _labels = getattr(
+            self, "cluster_labels_", getattr(self, "cluster_labels", None)
+        )
+        _data = getattr(self, "data_", getattr(self, "data", None))
+        _dist = getattr(
+            self, "distance_matrix_", getattr(self, "distance_matrix", None)
+        )
+
+        if _labels is None:
+            if _data is not None:
+                return np.array([0] * np.asarray(_data).shape[0])
+            if _dist is not None:
+                return np.array([0] * np.asarray(_dist).shape[0])
+            return np.array([0])
+        return np.array(_labels)
 
     def _ssd(self, data_store: np.ndarray) -> np.ndarray:
         """
@@ -130,9 +148,9 @@ class PipelineMixin:
         :return: the updated storage matrix that collects information on
         each observation.
         """
-        self.cluster_labels_u = np.unique(data_store[:, 0])
+        self._cluster_labels_u = np.unique(data_store[:, 0])
         ssd_array = np.empty([self._n_observations(), 1])
-        for cluster_id in self.cluster_labels_u:
+        for cluster_id in self._cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
             cluster_distances = np.take(data_store[:, 1], indices).tolist()
             ssd = np.power(cluster_distances[0], 2).sum(axis=1)
@@ -152,7 +170,7 @@ class PipelineMixin:
         each observation.
         """
         ssd_vals = data_store[:, 3].astype(float)
-        std_distances = np.sqrt(ssd_vals / self.n_neighbors)
+        std_distances = np.sqrt(ssd_vals / self._effective_n_neighbors())
         return np.hstack((data_store, std_distances.reshape(-1, 1)))
 
     def _prob_distances(self, data_store: np.ndarray) -> np.ndarray:
@@ -178,7 +196,7 @@ class PipelineMixin:
         each observation.
         """
         prob_set_distance_ev = np.empty([self._n_observations(), 1])
-        for cluster_id in self.cluster_labels_u:
+        for cluster_id in self._cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)[0]
             for index in indices:
                 nbrhood = data_store[index][2].astype(int)
@@ -190,7 +208,7 @@ class PipelineMixin:
                 ]
                 prob_set_distance_ev[index] = nbrhood_prob_distances_nonan.mean()
 
-        self.prob_distances_ev = prob_set_distance_ev
+        self.prob_distances_ev_ = prob_set_distance_ev
         return np.hstack((data_store, prob_set_distance_ev))
 
     def _prob_local_outlier_factors(self, data_store: np.ndarray) -> np.ndarray:
@@ -229,7 +247,7 @@ class PipelineMixin:
         each observation.
         """
         prob_local_outlier_factor_ev_dict = {}
-        for cluster_id in self.cluster_labels_u:
+        for cluster_id in self._cluster_labels_u:
             indices = np.where(data_store[:, 0] == cluster_id)
             prob_local_outlier_factors = np.take(data_store[:, 7], indices).astype(
                 float
