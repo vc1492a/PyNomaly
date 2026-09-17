@@ -32,6 +32,9 @@ and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
   `from PyNomaly import LoOP` 
   ([Issue #5](https://github.com/vc1492a/PyNomaly/issues/5)).
 - `__version__` is now exported from the package (`from PyNomaly import __version__`).
+### Removed
+- Support for Python 3.8. PyNomaly 1.0.0 requires Python 3.9 or newer
+  (`python_requires='>=3.9'`).
 
 ## 0.4.0
 ### Added
