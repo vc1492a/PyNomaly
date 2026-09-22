@@ -487,87 +487,148 @@ def test_public_api_contract(X_n120) -> None:
     """
     Guards against unintentional breaking changes to the public API of
     LocalOutlierProbability. Exercises every non-underscored constructor
-    keyword argument, public method, and public attribute so that a rename
-    or removal of any of them causes this test to fail. Additions to the
-    API are unaffected.
+    keyword argument, every fit() keyword argument, public method, and
+    public attribute so that a rename or removal of any of them causes this
+    test to fail. Additions to the API are unaffected.
+
+    Written against the 1.0.0 scikit-learn-style API: the constructor takes
+    configuration only, data goes to ``fit(X, y=None, ...)``, and fitted
+    state lives on ``_``-suffixed attributes (with read-only legacy aliases).
     :param X_n120: A pytest Fixture that generates 120 observations.
     :return: None
     """
     # exercise every public constructor keyword argument by name; a rename
-    # or removal raises a TypeError here. `data` is passed positionally to
-    # match the rest of the test suite (the `accepts` decorator does not
-    # support passing it as a keyword argument).
+    # or removal raises a TypeError here. Data parameters are no longer
+    # constructor arguments in 1.0.0 -- they are exercised via fit() below.
     clf = loop.LocalOutlierProbability(
-        X_n120,
-        distance_matrix=None,
-        neighbor_matrix=None,
         extent=3,
         n_neighbors=10,
-        cluster_labels=None,
         use_numba=NUMBA,
         n_jobs=1,
         progress_bar=False,
     )
 
-    # exercise every public method by name
-    assert hasattr(clf, "fit") and callable(clf.fit)
-    fitted = clf.fit()
-    assert hasattr(fitted, "stream") and callable(fitted.stream)
-    fitted.stream(X_n120[0])
-
-    # every public (non-underscored) attribute expected to exist post-fit
-    expected_public_attributes = [
+    # sklearn contract: get_params() exposes exactly the constructor's
+    # parameters -- the configuration parameters plus the deprecated data
+    # keywords, which stay constructor arguments (with a FutureWarning)
+    # until they are removed in a future version
+    assert set(clf.get_params()) == {
+        "extent",
+        "n_neighbors",
+        "use_numba",
+        "n_jobs",
+        "progress_bar",
         "data",
         "distance_matrix",
         "neighbor_matrix",
+        "cluster_labels",
+    }
+
+    # exercise every public method by name, and every fit() keyword
+    # argument by name (a rename or removal raises a TypeError here)
+    assert hasattr(clf, "fit") and callable(clf.fit)
+    fitted = clf.fit(
+        X_n120,
+        y=None,
+        distance_matrix=None,
+        neighbor_matrix=None,
+        cluster_labels=None,
+    )
+    assert fitted is clf
+    for method_name in (
+        "fit",
+        "fit_predict",
+        "predict",
+        "decision_function",
+        "score_samples",
+        "stream",
+        "get_params",
+        "set_params",
+    ):
+        assert hasattr(fitted, method_name) and callable(
+            getattr(fitted, method_name)
+        ), f"missing public method: {method_name}"
+    fitted.stream(X_n120[0])
+    fitted.predict(X_n120)
+    fitted.decision_function(X_n120)
+    fitted.score_samples(X_n120)
+
+    # every public (non-underscored) attribute expected to exist post-fit:
+    # configuration parameters, the deprecated constructor data inputs,
+    # the `_`-suffixed fitted state, and the read-only legacy aliases
+    expected_public_attributes = [
+        # configuration parameters (constructor)
         "extent",
         "n_neighbors",
-        "cluster_labels",
         "use_numba",
         "n_jobs",
+        "progress_bar",
+        # deprecated constructor data inputs (always present, None here)
+        "data",
+        "distance_matrix",
+        "neighbor_matrix",
+        "cluster_labels",
+        # fitted state (scikit-learn convention)
+        "data_",
+        "distance_matrix_",
+        "neighbor_matrix_",
+        "cluster_labels_",
+        "n_neighbors_",
+        "n_features_in_",
+        "offset_",
+        "points_vector_",
+        "prob_distances_",
+        "prob_distances_ev_",
+        "norm_prob_local_outlier_factor_",
+        "local_outlier_probabilities_",
+        "is_fit_",
+        # read-only legacy aliases for fitted output attributes
         "points_vector",
         "prob_distances",
         "prob_distances_ev",
         "norm_prob_local_outlier_factor",
         "local_outlier_probabilities",
-        "progress_bar",
         "is_fit",
-        "cluster_labels_u",
     ]
     for attr_name in expected_public_attributes:
         assert hasattr(fitted, attr_name), f"missing public attribute: {attr_name}"
 
+    # the legacy aliases must read the canonical fitted attributes
+    assert fitted.local_outlier_probabilities is fitted.local_outlier_probabilities_
+    assert fitted.is_fit is fitted.is_fit_
+
     # exercise every public constructor argument positionally, in the
-    # documented order, using a distinct value per slot. Swapping two
+    # documented 1.0.0 order, using a distinct value per slot. Swapping two
     # parameters of the same type (e.g. extent/n_neighbors/n_jobs, or
     # use_numba/progress_bar) doesn't raise an error -- it silently
     # assigns the wrong value -- so each assigned attribute is checked
     # against the value passed at its expected position.
-    positional_clf = loop.LocalOutlierProbability(
-        X_n120,
-        np.array([[9.9]]),
-        np.array([[7]]),
-        2,
-        15,
-        [0, 1, 2],
-        False,
-        1,
-        True,
-    )
-    assert positional_clf.data is X_n120
-    assert_array_equal(positional_clf.distance_matrix, np.array([[9.9]]))
-    assert_array_equal(positional_clf.neighbor_matrix, np.array([[7]]))
+    positional_clf = loop.LocalOutlierProbability(2, 15, False, 1, True)
     assert positional_clf.extent == 2
     assert positional_clf.n_neighbors == 15
-    assert positional_clf.cluster_labels == [0, 1, 2]
     assert positional_clf.use_numba is False
     assert positional_clf.n_jobs == 1
     assert positional_clf.progress_bar is True
 
+    # data is positional in fit(), sklearn-style: fit(X, y)
+    positional_fit = loop.LocalOutlierProbability(n_neighbors=10).fit(
+        X_n120, None
+    )
+    assert positional_fit.data_ is X_n120
+    assert positional_fit.is_fit_ is True
+
+    # the `LoOP` alias is part of the public API
+    from PyNomaly import LoOP
+
+    assert LoOP is loop.LocalOutlierProbability
+    assert loop.LoOP is loop.LocalOutlierProbability
+
     # the exception hierarchy is part of the public API: customers import
     # these names directly (as this test file does at the top) and may
     # catch on the base classes, so both the import paths and the
-    # hierarchy itself must remain stable
+    # hierarchy itself must remain stable. The canonical home is
+    # PyNomaly.exceptions; PyNomaly.loop and PyNomaly re-export them.
+    from PyNomaly import exceptions
     from PyNomaly.loop import (
         PyNomalyError,
         ValidationError,
@@ -575,6 +636,10 @@ def test_public_api_contract(X_n120) -> None:
         MissingValuesError as ImportedMissingValuesError,
     )
 
+    assert PyNomalyError is exceptions.PyNomalyError
+    assert ValidationError is exceptions.ValidationError
+    assert ImportedClusterSizeError is exceptions.ClusterSizeError
+    assert ImportedMissingValuesError is exceptions.MissingValuesError
     assert issubclass(ImportedClusterSizeError, ValidationError)
     assert issubclass(ImportedMissingValuesError, ValidationError)
     assert issubclass(ValidationError, PyNomalyError)
