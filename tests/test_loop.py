@@ -1018,6 +1018,34 @@ def test_fit_with_2d_label_y_is_ignored(X_n120) -> None:
     assert len(clf.local_outlier_probabilities_) == len(X_n120)
 
 
+@pytest.mark.parametrize(
+    "y_shape", [(120,), (120, 1), (120, 2)], ids=["1d", "n_by_1", "n_by_2"]
+)
+def test_fit_ignores_y_when_X_is_given(X_n120, y_shape) -> None:
+    """
+    Regression test for the fit(X, y) review finding on PR #92: when raw
+    data X is supplied, any label array y (1-d, a single column, or a
+    multi-column 2-d array) must be ignored without triggering the legacy
+    positional distance_matrix fallback, and the result must equal fit(X).
+    """
+    expected = (
+        loop.LocalOutlierProbability(n_neighbors=10)
+        .fit(X_n120)
+        .local_outlier_probabilities_
+    )
+
+    y = np.ones(y_shape)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        clf = loop.LocalOutlierProbability(n_neighbors=10).fit(X_n120, y)
+
+    assert clf.is_fit_ is True
+    # raw-data path was used: y did not become the distance matrix
+    assert clf.data_ is X_n120
+    assert clf.distance_matrix is None
+    assert_array_equal(clf.local_outlier_probabilities_, expected)
+
+
 def test_refit(X_n8, X_n120) -> None:
     """
     Tests that calling fit() twice with different data produces correct
