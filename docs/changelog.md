@@ -5,6 +5,37 @@ All notable changes to PyNomaly will be documented in this Changelog.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 1.0.0
+### Changed
+- **Breaking (with backward compatibility):** Adopted scikit-learn API conventions.
+  Data parameters (`data`, `distance_matrix`, `neighbor_matrix`, `cluster_labels`)
+  are now passed to `fit()` instead of `__init__()`. Configuration parameters
+  (`extent`, `n_neighbors`, `use_numba`, `n_jobs`, `progress_bar`) remain in 
+  the constructor 
+  ([Issue #7](https://github.com/vc1492a/PyNomaly/issues/7)).
+- Passing data parameters to `__init__()` still works but emits a 
+  `FutureWarning` and will be removed in a future version.
+- Calling `fit()` multiple times with different data is now supported 
+  (re-fitting resets internal state).
+- `stream()` now returns a Python `float` instead of a NumPy array.
+- Exception classes (`PyNomalyError`, `ValidationError`, `ClusterSizeError`,
+  `MissingValuesError`) now live in the new `PyNomaly.exceptions` module.
+  They remain importable from `PyNomaly.loop` and from `PyNomaly` for
+  backward compatibility.
+- Passing data as a positional argument to the constructor
+  (e.g. `LocalOutlierProbability(data)`) no longer works: the first
+  positional parameter is now `extent`. Pass data to `fit()` instead
+  (e.g. `LocalOutlierProbability().fit(data)`). Keyword form
+  `LocalOutlierProbability(data=data)` still works with a `FutureWarning`.
+### Added
+- `LoOP` class alias for `LocalOutlierProbability`, enabling 
+  `from PyNomaly import LoOP` 
+  ([Issue #5](https://github.com/vc1492a/PyNomaly/issues/5)).
+- `__version__` is now exported from the package (`from PyNomaly import __version__`).
+### Removed
+- Support for Python 3.8. PyNomaly 1.0.0 requires Python 3.9 or newer
+  (`python_requires='>=3.9'`).
+
 ## 0.4.0
 ### Added
 - Parallel distance computation via Numba `prange` and the new `n_jobs` 

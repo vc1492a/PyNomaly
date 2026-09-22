@@ -11,9 +11,9 @@ iris = pd.DataFrame(iris.drop('Species', 1))
 
 
 db = DBSCAN(eps=0.9, min_samples=10).fit(iris)
-m = loop.LocalOutlierProbability(iris).fit()
+m = loop.LocalOutlierProbability().fit(iris)
 scores_noclust = m.local_outlier_probabilities
-m_clust = loop.LocalOutlierProbability(iris, cluster_labels=list(db.labels_)).fit()
+m_clust = loop.LocalOutlierProbability().fit(iris, cluster_labels=list(db.labels_))
 scores_clust = m_clust.local_outlier_probabilities
 
 
