@@ -12,12 +12,12 @@ iris = pd.DataFrame(iris.drop('Species', 1))
 iris_train = iris.iloc[:, 0:4].head(120)
 iris_test = iris.iloc[:, 0:4].tail(30)
 
-m = loop.LocalOutlierProbability(iris).fit()
+m = loop.LocalOutlierProbability().fit(iris)
 scores_noclust = m.local_outlier_probabilities
 iris['scores'] = scores_noclust
 
-m_train = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
-m_train.fit()
+m_train = loop.LocalOutlierProbability(n_neighbors=10)
+m_train.fit(iris_train)
 iris_train_scores = m_train.local_outlier_probabilities
 
 iris_test_scores = []

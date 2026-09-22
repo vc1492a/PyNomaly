@@ -2,11 +2,14 @@
 
 ## Dependencies
 
-- Python 3.8 - 3.14
+- Python 3.9 - 3.14
 - numpy >= 1.16.3
 - python-utils >= 2.3.0
 - (optional) numba >= 0.45.1
-- (optional) scipy >= 1.3.0
+- (optional) scipy >= 1.3.0 — performance optimizations and **sparse matrix input**
+  (`scipy.sparse` CSR/CSC matrices are accepted and densified internally)
+- (optional) scikit-learn >= 1.0 — full estimator API / pipeline integration
+  (`pip install PyNomaly[sklearn]`)
 
 Numba just-in-time (JIT) compiles the function which calculates the Euclidean
 distance between observations, providing a reduction in computation time
@@ -16,6 +19,17 @@ requirement and PyNomaly may still be used solely with numpy if desired.
 When scipy is available, PyNomaly uses its optimized distance
 computation (`scipy.spatial.distance.cdist`) and error function (`scipy.special.erf`)
 implementations for additional performance gains.
+
+Sparse matrices from `scipy.sparse` (e.g. CSR, CSC) can be passed to `fit()`,
+`predict()`, `decision_function()`, and `stream()`. They are converted to dense
+NumPy arrays before distance computation. **scipy must be installed** to use
+sparse input:
+
+```shell
+pip install scipy
+# or
+pip install PyNomaly[sparse]
+```
 
 ## Installation
 
@@ -34,19 +48,19 @@ conda install conda-forge::pynomaly
 ## Quick Start
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data).fit()
+from PyNomaly import LoOP
+m = LoOP().fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
 
 where `data` is a NxM (N rows, M columns; 2-dimensional) set of data as either a Pandas DataFrame or Numpy array.
 
-`LocalOutlierProbability` sets the `extent` (an integer value of 1, 2, or 3) and `n_neighbors` (must be greater than 0) parameters with the default values of 3 and 10, respectively:
+`LocalOutlierProbability` (also available as `LoOP`) sets the `extent` (an integer value of 1, 2, or 3) and `n_neighbors` (must be greater than 0) parameters with the default values of 3 and 10, respectively:
 
 ```python
-from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20).fit()
+from PyNomaly import LoOP
+m = LoOP(extent=2, n_neighbors=20).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -56,12 +70,10 @@ print(scores)
 This implementation of LoOP includes an optional `cluster_labels` parameter. This is useful in cases where regions of varying density occur within the same set of data. When using `cluster_labels`, the Local Outlier Probability of a sample is calculated with respect to its cluster assignment.
 
 ```python
-from PyNomaly import loop
+from PyNomaly import LoOP
 from sklearn.cluster import DBSCAN
 db = DBSCAN(eps=0.6, min_samples=50).fit(data)
-m = loop.LocalOutlierProbability(
-    data, extent=2, n_neighbors=20, cluster_labels=list(db.labels_)
-).fit()
+m = LoOP(extent=2, n_neighbors=20).fit(data, cluster_labels=list(db.labels_))
 scores = m.local_outlier_probabilities
 print(scores)
 ```

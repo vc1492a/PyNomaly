@@ -29,7 +29,7 @@ For large datasets, Numba's just-in-time (JIT) compilation can significantly spe
 
 ```python
 from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, extent=2, n_neighbors=20, use_numba=True).fit()
+m = loop.LocalOutlierProbability(extent=2, n_neighbors=20, use_numba=True).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -39,9 +39,8 @@ To go further, set `n_jobs=-1` to enable Numba's thread-level parallelism (`pran
 ```python
 from PyNomaly import loop
 m = loop.LocalOutlierProbability(
-    data, extent=2, n_neighbors=20,
-    use_numba=True, n_jobs=-1
-).fit()
+    extent=2, n_neighbors=20, use_numba=True, n_jobs=-1
+).fit(data)
 scores = m.local_outlier_probabilities
 print(scores)
 ```
@@ -55,13 +54,46 @@ This provides **2-3x speedups** on multi-core machines (benchmarked on 8 cores).
 
 Numba must be installed to use JIT compilation. PyNomaly has been tested with Numba versions 0.45.1 through 0.65.1.
 
+## Sparse Matrix Input
+
+LoOP accepts `scipy.sparse` matrices (CSR, CSC, etc.) wherever raw feature data
+is expected — `fit(X)`, `predict(X)`, `decision_function(X)`, and `stream(x)`.
+Sparse inputs are **densified internally** before distance computation; there is
+no sparse-native distance kernel yet.
+
+**scipy is a soft dependency for sparse input.** If you pass a sparse matrix
+without scipy installed, PyNomaly raises a clear `ImportError` with install
+instructions. Install scipy with:
+
+```shell
+pip install scipy
+# or
+pip install PyNomaly[sparse]
+```
+
+Example:
+
+```python
+from scipy.sparse import csr_matrix
+from PyNomaly import LoOP
+
+X = csr_matrix([[1, 0, 2], [0, 3, 0], [4, 0, 5]], dtype=float)
+clf = LoOP(n_neighbors=2).fit(X)
+scores = clf.local_outlier_probabilities_
+```
+
+!!! note
+    Densifying very large sparse matrices can use significant memory. For
+    extremely high-dimensional sparse data, consider dimensionality reduction
+    or sampling before fitting LoOP.
+
 ## Progress Bars
 
 You may choose to print progress bars _with or without_ the use of Numba by passing `progress_bar=True` to `LocalOutlierProbability()`:
 
 ```python
 from PyNomaly import loop
-m = loop.LocalOutlierProbability(data, use_numba=True, n_jobs=-1, progress_bar=True).fit()
+m = loop.LocalOutlierProbability(use_numba=True, n_jobs=-1, progress_bar=True).fit(data)
 ```
 
 Progress bars are supported in both sequential and Numba execution modes.
@@ -83,7 +115,7 @@ data = np.array([
     [421.5, 90.3, 50.0]
 ])
 
-scores = loop.LocalOutlierProbability(data, n_neighbors=3).fit().local_outlier_probabilities
+scores = loop.LocalOutlierProbability(n_neighbors=3).fit(data).local_outlier_probabilities
 print(scores)
 ```
 
@@ -120,12 +152,12 @@ neigh.fit(data)
 d, idx = neigh.kneighbors(data, return_distance=True)
 
 # Remove self-distances
-indices = np.delete(indices, 0, 1)
-distances = np.delete(distances, 0, 1)
+idx = np.delete(idx, 0, 1)
+d = np.delete(d, 0, 1)
 
-m = loop.LocalOutlierProbability(
-    distance_matrix=d, neighbor_matrix=idx, n_neighbors=n_neighbors+1
-).fit()
+m = loop.LocalOutlierProbability(n_neighbors=n_neighbors).fit(
+    distance_matrix=d, neighbor_matrix=idx
+)
 scores = m.local_outlier_probabilities
 ```
 
@@ -150,8 +182,8 @@ iris_test = iris.iloc[:, 0:4].tail(30)
 Fit the model on training data:
 
 ```python
-m_train = loop.LocalOutlierProbability(iris_train, n_neighbors=10)
-m_train.fit()
+m_train = loop.LocalOutlierProbability(n_neighbors=10)
+m_train.fit(iris_train)
 iris_train_scores = m_train.local_outlier_probabilities
 ```
 
@@ -189,13 +221,10 @@ PyNomaly provides custom exceptions that can be caught and handled in your appli
 These exceptions are exported from the package and can be imported directly:
 
 ```python
-from PyNomaly import loop
-from PyNomaly.loop import ClusterSizeError, MissingValuesError
+from PyNomaly import LoOP, ClusterSizeError, MissingValuesError
 
 try:
-    m = loop.LocalOutlierProbability(
-        data, n_neighbors=50, cluster_labels=labels
-    ).fit()
+    m = LoOP(n_neighbors=50).fit(data, cluster_labels=labels)
 except ClusterSizeError:
     print("Reduce n_neighbors or use larger clusters.")
 except MissingValuesError:
